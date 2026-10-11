@@ -134,6 +134,18 @@ adminRouter.post('/invoices/:id/reconcile', (req: Request, res: Response) => {
   const now = new Date().toISOString();
 
   if (decision === 'APPROVE_PAID') {
+    // Prohibit administrator legitimacy bypass for Pi Network transactions
+    const isPiPayment = (invoice.paymentMethod || '').toLowerCase().includes('pi');
+    const associatedOrder = state.orders.find((o) => o.id === invoice.id || o.orderReference === invoice.notes);
+    const isPiOrder = associatedOrder?.paymentProvider === 'pi';
+
+    if (isPiPayment || isPiOrder) {
+      return res.status(403).json({
+        error: 'Administrator manual payment override is prohibited for Pi Network transactions. Pi payments must be verified exclusively through official server-to-server Pi Platform API completion.',
+        code: 'PI_MANUAL_OVERRIDE_PROHIBITED',
+      });
+    }
+
     if (!verifiedReference) {
       return res.status(400).json({
         error: 'Verified bank/provider transaction reference is mandatory to mark an invoice as PAID.',

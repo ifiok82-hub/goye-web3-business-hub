@@ -34,8 +34,14 @@ export function createExpressApp() {
       service: 'GOYE Web3 Business Hub',
       timestamp: new Date().toISOString(),
       network: process.env.PI_NETWORK_MODE || 'TESTNET',
-      sandbox: process.env.PI_SANDBOX !== 'false',
+      sandbox: false,
     });
+  });
+
+  // Official Pi Domain Validation endpoint
+  app.get('/validation-key.txt', (_req, res) => {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send('90abaa643d3497da29102392c358d77a18e2937cb338f944de6f88db2a2a2f7a46a39851946bb07eaa648e3a5cbee79db904ab485c3e929be43049c61396c757\n');
   });
 
   return app;

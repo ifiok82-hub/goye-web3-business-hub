@@ -93,6 +93,14 @@ npm start
 
 ---
 
+## Official Core Positioning
+
+> **"Professional Web3 business services platform connecting entrepreneurs and organizations with digital solutions, AI services and Pi-enabled Web3 commerce."**
+
+GOYE is positioned truthfully as a Web3-enabled digital business platform combining reliable conventional cloud infrastructure with cryptographic business identity and Pi Network commerce. It does not falsely claim to be a 100% decentralized blockchain or make unverified claims of government accreditation or Core Team endorsements.
+
+---
+
 ## Required Environment Variables
 
 > ⚠️ **CRITICAL SECURITY WARNING:**  
@@ -101,7 +109,7 @@ npm start
 | Variable | Description | Default / Example | Required in Production |
 | :--- | :--- | :--- | :--- |
 | `PI_NETWORK_MODE` | Pi Network Environment Mode (`TESTNET` or `MAINNET`) | `TESTNET` | Yes |
-| `PI_SANDBOX` | Pi SDK Sandbox Flag (`true` for Testnet) | `true` | Yes |
+| `PI_SANDBOX` | Pi SDK Sandbox Flag (set to `false` for Production Developer Review) | `false` | Yes |
 | `PI_API_KEY` | Official Pi Developer Portal Platform API Key | *Configured in Portal* | Yes (for Pi payments) |
 | `PI_APP_ID` | Official Pi Developer Application ID | *Configured in Portal* | Yes (for Pi payments) |
 | `PI_TESTNET_WALLET` | Public Testnet Wallet Address for developer testing | *Public Address* | Optional |
@@ -115,10 +123,10 @@ npm start
 
 ---
 
-## Pi Testnet Status & Anti-Mock Policy
+## Pi Platform Integration & Anti-Mock Policy
 
 - **Current Network Mode**: `TESTNET`
-- **Sandbox Mode**: `true`
+- **Sandbox Mode**: `false` (Standard production architecture)
 - **Mainnet**: **DISABLED**. Mainnet transactions remain disabled until official Pi Developer Portal review and production key validation are completed.
 - **Strict Anti-Mock Policy**: GOYE does NOT simulate payments, invent txids, or forge wallet balances. If `PI_API_KEY` is not present in the backend environment, the system factually reports:
   > *"Pi payment verification is currently unavailable. Please try again later."*
@@ -155,7 +163,7 @@ This project is configured out-of-the-box for Vercel deployment with:
 2. Framework Preset: **Vite** (Vercel will detect `vercel.json` settings automatically).
 3. Under **Environment Variables**, add:
    - `PI_NETWORK_MODE`: `TESTNET`
-   - `PI_SANDBOX`: `true`
+   - `PI_SANDBOX`: `false`
    - `PI_API_KEY`: *(your Pi developer API key)*
    - `PI_APP_ID`: *(your Pi application ID)*
    - `GEMINI_API_KEY`: *(your Google Gemini API key)*

@@ -40,7 +40,7 @@ export const AiAgentsView: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      text: 'Welcome to the GOYE AI Assistant Sandbox. Select any business agent or ask about our enterprise services, pricing models, and trade assurance.',
+      text: 'Welcome to the GOYE AI Assistant Live Console. Select any specialized business agent or ask about our enterprise solutions, pricing structures, and trade assurance.',
     },
   ]);
   const [userInput, setUserInput] = useState('');
@@ -131,7 +131,7 @@ export const AiAgentsView: React.FC = () => {
           contactName: leadName,
           contactEmail: leadEmail,
           phone: leadPhone,
-          message: leadNotes || 'Inquiry from AI Agent sandbox',
+          message: leadNotes || 'Inquiry from AI Agent interactive console',
         }),
       });
       if (res.ok) {
@@ -176,15 +176,15 @@ export const AiAgentsView: React.FC = () => {
         </button>
       </div>
 
-      {/* Split Section: Interactive Sandbox & Image Showcase */}
+      {/* Split Section: Interactive Console & Image Showcase */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left: Chat Sandbox Console */}
+        {/* Left: Chat Live Console */}
         <div className="lg:col-span-7 bg-[#121620] border border-white/10 rounded-xl overflow-hidden flex flex-col h-[520px]">
           {/* Chat Header */}
           <div className="p-4 bg-[#0B0E14] border-b border-white/10 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span className="font-bold text-white">GOYE Concierge Live Sandbox</span>
+              <span className="font-bold text-white">GOYE Concierge Live Console</span>
               <span className="text-slate-500 font-mono text-[11px]">gemini-3.8-flash</span>
             </div>
             <button

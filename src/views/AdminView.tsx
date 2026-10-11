@@ -182,7 +182,7 @@ export const AdminView: React.FC = () => {
                 className="w-full bg-[#0B0E14] border border-white/10 rounded-md px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37] font-mono"
               />
               <span className="text-[10px] text-slate-500 mt-1 block">
-                Development fallback: <code className="text-slate-400">goye_internal_admin_sec_2026</code>
+                Configured securely in server deployment environment as GOYE_ADMIN_SECRET.
               </span>
             </div>
 

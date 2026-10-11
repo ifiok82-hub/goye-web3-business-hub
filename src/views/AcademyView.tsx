@@ -24,7 +24,7 @@ export const AcademyView: React.FC = () => {
       level: 'Professional',
       duration: '4 Weeks',
       topics: ['Knowledge base ingestion', 'Server-side Gemini SDK', 'Lead qualification CRM', 'WhatsApp handoff'],
-      enrolledCount: 380,
+      credential: 'Sirwise Digital Credential',
     },
     {
       id: 'CRS-02',
@@ -32,7 +32,7 @@ export const AcademyView: React.FC = () => {
       level: 'Advanced Engineering',
       duration: '6 Weeks',
       topics: ['Pi SDK init & auth', 'Server-to-server approval', 'Double-spending idempotency', 'Mainnet readiness checklist'],
-      enrolledCount: 520,
+      credential: 'Pi Platform Certified Track',
     },
     {
       id: 'CRS-03',
@@ -40,7 +40,7 @@ export const AcademyView: React.FC = () => {
       level: 'Business Operations',
       duration: '3 Weeks',
       topics: ['Milestone structuring', 'Tax calculation line items', 'SHA-256 QR codes', 'Bank transfer reconciliation'],
-      enrolledCount: 290,
+      credential: 'Trade Billing Credential',
     },
     {
       id: 'CRS-04',
@@ -48,7 +48,7 @@ export const AcademyView: React.FC = () => {
       level: 'Executive',
       duration: '4 Weeks',
       topics: ['Pre-shipment verification', 'Customs documentation', 'Dispute mediation records', 'Currency hedges'],
-      enrolledCount: 215,
+      credential: 'Trade Assurance Credential',
     },
   ];
 
@@ -165,8 +165,8 @@ export const AcademyView: React.FC = () => {
               </div>
 
               <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-500 tabular-nums">
-                  {course.enrolledCount} Active Learners
+                <span className="text-xs font-mono text-[#D4AF37]">
+                  {course.credential}
                 </span>
                 <a
                   href="https://sirwise.online"

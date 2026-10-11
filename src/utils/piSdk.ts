@@ -58,7 +58,7 @@ export function detectPiEnvironment(): PiEnvironmentDetection {
 
 let isInitialized = false;
 
-export async function initializePiSDK(sandbox = true): Promise<boolean> {
+export async function initializePiSDK(sandbox = false): Promise<boolean> {
   if (typeof window === 'undefined' || !window.Pi) {
     return false;
   }
@@ -66,11 +66,12 @@ export async function initializePiSDK(sandbox = true): Promise<boolean> {
   if (isInitialized) return true;
 
   try {
+    // Production requirement: sandbox is false
     window.Pi.init({ version: '2.0', sandbox });
     isInitialized = true;
     return true;
   } catch (err) {
-    console.warn('Pi.init failed or already initialized:', err);
+    console.warn('Pi.init status:', err);
     return false;
   }
 }
@@ -84,16 +85,16 @@ export async function authenticatePi(): Promise<{
   if (typeof window === 'undefined' || !window.Pi) {
     return {
       success: false,
-      errorMessage: 'Pi authentication is currently unavailable. Please open this app inside the official Pi Browser.',
+      errorMessage: 'Pi payment verification is currently unavailable. Please open this app inside the official Pi Browser.',
     };
   }
 
   try {
-    await initializePiSDK(true);
+    await initializePiSDK(false);
 
     const authResult = await window.Pi.authenticate(['username', 'payments'], (incompletePayment) => {
       console.log('[Pi SDK] Incomplete payment found:', incompletePayment);
-      // Incomplete payments should be handled by backend resolution
+      // Incomplete payments should be resolved server-side
     });
 
     return {
@@ -106,20 +107,21 @@ export async function authenticatePi(): Promise<{
     return {
       success: false,
       errorMessage:
-        err?.message || 'Pi authentication is currently unavailable. Please ensure your Pi Wallet is unlocked.',
+        err?.message || 'Pi payment verification is currently unavailable. Please try again later.',
     };
   }
 }
 
 /**
  * Executes authentic Pi Payment flow:
- * 1. Frontend calls Pi.createPayment()
- * 2. On onReadyForServerApproval, calls GOYE backend POST /api/pi/approve
+ * 1. Customer initiates payment via Pi.createPayment()
+ * 2. On onReadyForServerApproval: calls backend POST /api/pi/approve (server approves via Pi Platform API)
  * 3. Pioneer signs payment
- * 4. On onReadyForServerCompletion, calls GOYE backend POST /api/pi/complete
- * 5. Backend verifies payment state with Pi Platform API
+ * 4. On onReadyForServerCompletion: calls backend POST /api/pi/complete (server verifies with Pi Platform API)
+ * 5. Only after backend verifies completion does onSuccess execute
+ * Strict anti-mock policy: Zero client-side verification, zero simulated transactions.
  */
-export function executePiPayment(options: {
+export async function executePiPayment(options: {
   amount: number;
   memo: string;
   internalOrderId: string;
@@ -132,9 +134,11 @@ export function executePiPayment(options: {
     return;
   }
 
-  options.onStatusChange('Initiating payment request through Pi SDK...');
+  options.onStatusChange('Initializing official Pi SDK (Production Architecture)...');
 
   try {
+    await initializePiSDK(false);
+
     window.Pi.createPayment(
       {
         amount: options.amount,

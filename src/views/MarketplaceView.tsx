@@ -145,25 +145,54 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
         return;
       }
 
-      executePiPayment({
-        amount: activeItem.pricePi || Math.round(activeItem.priceUSD / 10),
-        memo: `Order ${orderRef} - ${activeItem.title}`,
-        internalOrderId: orderRef,
-        onStatusChange: (status) => setPaymentStatusText(status),
-        onSuccess: (payment) => {
-          setOrderComplete({
-            orderRef,
-            paymentMethod: 'Pi Platform API (Verified)',
-            transactionId: payment.txid,
-            verified: true,
-          });
+      setPaymentStatusText('Initializing order record on server...');
+
+      try {
+        // Create order on backend in PENDING status first
+        const orderRes = await fetch('/api/marketplace/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            itemId: activeItem.id,
+            buyerName,
+            buyerEmail,
+            paymentProvider: 'pi',
+          }),
+        });
+
+        const orderData = await orderRes.json();
+        if (!orderRes.ok || !orderData.order) {
+          setPaymentError(orderData.error || 'Failed to initialize server-side order record.');
           setPaymentStatusText(null);
-        },
-        onError: (err) => {
-          setPaymentError(err);
-          setPaymentStatusText(null);
-        },
-      });
+          return;
+        }
+
+        const serverOrderId = orderData.order.id;
+        const internalRef = orderData.order.orderReference;
+
+        await executePiPayment({
+          amount: activeItem.pricePi || Math.round(activeItem.priceUSD / 10),
+          memo: `Order ${internalRef} - ${activeItem.title}`,
+          internalOrderId: serverOrderId,
+          onStatusChange: (status) => setPaymentStatusText(status),
+          onSuccess: (payment) => {
+            setOrderComplete({
+              orderRef: internalRef,
+              paymentMethod: 'Pi Platform API (Verified)',
+              transactionId: payment.txid,
+              verified: true,
+            });
+            setPaymentStatusText(null);
+          },
+          onError: (err) => {
+            setPaymentError(err || 'Pi payment verification is currently unavailable. Please try again later.');
+            setPaymentStatusText(null);
+          },
+        });
+      } catch (err) {
+        setPaymentError('Pi payment verification is currently unavailable. Please try again later.');
+        setPaymentStatusText(null);
+      }
       return;
     }
 
@@ -489,10 +518,10 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                       <div className="flex-1">
                         <div className="font-semibold text-white flex items-center gap-1.5">
                           <Smartphone className="w-3.5 h-3.5 text-[#D4AF37]" />
-                          <span>Pi Network Platform API (Testnet)</span>
+                          <span>Pi Network Platform API (Pi-Enabled Commerce)</span>
                         </div>
                         <div className="text-[11px] text-slate-400">
-                          Official Pi SDK required. Strict zero-mock enforcement.
+                          Official Pi SDK integration. Server-to-server cryptographic verification.
                         </div>
                       </div>
                     </label>

@@ -103,16 +103,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                   </div>
                   <div className="grid grid-cols-3 gap-2 pt-2 text-center">
                     <div>
-                      <div className="text-xs text-slate-400">Verified IDs</div>
-                      <div className="text-sm font-bold text-white font-mono tabular-nums">2,480+</div>
+                      <div className="text-xs text-slate-400">Business ID</div>
+                      <div className="text-sm font-bold text-white font-mono">5 Levels</div>
                     </div>
                     <div>
-                      <div className="text-xs text-slate-400">Contracts Active</div>
-                      <div className="text-sm font-bold text-white font-mono tabular-nums">1,120+</div>
+                      <div className="text-xs text-slate-400">Payment Rails</div>
+                      <div className="text-sm font-bold text-white font-mono">Dual Web2 + Pi</div>
                     </div>
                     <div>
-                      <div className="text-xs text-slate-400">Pi SDK Status</div>
-                      <div className="text-sm font-bold text-[#D4AF37] font-mono">Ready</div>
+                      <div className="text-xs text-slate-400">Pi Integration</div>
+                      <div className="text-sm font-bold text-[#D4AF37] font-mono">Web3 Ready</div>
                     </div>
                   </div>
                 </div>
@@ -266,10 +266,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
               Demystifying Emerging Technology
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Web3 Explained Without the Speculative Jargon.
+              Web3-Enabled Architecture Explained Without the Jargon.
             </h2>
             <p className="text-sm text-slate-400">
-              GOYE bridges traditional business models with decentralized verification, allowing entrepreneurs to adopt new technology safely.
+              The GOYE platform combines conventional enterprise web infrastructure with decentralisation-ready verification and Pi-enabled commerce. Rather than making false claims of running 100% on-chain, GOYE utilizes practical cryptographic auditability where it provides genuine commercial value.
             </p>
           </div>
 
@@ -277,20 +277,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
             <div className="p-6 rounded-lg bg-[#0B0E14]/70 border border-white/10 space-y-3">
               <div className="text-sm font-bold text-slate-200">Web2 (Conventional)</div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Your standard website, corporate email, social profiles, and traditional fiat payments (Bank transfers, card gateways like Paystack and Flutterwave).
+                Your standard corporate website, email, business registration documents, and fiat payment rails (direct bank wires, Paystack, Flutterwave).
               </p>
               <div className="text-xs text-slate-500 pt-2 border-t border-white/5">
-                Centralized database & institutional processing.
+                Reliable web infrastructure & commercial banking rails.
               </div>
             </div>
 
             <div className="p-6 rounded-lg bg-[#0B0E14]/70 border border-white/10 space-y-3">
-              <div className="text-sm font-bold text-[#D4AF37]">Web3 (Decentralized)</div>
+              <div className="text-sm font-bold text-[#D4AF37]">Web3 (Decentralisation-Ready)</div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Self-sovereign digital identity, cryptographic wallets, peer-to-peer verification, and blockchain-recorded transactions (Pi Network, digital assets).
+                Cryptographic digital identities, non-custodial wallet readiness, peer-to-peer verification, and official Pi Network commerce.
               </p>
               <div className="text-xs text-slate-500 pt-2 border-t border-white/5">
-                Verifiable signatures & cryptographic audit trail.
+                Cryptographic signatures & verifiable audit trails.
               </div>
             </div>
 
@@ -300,10 +300,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 <span className="text-[#D4AF37] text-xs font-mono">HYBRID</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Connects both worlds seamlessly. Works inside standard browsers and Pi Browser. Protects your business with real verification and zero mock simulations.
+                Seamlessly bridges both worlds. Works in standard desktop and mobile browsers, as well as official Pi Browser. Protects your business with real verification and zero mock simulations.
               </p>
               <div className="text-xs text-[#D4AF37] pt-2 border-t border-white/10">
-                Production infrastructure for real enterprise trade.
+                Secure digital business platform for real trade.
               </div>
             </div>
           </div>

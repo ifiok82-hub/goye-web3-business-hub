@@ -22,7 +22,8 @@ export function getPiServerConfig() {
   const apiKey = process.env.PI_API_KEY;
   const appId = process.env.PI_APP_ID;
   const networkMode = (process.env.PI_NETWORK_MODE || 'TESTNET').toUpperCase();
-  const sandbox = process.env.PI_SANDBOX !== 'false';
+  // CRITICAL: Production application requires Pi Sandbox = FALSE (never sandbox: true)
+  const sandbox = false;
   const testnetWallet = process.env.PI_TESTNET_WALLET || 'NOT CONFIGURED';
   const mainnetWallet = process.env.PI_MAINNET_WALLET || 'NOT CONFIGURED';
 
@@ -56,7 +57,7 @@ piRouter.get('/status', (_req: Request, res: Response) => {
     testnetWalletLabel: 'Pi Testnet — Developer Testing Only',
     mainnetWallet: config.mainnetWallet === 'NOT CONFIGURED' ? 'NOT CONFIGURED' : 'CONFIGURED',
     paymentVerification: config.isApiKeyConfigured ? 'AVAILABLE' : 'UNAVAILABLE',
-    domainValidation: 'MANUAL PI PORTAL VERIFICATION REQUIRED',
+    domainValidation: 'KEY DEPLOYED (/validation-key.txt)',
     developerPortalStatus: 'MANUAL PI PORTAL VERIFICATION REQUIRED',
     mockPaymentSystem: 'DISABLED (Strict anti-mock policy)',
     mainnetActivation: config.isMainnetReady ? 'ACTIVE' : 'DISABLED (Requires valid server credentials & Pi Portal approval)',

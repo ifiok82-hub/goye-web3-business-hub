@@ -40,7 +40,7 @@ export const PiStatusView: React.FC = () => {
   }, []);
 
   const getBadgeClass = (val: string) => {
-    if (val === 'CONFIGURED' || val === 'AVAILABLE' || val === 'ACTIVE' || val === 'VERIFIED') {
+    if (val === 'CONFIGURED' || val === 'AVAILABLE' || val === 'ACTIVE' || val === 'VERIFIED' || val.includes('DEPLOYED')) {
       return 'text-emerald-400 bg-emerald-950/60 border border-emerald-800';
     }
     if (val.includes('MANUAL') || val.includes('TESTNET') || val.includes('REQUIRED')) {
@@ -176,7 +176,7 @@ export const PiStatusView: React.FC = () => {
                 </span>
               </div>
               <div className="text-[11px] text-slate-500">
-                Requires manual registration in Pi Developer Portal app settings.
+                validation-key.txt is active at domain root for Pi Developer Portal verification.
               </div>
             </div>
 
