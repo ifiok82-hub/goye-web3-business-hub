@@ -1,14 +1,18 @@
 /**
- * GOYE Web3 Business Hub - Pi Testnet Payment Test Panel
- * Real End-to-End Payment Validation (Zero-Simulation Architecture)
+ * GOYE Web3 Business Hub - PI TESTNET PAYMENT TEST CARD
  *
- * Rules:
- * - Network: TESTNET
- * - Sandbox: FALSE
- * - Test Amount: 0.1 Test-Pi
- * - Official Pi SDK: Pi.authenticate(['username', 'payments'], onIncompletePaymentFound) -> Pi.createPayment(...)
- * - Two-phase server approval and completion
- * - Never populates fake placeholders. Evidence appears ONLY upon a genuine transaction.
+ * Requirements:
+ * - Real Pi Testnet payment flow using official Pi SDK
+ * - Network: Pi Testnet
+ * - Amount: 0.1 Test-Pi
+ * - Description: "Real Testnet payment for GOYE Web3 Business Hub integration testing. Test-Pi has no monetary value."
+ * - Prominent Button: [ 🟡 PAY 0.1 TEST-PI ]
+ * - Real live status progression:
+ *   NOT STARTED -> AUTHENTICATING -> PAYMENT CREATED -> WAITING FOR APPROVAL ->
+ *   WAITING FOR USER CONFIRMATION -> TRANSACTION SUBMITTED -> COMPLETING PAYMENT ->
+ *   TESTNET PAYMENT SUCCESSFUL
+ * - Success Screen with real values verified by GOYE server + Pi Platform API
+ * - Zero mocks, zero fake txids, zero fake balances, zero simulated success.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -16,25 +20,21 @@ import {
   detectPiEnvironment,
   executePiTestnetPayment,
   authenticatePi,
-  resolveIncompletePaymentServer,
   RealPaymentEvidence,
   PiPaymentFlowStatus,
 } from '../utils/piSdk';
 import { usePiAuth } from '../context/PiAuthContext';
 import {
-  ShieldCheck,
-  ShieldAlert,
   CheckCircle2,
-  AlertTriangle,
+  AlertCircle,
   RefreshCw,
   ExternalLink,
   Smartphone,
   Key,
-  ArrowRight,
+  ShieldCheck,
+  ShieldAlert,
   Loader2,
-  Clock,
-  Layers,
-  Sparkles,
+  Lock,
 } from 'lucide-react';
 
 export const PiTestnetPaymentPanel: React.FC = () => {
@@ -42,24 +42,23 @@ export const PiTestnetPaymentPanel: React.FC = () => {
 
   const [envStatus, setEnvStatus] = useState({ isPiBrowser: false, isSdkLoaded: false });
   const [serverStatus, setServerStatus] = useState<any | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState<boolean>(true);
+  const [loadingTelemetry, setLoadingTelemetry] = useState<boolean>(true);
 
-  // Payment Execution State
-  const [flowStatus, setFlowStatus] = useState<PiPaymentFlowStatus>('IDLE');
-  const [statusMessage, setStatusMessage] = useState<string>('Ready for Pi Testnet payment validation.');
+  // Live Status Flow
+  const [flowStatus, setFlowStatus] = useState<PiPaymentFlowStatus>('NOT STARTED');
+  const [statusDetail, setStatusDetail] = useState<string>('Ready to initiate real Testnet payment.');
   const [inProgress, setInProgress] = useState<boolean>(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  // Incomplete Payment tracking
-  const [incompletePayment, setIncompletePayment] = useState<any | null>(null);
-  const [resolvingIncomplete, setResolvingIncomplete] = useState<boolean>(false);
+  // Real Captured Values (Never fake placeholders)
+  const [capturedPaymentId, setCapturedPaymentId] = useState<string | null>(null);
+  const [capturedTxid, setCapturedTxid] = useState<string | null>(null);
+  const [errorFeedback, setErrorFeedback] = useState<string | null>(null);
 
-  // Real Transaction Evidence (NEVER fake placeholders)
-  const [transactionEvidence, setTransactionEvidence] = useState<RealPaymentEvidence | null>(null);
+  // Verified Success Screen Data
+  const [successEvidence, setSuccessEvidence] = useState<RealPaymentEvidence | null>(null);
 
   const fetchTelemetry = async () => {
-    setLoadingStatus(true);
+    setLoadingTelemetry(true);
     setEnvStatus(detectPiEnvironment());
     try {
       const res = await fetch('/api/pi/status');
@@ -68,9 +67,9 @@ export const PiTestnetPaymentPanel: React.FC = () => {
         setServerStatus(data);
       }
     } catch (err) {
-      console.error('Failed to fetch Pi telemetry:', err);
+      console.error('Failed to fetch status:', err);
     } finally {
-      setLoadingStatus(false);
+      setLoadingTelemetry(false);
     }
   };
 
@@ -78,340 +77,321 @@ export const PiTestnetPaymentPanel: React.FC = () => {
     fetchTelemetry();
   }, []);
 
-  // Handler: Authenticate with Pi SDK
+  // Handler: Manual Authentication with Pi
   const handleAuthenticate = async () => {
-    setAuthError(null);
-    setPaymentError(null);
-    setFlowStatus('IDLE');
-    setStatusMessage('Authenticating Pioneer via official Pi SDK...');
+    setErrorFeedback(null);
+    setFlowStatus('AUTHENTICATING');
+    setStatusDetail('Authenticating Pioneer via official Pi SDK...');
 
-    const res = await authenticatePi((incomplete) => {
-      setIncompletePayment(incomplete);
-    });
-
+    const res = await authenticatePi();
     if (res.success && res.user && res.accessToken) {
-      setStatusMessage(`Authenticated as @${res.user.username}.`);
-      if (res.incompletePayment) {
-        setIncompletePayment(res.incompletePayment);
-      }
-      // Authoritatively verify with backend
+      setStatusDetail(`Authenticated as Pioneer @${res.user.username}.`);
+      setFlowStatus('NOT STARTED');
+
       try {
-        const verifyRes = await fetch('/api/pi/oauth-verify', {
+        const vRes = await fetch('/api/pi/oauth-verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ accessToken: res.accessToken }),
         });
-        if (verifyRes.ok) {
-          const vData = await verifyRes.json();
+        if (vRes.ok) {
+          const vData = await vRes.json();
           if (vData.success && vData.user) {
             setVerifiedSession(vData.sessionToken, vData.user, vData.expiresAt);
           }
         }
       } catch (_) {}
     } else {
-      setAuthError(res.errorMessage || 'Pi authentication failed.');
-      setStatusMessage('Pi authentication failed.');
+      setFlowStatus('FAILED');
+      setErrorFeedback(res.errorMessage || 'Pi authentication failed. Please try again.');
+      setStatusDetail('Pi authentication failed.');
     }
   };
 
-  // Handler: Execute genuine Testnet payment
-  const handlePayTestPi = async () => {
+  // Handler: Primary Button [ 🟡 PAY 0.1 TEST-PI ]
+  const handlePayTestnet = async () => {
     if (inProgress) return;
     setInProgress(true);
-    setPaymentError(null);
-    setAuthError(null);
-    setTransactionEvidence(null);
+    setErrorFeedback(null);
+    setSuccessEvidence(null);
+    setCapturedPaymentId(null);
+    setCapturedTxid(null);
 
     await executePiTestnetPayment({
-      onStatusChange: (status: PiPaymentFlowStatus, details?: string) => {
+      onStatusChange: (status: PiPaymentFlowStatus, detail?: string) => {
         setFlowStatus(status);
-        if (details) {
-          setStatusMessage(details);
+        if (detail) {
+          setStatusDetail(detail);
         }
+      },
+      onPaymentCreated: (paymentId: string) => {
+        setCapturedPaymentId(paymentId);
+      },
+      onTransactionReceived: (txid: string) => {
+        setCapturedTxid(txid);
       },
       onSuccess: (evidence: RealPaymentEvidence) => {
         setInProgress(false);
-        setTransactionEvidence(evidence);
-        setStatusMessage('Payment officially verified. Order marked PAID.');
+        setSuccessEvidence(evidence);
+        setFlowStatus('TESTNET PAYMENT SUCCESSFUL');
+        setStatusDetail('TESTNET PAYMENT SUCCESSFUL');
       },
-      onError: (errorMessage: string) => {
+      onError: (errMsg: string) => {
         setInProgress(false);
-        setPaymentError(errorMessage);
-        setStatusMessage(errorMessage);
-      },
-      onIncompleteFound: (incomplete: any) => {
-        setIncompletePayment(incomplete);
+        setErrorFeedback(errMsg);
+        setStatusDetail(errMsg);
       },
     });
   };
 
-  // Handler: Reconcile incomplete payment
-  const handleResolveIncomplete = async () => {
-    if (!incompletePayment) return;
-    setResolvingIncomplete(true);
-    try {
-      const result = await resolveIncompletePaymentServer(incompletePayment);
-      if (result.resolved) {
-        setIncompletePayment(null);
-        setStatusMessage('Incomplete payment successfully resolved.');
-        fetchTelemetry();
-      } else {
-        setStatusMessage(result.message || 'Incomplete payment retrieved from Pi Platform API.');
-      }
-    } catch (err) {
-      setStatusMessage('Error resolving incomplete payment.');
-    } finally {
-      setResolvingIncomplete(false);
+  // Reset to initiate another test payment
+  const handleReset = () => {
+    setFlowStatus('NOT STARTED');
+    setStatusDetail('Ready to initiate real Testnet payment.');
+    setCapturedPaymentId(null);
+    setCapturedTxid(null);
+    setErrorFeedback(null);
+    setSuccessEvidence(null);
+  };
+
+  const getStatusColor = (status: PiPaymentFlowStatus) => {
+    switch (status) {
+      case 'TESTNET PAYMENT SUCCESSFUL':
+        return 'text-emerald-400 bg-emerald-950/70 border-emerald-700';
+      case 'FAILED':
+      case 'CANCELLED':
+        return 'text-rose-400 bg-rose-950/70 border-rose-800';
+      case 'NOT STARTED':
+        return 'text-slate-400 bg-slate-900 border-white/10';
+      default:
+        return 'text-[#D4AF37] bg-[#D4AF37]/10 border-[#D4AF37]/40 animate-pulse';
     }
   };
 
-  // Readiness Calculation
-  const isServerConfigured = serverStatus?.serverApiKeyStatus === 'CONFIGURED';
-  const isReady = envStatus.isPiBrowser && isServerConfigured;
-
   return (
-    <div className="bg-[#121620] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-8 relative overflow-hidden">
-      {/* Decorative background glow */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-[#D4AF37]/5 rounded-full blur-3xl -z-0 pointer-events-none" />
+    <div className="bg-[#121620] border-2 border-[#D4AF37]/40 rounded-2xl p-5 sm:p-8 shadow-2xl relative overflow-hidden space-y-6">
+      {/* Background Accent */}
+      <div className="absolute top-0 right-0 w-72 h-72 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none -z-0" />
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6 relative z-10">
+      {/* 1. Header Card Specification */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5 relative z-10">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-semibold mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            End-to-End Real Payment Validation
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-bold uppercase tracking-wider mb-2">
+            <span>Official Pi SDK Integration</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            GOYE Web3 Business Hub — Pi Testnet Payment Test
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            PI TESTNET PAYMENT TEST
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Official Pi Developer Platform User-to-App payment testing. Zero mocks, zero simulations.
-          </p>
         </div>
 
         <button
           onClick={fetchTelemetry}
-          disabled={loadingStatus}
-          className="self-start md:self-auto px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-[#0B0E14] border border-white/10 rounded-lg transition-colors flex items-center gap-2"
+          disabled={loadingTelemetry}
+          className="self-start sm:self-auto px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-[#0B0E14] border border-white/10 hover:border-white/20 rounded-lg transition-colors flex items-center gap-2"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loadingStatus ? 'animate-spin' : ''}`} />
-          <span>Refresh Payment Status</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${loadingTelemetry ? 'animate-spin' : ''}`} />
+          <span>Refresh Status</span>
         </button>
       </div>
 
-      {/* Required Specifications Matrix */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs relative z-10">
-        {/* Network */}
-        <div className="p-3 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
-          <div className="text-slate-400 text-[11px]">Network:</div>
-          <div className="text-sm font-bold text-[#D4AF37] font-mono">TESTNET</div>
-          <div className="text-[10px] text-slate-500">Separated from Mainnet</div>
+      {/* 2. Parameters Card: Network, Amount, Description */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs relative z-10">
+        <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
+          <div className="text-slate-400 text-[11px] font-semibold uppercase">Network:</div>
+          <div className="text-base font-extrabold text-[#D4AF37] font-mono">Pi Testnet</div>
+          <div className="text-[10px] text-slate-500">Strictly isolated from Mainnet</div>
         </div>
 
-        {/* Sandbox */}
-        <div className="p-3 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
-          <div className="text-slate-400 text-[11px]">Sandbox:</div>
-          <div className="text-sm font-bold text-emerald-400 font-mono">FALSE</div>
-          <div className="text-[10px] text-slate-500">Standard production SDK</div>
+        <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
+          <div className="text-slate-400 text-[11px] font-semibold uppercase">Amount:</div>
+          <div className="text-base font-extrabold text-white font-mono">0.1 Test-Pi</div>
+          <div className="text-[10px] text-amber-300/80">No monetary value</div>
         </div>
 
-        {/* Test Amount */}
-        <div className="p-3 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
-          <div className="text-slate-400 text-[11px]">Test Amount:</div>
-          <div className="text-sm font-bold text-white font-mono">0.1 Test-Pi</div>
-          <div className="text-[10px] text-slate-500">No monetary value</div>
-        </div>
-
-        {/* Status */}
-        <div className="p-3 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
-          <div className="text-slate-400 text-[11px]">Status:</div>
-          <div>
-            <span
-              className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
-                isReady
-                  ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-800'
-                  : 'text-amber-400 bg-amber-950/60 border border-amber-800'
-              }`}
-            >
-              {isReady ? 'READY' : 'NOT READY'}
-            </span>
-          </div>
-          <div className="text-[10px] text-slate-500 truncate">
-            {!envStatus.isPiBrowser
-              ? 'Requires Pi Browser'
-              : !isServerConfigured
-              ? 'Requires Server API Key'
-              : 'SDK & Server Active'}
-          </div>
+        <div className="p-3.5 rounded-xl bg-[#0B0E14] border border-white/5 space-y-1">
+          <div className="text-slate-400 text-[11px] font-semibold uppercase">SDK Mode:</div>
+          <div className="text-base font-extrabold text-emerald-400 font-mono">sandbox: false</div>
+          <div className="text-[10px] text-slate-500">Production architecture</div>
         </div>
       </div>
 
-      {/* Mandatory Non-Monetary Testnet Notice */}
-      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/90 flex items-start gap-3">
-        <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <div className="leading-relaxed">
-          <strong>Mandatory Notice:</strong> Testnet payment — Test-Pi has no monetary value.
-          This payment executes on the official Pi Testnet blockchain and does not represent real-money trade or Mainnet assets.
-        </div>
+      {/* Description */}
+      <div className="p-4 rounded-xl bg-[#0B0E14] border border-white/5 text-xs text-slate-300 leading-relaxed relative z-10">
+        <p>
+          "Real Testnet payment for GOYE Web3 Business Hub integration testing. Test-Pi has no monetary value."
+        </p>
       </div>
 
-      {/* Incomplete Payment Alert (if detected) */}
-      {incompletePayment && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <div className="font-semibold flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-amber-400" />
-              Incomplete Payment Detected by Pi SDK
-            </div>
-            <div className="text-[11px] text-amber-200/80 font-mono">
-              Payment ID: {incompletePayment.identifier}
-            </div>
-          </div>
-          <button
-            onClick={handleResolveIncomplete}
-            disabled={resolvingIncomplete}
-            className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-black font-semibold text-xs rounded-md transition-colors shrink-0"
-          >
-            {resolvingIncomplete ? 'Resolving...' : 'Reconcile on Server'}
-          </button>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        {/* Button 1: Authenticate */}
-        <button
-          onClick={handleAuthenticate}
-          disabled={inProgress}
-          className="flex-1 py-3 px-4 bg-[#0B0E14] hover:bg-[#181d29] text-white border border-white/10 hover:border-white/20 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-2"
-        >
-          <Key className="w-4 h-4 text-[#D4AF37]" />
-          <span>
-            {isAuthenticated && user ? `Authenticated (@${user.username})` : 'Authenticate with Pi'}
-          </span>
-        </button>
-
-        {/* Button 2: Pay 0.1 Test-Pi */}
-        <button
-          onClick={handlePayTestPi}
-          disabled={inProgress}
-          className="flex-1 py-3 px-4 bg-[#D4AF37] hover:bg-[#e0bc46] disabled:opacity-50 text-[#0B0E14] font-bold text-xs rounded-xl transition-all shadow-md hover:shadow-[#D4AF37]/20 flex items-center justify-center gap-2"
-        >
-          {inProgress ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[#0B0E14]" />
-          ) : (
-            <div className="w-4 h-4 rounded-full bg-[#0B0E14] text-[#D4AF37] flex items-center justify-center font-bold text-[10px]">
-              π
-            </div>
-          )}
-          <span>Pay 0.1 Test-Pi</span>
-        </button>
-      </div>
-
-      {/* Live Status Progress & Truthful Diagnoses */}
-      <div className="p-4 rounded-xl bg-[#0B0E14] border border-white/5 space-y-2 text-xs font-mono">
-        <div className="flex items-center justify-between text-slate-400 border-b border-white/5 pb-2">
-          <span>PI PAYMENT FLOW STATUS:</span>
-          <span
-            className={`font-bold ${
-              flowStatus === 'PAID' || flowStatus === 'COMPLETED'
-                ? 'text-emerald-400'
-                : flowStatus === 'FAILED' || flowStatus === 'CANCELLED'
-                ? 'text-rose-400'
-                : flowStatus === 'IDLE'
-                ? 'text-slate-400'
-                : 'text-amber-400'
-            }`}
-          >
-            {flowStatus}
-          </span>
-        </div>
-        <div className="text-slate-300 font-sans text-xs pt-1 flex items-start gap-2">
-          {inProgress && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D4AF37] shrink-0 mt-0.5" />}
-          <span>{statusMessage}</span>
-        </div>
-
-        {/* Error Details */}
-        {(paymentError || authError) && (
-          <div className="pt-2 border-t border-white/5 text-rose-400 font-sans text-xs">
-            {paymentError || authError}
-          </div>
-        )}
-      </div>
-
-      {/* Real Transaction Evidence Ledger (NEVER fake placeholders) */}
-      {transactionEvidence ? (
-        <div className="p-6 rounded-xl bg-[#0B0E14] border border-emerald-500/40 space-y-4 text-xs">
+      {/* Success Screen (Rendered upon genuine completion) */}
+      {successEvidence ? (
+        <div className="p-6 rounded-xl bg-[#0B0E14] border-2 border-emerald-500 shadow-xl space-y-4 text-xs relative z-10 animate-fade-in">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <span className="text-sm font-bold text-white">Genuine Testnet Payment Evidence</span>
+              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              <h3 className="text-base sm:text-lg font-black text-emerald-400">
+                ✅ PI TESTNET PAYMENT SUCCESSFUL
+              </h3>
             </div>
-            <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-950/80 border border-emerald-700 text-emerald-400">
-              STATUS: {transactionEvidence.finalPaymentStatus}
+            <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-950 border border-emerald-700 text-emerald-300">
+              PAID
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <span className="text-slate-400 block text-[11px]">Payment ID:</span>
-              <span className="font-mono text-slate-200 select-all break-all font-semibold">
-                {transactionEvidence.paymentId}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-slate-400 block text-[11px]">Transaction ID (TxID):</span>
-              <span className="font-mono text-[#D4AF37] select-all break-all font-semibold">
-                {transactionEvidence.txid}
-              </span>
+              <span className="text-slate-400 block text-[11px]">Amount:</span>
+              <span className="text-white font-bold text-sm font-mono">0.1 Test-Pi</span>
             </div>
 
             <div>
               <span className="text-slate-400 block text-[11px]">Network:</span>
-              <span className="font-mono text-slate-200 font-semibold">{transactionEvidence.network}</span>
+              <span className="text-[#D4AF37] font-bold text-sm font-mono">TESTNET</span>
             </div>
 
-            <div>
-              <span className="text-slate-400 block text-[11px]">Amount:</span>
-              <span className="font-mono text-slate-200 font-semibold">{transactionEvidence.amount} Test-Pi</span>
+            <div className="sm:col-span-2">
+              <span className="text-slate-400 block text-[11px]">Payment ID:</span>
+              <span className="font-mono text-slate-200 select-all break-all text-xs font-semibold">
+                {successEvidence.paymentId}
+              </span>
+            </div>
+
+            <div className="sm:col-span-2">
+              <span className="text-slate-400 block text-[11px]">Transaction ID (TxID):</span>
+              <span className="font-mono text-[#D4AF37] select-all break-all text-xs font-semibold">
+                {successEvidence.txid}
+              </span>
+            </div>
+
+            <div className="sm:col-span-2 pt-2 border-t border-white/5">
+              <span className="text-slate-400 block text-[11px]">Verified by:</span>
+              <span className="text-emerald-400 font-semibold text-xs">
+                GOYE server + Pi Platform API
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5 text-center">
-            <div className="p-2 rounded bg-white/5">
-              <span className="text-[10px] text-slate-400 block">Developer Approval</span>
-              <span className="font-bold text-emerald-400">{transactionEvidence.developerApproval}</span>
-            </div>
-            <div className="p-2 rounded bg-white/5">
-              <span className="text-[10px] text-slate-400 block">Transaction Verification</span>
-              <span className="font-bold text-emerald-400">{transactionEvidence.transactionVerification}</span>
-            </div>
-            <div className="p-2 rounded bg-white/5">
-              <span className="text-[10px] text-slate-400 block">Developer Completion</span>
-              <span className="font-bold text-emerald-400">{transactionEvidence.developerCompletion}</span>
-            </div>
+          <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-200/90">
+            <strong>Important:</strong> This is a Testnet transaction and has no monetary value.
           </div>
 
-          <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-between border-t border-white/5">
-            <span>Verified with official Pi Platform API (/v2/payments/{transactionEvidence.paymentId}).</span>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              onClick={handleReset}
+              className="py-2.5 px-4 bg-[#D4AF37] hover:bg-[#e0bc46] text-[#0B0E14] font-bold text-xs rounded-lg transition-colors text-center"
+            >
+              Test Another Payment
+            </button>
             <a
               href={`https://minepi.com/blockexplorer/`}
               target="_blank"
               rel="noreferrer"
-              className="text-[#D4AF37] hover:underline flex items-center gap-1 shrink-0 ml-2"
+              className="py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-semibold text-xs rounded-lg transition-colors text-center flex items-center justify-center gap-1.5"
             >
-              <span>Pi Block Explorer</span>
-              <ExternalLink className="w-3 h-3" />
+              <span>Verify on Pi Explorer</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>
       ) : (
-        /* Empty State / Integrity Guarantee Note */
-        <div className="p-4 rounded-xl bg-[#0B0E14] border border-white/5 text-[11px] text-slate-500 space-y-1">
-          <div className="text-slate-400 font-medium">Payment Evidence Integrity Guarantee:</div>
-          <div>
-            Transaction ID, Payment ID, Developer Approval, and Completion verification status will appear here exclusively upon completion of a genuine Pi Testnet transaction signed by a Pioneer in the official Pi Browser.
+        /* 3. Action Section: Buttons + Live Progression Status */
+        <div className="space-y-5 relative z-10">
+          {/* Main Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch gap-3">
+            {/* Primary Action Button: [ 🟡 PAY 0.1 TEST-PI ] */}
+            <button
+              onClick={handlePayTestnet}
+              disabled={inProgress}
+              className="flex-1 py-4 px-6 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] hover:from-[#e0bc46] hover:to-[#f5e9bd] text-[#0B0E14] font-black text-sm sm:text-base rounded-xl transition-all shadow-xl hover:shadow-[#D4AF37]/30 flex items-center justify-center gap-3 active:scale-[0.99] disabled:opacity-50"
+              aria-label="Pay 0.1 Test-Pi"
+            >
+              {inProgress ? (
+                <Loader2 className="w-5 h-5 animate-spin text-[#0B0E14]" />
+              ) : (
+                <span className="w-5 h-5 rounded-full bg-[#0B0E14] text-[#D4AF37] flex items-center justify-center font-black text-xs">
+                  🟡
+                </span>
+              )}
+              <span className="tracking-wide">PAY 0.1 TEST-PI</span>
+            </button>
+
+            {/* Optional Step: Authenticate with Pi */}
+            <button
+              onClick={handleAuthenticate}
+              disabled={inProgress}
+              className="py-3 px-4 bg-[#0B0E14] hover:bg-[#181d29] text-white border border-white/10 hover:border-white/20 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <Key className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span>
+                {isAuthenticated && user ? `Authenticated (@${user.username})` : 'Authenticate with Pi'}
+              </span>
+            </button>
+          </div>
+
+          {/* 4. Live Payment Status UI Area */}
+          <div className="p-4 rounded-xl bg-[#0B0E14] border border-white/10 space-y-3 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+              <span className="text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+                Pi Testnet Payment Status:
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded text-xs font-black font-mono border ${getStatusColor(
+                  flowStatus
+                )}`}
+              >
+                {flowStatus}
+              </span>
+            </div>
+
+            {/* Live Status Description */}
+            <div className="text-slate-200 text-xs flex items-start gap-2 pt-1 font-sans">
+              {inProgress && <Loader2 className="w-4 h-4 animate-spin text-[#D4AF37] shrink-0 mt-0.5" />}
+              <span>{statusDetail}</span>
+            </div>
+
+            {/* Error Message Display */}
+            {errorFeedback && (
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>{errorFeedback}</span>
+              </div>
+            )}
+
+            {/* Real Values Display (Only populated when real values are received) */}
+            <div className="pt-2 border-t border-white/5 space-y-1.5 text-[11px] font-mono">
+              <div className="flex flex-col sm:flex-row sm:justify-between text-slate-400">
+                <span>Payment ID:</span>
+                <span className="text-slate-200 select-all font-semibold break-all">
+                  {capturedPaymentId || '[Awaiting payment creation in Pi Wallet]'}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-between text-slate-400">
+                <span>Transaction ID:</span>
+                <span className="text-[#D4AF37] select-all font-semibold break-all">
+                  {capturedTxid || '[Awaiting blockchain transaction signature]'}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-slate-400">
+                <span>Network:</span>
+                <span className="text-slate-200 font-semibold">TESTNET</span>
+              </div>
+
+              <div className="flex justify-between text-slate-400">
+                <span>Amount:</span>
+                <span className="text-slate-200 font-semibold">0.1 Test-Pi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Environment Context Warning */}
+      {!envStatus.isPiBrowser && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-start gap-2.5">
+          <Smartphone className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="leading-relaxed">
+            <strong>Pi Browser Required:</strong> To sign Testnet transactions with your Pi Testnet wallet, please open this link inside the official <strong>Pi Browser</strong>.
           </div>
         </div>
       )}
