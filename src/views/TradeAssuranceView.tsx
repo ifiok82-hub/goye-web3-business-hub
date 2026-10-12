@@ -135,14 +135,14 @@ export const TradeAssuranceView: React.FC = () => {
           <div className="rounded-xl overflow-hidden border border-white/15 bg-[#121620]">
             <img
               src={ASSETS.tradeAssurance}
-              alt="Digital Trade Assurance Inspection"
+              alt="Two businesses conducting a professional transaction with digital contract, invoice, verification and secure-deal concepts on tablet"
               referrerPolicy="no-referrer"
               className="w-full h-80 object-cover"
             />
             <div className="p-4 text-xs text-slate-400 bg-[#0B0E14] border-t border-white/10">
-              <span className="font-semibold text-white">Cross-Border Verification Dossier</span>
+              <span className="font-semibold text-white">Verified Trade Agreement & Milestone Dossier</span>
               <p className="text-[11px] text-slate-400 mt-1">
-                Every trade stage creates a timestamped audit trail that can be exported for legal or customs inspection.
+                Every trade stage creates a timestamped audit trail that can be verified and exported for transparent counterparty due diligence.
               </p>
             </div>
           </div>

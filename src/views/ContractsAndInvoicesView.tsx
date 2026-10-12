@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generateQrDataUrl } from '../utils/qrCode';
+import { ASSETS } from '../constants/assets';
 import {
   FileText,
   FileCheck2,
@@ -284,6 +285,49 @@ export const ContractsAndInvoicesView: React.FC = () => {
         <ShieldAlert className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
         <div className="leading-relaxed">
           <strong className="text-slate-200">Legal Practice Notice:</strong> Digital contract templates and invoice structures are provided for business convenience, operational milestone record-keeping, and coordination. They do not constitute formal legal counsel. Users should obtain licensed legal advice where required.
+        </div>
+      </div>
+
+      {/* Photographic Contracts & Ledger Showcase */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#121620] border border-white/10 rounded-2xl overflow-hidden p-6 sm:p-8">
+        <div className="lg:col-span-7 space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
+            <span>Cryptographic Commercial Records</span>
+            <span aria-hidden="true">·</span>
+            <span>Milestone Sign-Off</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Verifiable Digital Contracts & Multi-Currency Ledger
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Eliminate invoice fraud and scope disputes with cryptographic SHA-256 signatures, verifiable milestone deliveries, and instant QR verification codes readable by accountants, auditors, and clients.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs pt-1">
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-[#D4AF37] border border-[#D4AF37]/30 font-mono">
+              ✓ SHA-256 Hash Seals
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-emerald-400 border border-emerald-800 font-mono">
+              ✓ Multi-Currency (NGN/USD/Pi)
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-slate-300 border border-white/10 font-mono">
+              ✓ Mutual Signatures
+            </span>
+          </div>
+        </div>
+        <div className="lg:col-span-5">
+          <div className="relative rounded-xl overflow-hidden border border-white/15 bg-[#0B0E14] shadow-xl">
+            <img
+              src={ASSETS.contractsInvoices}
+              alt="Professional businessperson reviewing a digital contract and invoice dashboard on a laptop"
+              referrerPolicy="no-referrer"
+              className="w-full h-56 sm:h-64 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4 text-[11px] text-slate-300 flex items-center justify-between">
+              <span className="font-semibold text-white">Digital Contract & Ledger Record</span>
+              <span className="text-[#D4AF37] font-mono">VERIFIABLE RECORD</span>
+            </div>
+          </div>
         </div>
       </div>
 

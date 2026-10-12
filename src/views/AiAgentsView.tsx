@@ -267,8 +267,8 @@ export const AiAgentsView: React.FC = () => {
         <div className="lg:col-span-5 space-y-6">
           <div className="relative rounded-xl overflow-hidden border border-white/15 bg-[#121620]">
             <img
-              src={ASSETS.aiSuite}
-              alt="Autonomous Business AI Suite"
+              src={ASSETS.aiAssistants}
+              alt="Real business owners using an AI assistant and customer-support dashboard with automation metrics"
               referrerPolicy="no-referrer"
               className="w-full h-56 object-cover"
             />

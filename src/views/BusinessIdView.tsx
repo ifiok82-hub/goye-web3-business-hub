@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generateQrDataUrl } from '../utils/qrCode';
+import { ASSETS } from '../constants/assets';
 import {
   ShieldCheck,
   Search,
@@ -185,6 +186,50 @@ export const BusinessIdView: React.FC<BusinessIdViewProps> = ({
         >
           Register New Business Profile
         </button>
+      </div>
+
+      {/* Visual Identity Protocol Showcase */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#121620] border border-white/10 rounded-2xl overflow-hidden p-6 sm:p-8">
+        <div className="lg:col-span-7 space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
+            <span>Verifiable African Enterprise Protocol</span>
+            <span aria-hidden="true">·</span>
+            <span>Real SME Governance</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Tamper-Evident Business Profiles & Real Document Verification
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Every business registered on GOYE receives an authenticated digital identity (e.g.{' '}
+            <span className="font-mono text-white">GOYE-BIZ-2026-000001</span>), verified corporate credentials, and director validation. Scannable QR endpoints enable instant counterparty due diligence.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs pt-1">
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-[#D4AF37] border border-[#D4AF37]/30 font-mono">
+              ✓ Verified CAC Documents
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-emerald-400 border border-emerald-800 font-mono">
+              ✓ Live QR Endpoints Active
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-slate-300 border border-white/10 font-mono">
+              ✓ 5-Level Verification Hierarchy
+            </span>
+          </div>
+        </div>
+        <div className="lg:col-span-5">
+          <div className="relative rounded-xl overflow-hidden border border-white/15 bg-[#0B0E14] shadow-xl">
+            <img
+              src={ASSETS.businessIdentity}
+              alt="Realistic entrepreneur viewing a professional digital business profile on a laptop showing business identity, verification levels, documents and QR verification"
+              referrerPolicy="no-referrer"
+              className="w-full h-56 sm:h-64 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4 text-[11px] text-slate-300 flex items-center justify-between">
+              <span className="font-semibold text-white">Verified Business Profile Dossier</span>
+              <span className="text-[#D4AF37] font-mono">GOYE-BIZ-VERIFIED</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 5 Transparent Verification Levels Explanation Strip */}

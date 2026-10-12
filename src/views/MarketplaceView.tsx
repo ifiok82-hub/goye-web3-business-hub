@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { executePiPayment, detectPiEnvironment } from '../utils/piSdk';
+import { ASSETS } from '../constants/assets';
 import {
   Search,
   Tag,
@@ -287,6 +288,49 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
           >
             Pi (π)
           </button>
+        </div>
+      </div>
+
+      {/* Visual Marketplace Discovery Showcase */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#121620] border border-white/10 rounded-2xl overflow-hidden p-6 sm:p-8">
+        <div className="lg:col-span-7 space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
+            <span>Verified SME Solutions</span>
+            <span aria-hidden="true">·</span>
+            <span>Digital Assets & Engineering</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            Curated Business Solutions from Verified African Creators
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Browse corporate websites, bespoke software portals, AI automation flows, and legal digital documents created by verified merchants. Every deliverable is backed by milestone assurance and transparent invoicing.
+          </p>
+          <div className="flex flex-wrap gap-2 text-xs pt-1">
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-[#D4AF37] border border-[#D4AF37]/30 font-mono">
+              ✓ 100% Verified Sellers
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-emerald-400 border border-emerald-800 font-mono">
+              ✓ Multi-Rail Settlement
+            </span>
+            <span className="px-2.5 py-1 rounded bg-[#0B0E14] text-slate-300 border border-white/10 font-mono">
+              ✓ Trade Protected
+            </span>
+          </div>
+        </div>
+        <div className="lg:col-span-5">
+          <div className="relative rounded-xl overflow-hidden border border-white/15 bg-[#0B0E14] shadow-xl">
+            <img
+              src={ASSETS.marketplace}
+              alt="Modern African entrepreneurs browsing digital services and business solutions on laptops and mobile devices"
+              referrerPolicy="no-referrer"
+              className="w-full h-56 sm:h-64 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4 text-[11px] text-slate-300 flex items-center justify-between">
+              <span className="font-semibold text-white">Hub Solutions Catalog</span>
+              <span className="text-[#D4AF37] font-mono">VERIFIED COMMERCE</span>
+            </div>
+          </div>
         </div>
       </div>
 
