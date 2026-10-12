@@ -730,6 +730,36 @@
   "notifications": [],
   "audit_logs": [
     {
+      "id": "AUD-1791810572055-668",
+      "timestamp": "2026-10-12T13:09:32.055Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test_header_rewrite_check",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "::ffff:127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791810571811-502",
+      "timestamp": "2026-10-12T13:09:31.812Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test_query_rewrite_check",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "::ffff:127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791810571639-197",
+      "timestamp": "2026-10-12T13:09:31.639Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test_payment_id_simulation_check",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "::ffff:127.0.0.1",
+      "isImmutable": true
+    },
+    {
       "id": "AUD-1791797508337-32",
       "timestamp": "2026-10-12T09:31:48.337Z",
       "eventType": "PI_PAYMENT_COMPLETION_REJECTED",
@@ -878,6 +908,6 @@
   "meta": {
     "version": "1.0.0",
     "initializedAt": "2026-03-01T10:00:00Z",
-    "lastSavedAt": "2026-10-12T09:31:48.337Z"
+    "lastSavedAt": "2026-10-12T13:09:32.055Z"
   }
 }

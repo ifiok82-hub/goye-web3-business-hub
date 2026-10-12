@@ -5,11 +5,15 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api"
+      "destination": "/api?path=$1"
     },
     {
       "source": "/health",
-      "destination": "/api"
+      "destination": "/api?path=health"
+    },
+    {
+      "source": "/validation-key.txt",
+      "destination": "/validation-key.txt"
     },
     {
       "source": "/((?!api|health|validation-key\\.txt).*)",

@@ -16,19 +16,35 @@ dotenv.config();
 export function createExpressApp() {
   const app = express();
 
+  // Permissive CORS middleware for cross-origin mobile webview & Vercel edge
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // JSON Body Parser
   app.use(express.json());
 
-
-
-  // Mount Hardened Routers
-  app.use('/api/verify', verifyRouter);
-  app.use('/api/admin', adminRouter);
+  // Dual-prefix router mounting ensures matching regardless of Vercel path rewriting
   app.use('/api/pi', piRouter);
-  app.use('/api', apiRouter);
+  app.use('/pi', piRouter);
 
-  // Health check endpoint
-  app.get('/health', (_req, res) => {
+  app.use('/api/verify', verifyRouter);
+  app.use('/verify', verifyRouter);
+
+  app.use('/api/admin', adminRouter);
+  app.use('/admin', adminRouter);
+
+  app.use('/api', apiRouter);
+  app.use('/', apiRouter);
+
+  // Health check endpoint (both /health and /api/health)
+  const healthHandler = (_req: express.Request, res: express.Response) => {
     res.json({
       status: 'ok',
       service: 'GOYE Web3 Business Hub',
@@ -36,13 +52,17 @@ export function createExpressApp() {
       network: process.env.PI_NETWORK_MODE || 'TESTNET',
       sandbox: false,
     });
-  });
+  };
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
 
-  // Official Pi Domain Validation endpoint
-  app.get('/validation-key.txt', (_req, res) => {
+  // Official Pi Domain Validation endpoint (both /validation-key.txt and /api/validation-key.txt)
+  const validationHandler = (_req: express.Request, res: express.Response) => {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.send('90abaa643d3497da29102392c358d77a18e2937cb338f944de6f88db2a2a2f7a46a39851946bb07eaa648e3a5cbee79db904ab485c3e929be43049c61396c757\n');
-  });
+  };
+  app.get('/validation-key.txt', validationHandler);
+  app.get('/api/validation-key.txt', validationHandler);
 
   return app;
 }
