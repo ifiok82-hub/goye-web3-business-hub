@@ -1,6 +1,12 @@
 /**
  * Official Pi Network Client-Side SDK Integration Wrapper
  * Strict Zero-Simulation Policy: Never fakes payment or blockchain status.
+ *
+ * Architecture:
+ * - Pi.init({ version: "2.0", sandbox: false })
+ * - Pi.authenticate(["username", "payments"], onIncompletePaymentFound)
+ * - Two-phase payment: Pi.createPayment() -> onReadyForServerApproval -> onReadyForServerCompletion
+ * - Authoritative backend validation with Pi Platform API (/v2/payments/{id}/complete)
  */
 
 declare global {
@@ -34,6 +40,20 @@ declare global {
   }
 }
 
+export type PiPaymentFlowStatus =
+  | 'IDLE'
+  | 'CREATED'
+  | 'APPROVAL_PENDING'
+  | 'APPROVED'
+  | 'USER_ACTION_REQUIRED'
+  | 'TRANSACTION_SUBMITTED'
+  | 'COMPLETION_PENDING'
+  | 'COMPLETED'
+  | 'VERIFIED'
+  | 'PAID'
+  | 'CANCELLED'
+  | 'FAILED';
+
 export interface PiEnvironmentDetection {
   isPiBrowser: boolean;
   isSdkLoaded: boolean;
@@ -58,6 +78,10 @@ export function detectPiEnvironment(): PiEnvironmentDetection {
 
 let isInitialized = false;
 
+/**
+ * Initializes the official Pi SDK.
+ * Critical Production Requirement: sandbox = false (standard production SDK architecture).
+ */
 export async function initializePiSDK(sandbox = false): Promise<boolean> {
   if (typeof window === 'undefined' || !window.Pi) {
     return false;
@@ -66,60 +90,286 @@ export async function initializePiSDK(sandbox = false): Promise<boolean> {
   if (isInitialized) return true;
 
   try {
-    // Production requirement: sandbox is false
-    window.Pi.init({ version: '2.0', sandbox });
+    // Official Pi SDK initialization (must be sandbox: false)
+    window.Pi.init({ version: '2.0', sandbox: false });
     isInitialized = true;
     return true;
   } catch (err) {
-    console.warn('Pi.init status:', err);
+    console.warn('[Pi SDK] Initialization warning:', err);
     return false;
   }
 }
 
-export async function authenticatePi(): Promise<{
+/**
+ * Reconciles an incomplete payment with the backend.
+ */
+export async function resolveIncompletePaymentServer(payment: any): Promise<{
+  resolved: boolean;
+  status: string;
+  message: string;
+}> {
+  try {
+    const res = await fetch('/api/pi/incomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        paymentId: payment.identifier,
+        txid: payment.transaction?.txid,
+        payment,
+      }),
+    });
+    const data = await res.json();
+    return {
+      resolved: Boolean(data.resolved),
+      status: data.status || 'PENDING',
+      message: data.message || 'Incomplete payment processed.',
+    };
+  } catch (err) {
+    return {
+      resolved: false,
+      status: 'UNAVAILABLE',
+      message: 'Failed to communicate with server to reconcile incomplete payment.',
+    };
+  }
+}
+
+/**
+ * Authenticates before payment with:
+ * Pi.authenticate(["username", "payments"], onIncompletePaymentFound)
+ */
+export async function authenticatePi(
+  onIncompleteFound?: (payment: any) => void
+): Promise<{
   success: boolean;
   user?: { uid: string; username: string };
   accessToken?: string;
+  incompletePayment?: any;
   errorMessage?: string;
 }> {
   if (typeof window === 'undefined' || !window.Pi) {
     return {
       success: false,
-      errorMessage: 'Pi payment verification is currently unavailable. Please open this app inside the official Pi Browser.',
+      errorMessage: 'Pi SDK unavailable. Please open this app inside the official Pi Browser.',
     };
   }
 
   try {
     await initializePiSDK(false);
 
-    const authResult = await window.Pi.authenticate(['username', 'payments'], (incompletePayment) => {
-      console.log('[Pi SDK] Incomplete payment found:', incompletePayment);
-      // Incomplete payments should be resolved server-side
-    });
+    let detectedIncomplete: any = null;
+
+    const authResult = await window.Pi.authenticate(
+      ['username', 'payments'],
+      (incompletePayment) => {
+        console.warn('[Pi SDK] Incomplete payment found on authentication:', incompletePayment);
+        detectedIncomplete = incompletePayment;
+        if (onIncompleteFound) {
+          onIncompleteFound(incompletePayment);
+        }
+        // Asynchronously notify backend to inspect and resolve
+        resolveIncompletePaymentServer(incompletePayment);
+      }
+    );
 
     return {
       success: true,
       user: authResult.user,
       accessToken: authResult.accessToken,
+      incompletePayment: detectedIncomplete,
     };
   } catch (err: any) {
     console.error('Pi Authentication Error:', err);
     return {
       success: false,
-      errorMessage:
-        err?.message || 'Pi payment verification is currently unavailable. Please try again later.',
+      errorMessage: err?.message || 'Pi authentication failed. Please try again later.',
     };
   }
 }
 
+export interface RealPaymentEvidence {
+  paymentId: string;
+  txid: string;
+  network: 'TESTNET';
+  amount: number;
+  developerApproval: 'PASS' | 'FAIL';
+  transactionVerification: 'PASS' | 'FAIL';
+  developerCompletion: 'PASS' | 'FAIL';
+  finalPaymentStatus: 'PAID' | 'NOT PAID';
+  rawPayment?: any;
+}
+
 /**
- * Executes authentic Pi Payment flow:
- * 1. Customer initiates payment via Pi.createPayment()
- * 2. On onReadyForServerApproval: calls backend POST /api/pi/approve (server approves via Pi Platform API)
- * 3. Pioneer signs payment
- * 4. On onReadyForServerCompletion: calls backend POST /api/pi/complete (server verifies with Pi Platform API)
- * 5. Only after backend verifies completion does onSuccess execute
- * Strict anti-mock policy: Zero client-side verification, zero simulated transactions.
+ * Dedicated Pi Testnet Payment Validation Execution
+ * Strictly executes:
+ * 1. Backend test payment initiation (0.1 Test-Pi, order ID registered)
+ * 2. Pi.createPayment({ amount: 0.1, memo: "GOYE Web3 Business Hub Testnet Payment", metadata: ... })
+ * 3. onReadyForServerApproval -> POST /api/pi/approve -> Pi Platform API /approve
+ * 4. Pioneer confirms and signs on Testnet blockchain
+ * 5. onReadyForServerCompletion -> POST /api/pi/complete -> Pi Platform API /complete
+ * 6. Backend confirms completion -> Order marked PAID -> returns real evidence
+ *
+ * Absolutely NO mock payments, simulated txids, or fake completions.
+ */
+export async function executePiTestnetPayment(options: {
+  onStatusChange: (status: PiPaymentFlowStatus, details?: string) => void;
+  onSuccess: (evidence: RealPaymentEvidence) => void;
+  onError: (errorMessage: string, details?: any) => void;
+  onIncompleteFound?: (payment: any) => void;
+}): Promise<void> {
+  if (typeof window === 'undefined' || !window.Pi) {
+    options.onStatusChange('FAILED', 'Pi SDK unavailable.');
+    options.onError('Pi SDK unavailable. Please open this app inside the official Pi Browser.');
+    return;
+  }
+
+  try {
+    options.onStatusChange('IDLE', 'Initializing official Pi SDK (sandbox: false)...');
+    await initializePiSDK(false);
+
+    // Step 1: Authenticate Pioneer with payments scope
+    options.onStatusChange('IDLE', 'Authenticating Pioneer with Pi SDK...');
+    const authRes = await authenticatePi(options.onIncompleteFound);
+    if (!authRes.success || !authRes.user) {
+      options.onStatusChange('FAILED', 'Pi authentication failed.');
+      options.onError(authRes.errorMessage || 'Pi authentication failed.');
+      return;
+    }
+
+    // Step 2: Register genuine Testnet payment intent on backend
+    options.onStatusChange('CREATED', 'Initiating testnet payment order on GOYE backend...');
+    const initRes = await fetch('/api/pi/test-payment/initiate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: authRes.user.username,
+        userUid: authRes.user.uid,
+      }),
+    });
+
+    if (!initRes.ok) {
+      const initErr = await initRes.json();
+      options.onStatusChange('FAILED', 'Server failed to initiate testnet payment.');
+      options.onError(initErr.error || 'Server failed to initiate testnet payment.');
+      return;
+    }
+
+    const { orderId, amount, memo, metadata } = await initRes.json();
+
+    let capturedPaymentId = '';
+    let approvalPass = false;
+
+    // Step 3: Call official Pi.createPayment()
+    options.onStatusChange('CREATED', 'Opening official Pi payment interface (0.1 Test-Pi)...');
+
+    window.Pi.createPayment(
+      {
+        amount: 0.1,
+        memo: memo || 'GOYE Web3 Business Hub Testnet Payment',
+        metadata: {
+          purpose: 'pi_testnet_integration_test',
+          app: 'GOYE Web3 Business Hub',
+          orderId,
+          network: 'TESTNET',
+          ...metadata,
+        },
+      },
+      {
+        onReadyForServerApproval: async (paymentId: string) => {
+          capturedPaymentId = paymentId;
+          options.onStatusChange('APPROVAL_PENDING', 'Waiting for GOYE backend server approval...');
+
+          try {
+            const approveRes = await fetch('/api/pi/approve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentId,
+                internalOrderId: orderId,
+              }),
+            });
+
+            const approveData = await approveRes.json();
+            if (!approveRes.ok || !approveData.success) {
+              options.onStatusChange('FAILED', 'Server approval failed.');
+              options.onError(approveData.error || 'Server approval failed.', approveData);
+              return;
+            }
+
+            approvalPass = true;
+            options.onStatusChange('APPROVED', 'Payment approved by backend. Waiting for Testnet transaction...');
+            options.onStatusChange('USER_ACTION_REQUIRED', 'Please review and confirm the transaction in your Pi Wallet.');
+          } catch (err: any) {
+            options.onStatusChange('FAILED', 'Server approval network error.');
+            options.onError('Server approval failed due to network error.');
+          }
+        },
+
+        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          options.onStatusChange('TRANSACTION_SUBMITTED', 'Transaction submitted. Waiting for server completion...');
+          options.onStatusChange('COMPLETION_PENDING', 'Submitting real TxID to Pi Platform API for server completion...');
+
+          try {
+            const completeRes = await fetch('/api/pi/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentId,
+                txid,
+                internalOrderId: orderId,
+              }),
+            });
+
+            const completeData = await completeRes.json();
+            if (!completeRes.ok || !completeData.success || !completeData.verified) {
+              options.onStatusChange('FAILED', 'Payment completion failed.');
+              options.onError(completeData.error || 'Payment completion failed.', completeData);
+              return;
+            }
+
+            options.onStatusChange('COMPLETED', 'Payment completed.');
+            options.onStatusChange('VERIFIED', 'Pi Platform API confirmed completion.');
+            options.onStatusChange('PAID', 'Payment officially verified. Order marked PAID.');
+
+            const evidence: RealPaymentEvidence = {
+              paymentId,
+              txid,
+              network: 'TESTNET',
+              amount: 0.1,
+              developerApproval: approvalPass ? 'PASS' : 'FAIL',
+              transactionVerification: 'PASS',
+              developerCompletion: 'PASS',
+              finalPaymentStatus: 'PAID',
+              rawPayment: completeData.payment,
+            };
+
+            options.onSuccess(evidence);
+          } catch (err) {
+            options.onStatusChange('FAILED', 'Pi payment verification failed.');
+            options.onError('Pi payment verification failed. Payment has NOT been confirmed.');
+          }
+        },
+
+        onCancel: (paymentId: string) => {
+          options.onStatusChange('CANCELLED', 'Payment was cancelled.');
+          options.onError('Payment was cancelled.');
+        },
+
+        onError: (error: Error, payment?: any) => {
+          console.error('[Pi SDK Payment Error]:', error, payment);
+          options.onStatusChange('FAILED', 'Pi payment could not be created.');
+          options.onError(error.message || 'Pi payment could not be created.', payment);
+        },
+      }
+    );
+  } catch (err: any) {
+    console.error('[Pi SDK] General invocation error:', err);
+    options.onStatusChange('FAILED', 'Pi Platform is temporarily unavailable.');
+    options.onError(err.message || 'Pi Platform is temporarily unavailable.');
+  }
+}
+
+/**
+ * Standard Production Payment flow (for Marketplace and services)
  */
 export async function executePiPayment(options: {
   amount: number;
@@ -130,7 +380,7 @@ export async function executePiPayment(options: {
   onError: (errorMessage: string) => void;
 }) {
   if (typeof window === 'undefined' || !window.Pi) {
-    options.onError('Pi payment verification is currently unavailable. Please try again later.');
+    options.onError('Pi SDK unavailable. Please open this app inside the official Pi Browser.');
     return;
   }
 
@@ -146,6 +396,7 @@ export async function executePiPayment(options: {
         metadata: {
           internalOrderId: options.internalOrderId,
           platform: 'GOYE Web3 Business Hub',
+          network: 'TESTNET',
           timestamp: new Date().toISOString(),
         },
       },
@@ -170,14 +421,14 @@ export async function executePiPayment(options: {
               return;
             }
 
-            options.onStatusChange('Payment approved by backend. Awaiting Pioneer blockchain confirmation...');
+            options.onStatusChange('Payment approved by backend. Waiting for Testnet transaction...');
           } catch (err: any) {
-            options.onError('Network connection error during server-side payment approval.');
+            options.onError('Server approval failed due to network error.');
           }
         },
 
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-          options.onStatusChange('Payment broadcasted to blockchain. Verifying completion via Pi Platform API...');
+          options.onStatusChange('Transaction submitted. Submitting TxID for official verification...');
           try {
             const completeRes = await fetch('/api/pi/complete', {
               method: 'POST',
@@ -190,30 +441,34 @@ export async function executePiPayment(options: {
             });
 
             const completeData = await completeRes.json();
-            if (!completeRes.ok) {
-              options.onError(completeData.error || 'Backend failed to verify completion with Pi Platform API.');
+            if (!completeRes.ok || !completeData.success || !completeData.verified) {
+              options.onError(completeData.error || 'Payment completion failed. Payment has NOT been confirmed.');
               return;
             }
 
-            options.onSuccess(completeData.payment);
+            options.onSuccess({
+              ...completeData.payment,
+              txid: completeData.txid || completeData.payment?.transaction?.txid,
+              paymentId: completeData.paymentId || completeData.payment?.identifier,
+            });
           } catch (err) {
-            options.onError('Network connection error during final payment verification.');
+            options.onError('Pi payment verification failed. Payment has NOT been confirmed.');
           }
         },
 
         onCancel: (paymentId: string) => {
-          options.onStatusChange('Payment cancelled by user.');
-          options.onError(`Payment ${paymentId} was cancelled.`);
+          options.onStatusChange('Payment was cancelled.');
+          options.onError(`Payment was cancelled.`);
         },
 
         onError: (error: Error) => {
           console.error('Pi SDK Payment Error:', error);
-          options.onError(error.message || 'Pi payment verification is currently unavailable. Please try again later.');
+          options.onError(error.message || 'Pi payment could not be created.');
         },
       }
     );
   } catch (err: any) {
     console.error('Pi SDK createPayment invocation error:', err);
-    options.onError('Pi payment verification is currently unavailable. Please try again later.');
+    options.onError('Pi Platform is temporarily unavailable.');
   }
 }

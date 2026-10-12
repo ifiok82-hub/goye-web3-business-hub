@@ -152,6 +152,22 @@
   "services": [],
   "orders": [
     {
+      "id": "ORD-TEST-1791797487605",
+      "orderReference": "TEST-REF-376829",
+      "buyerName": "@test_pioneer",
+      "buyerEmail": "test_pioneer@pi.network",
+      "buyerPhone": "",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "itemId": "SERVICE-TESTNET-001",
+      "itemTitle": "GOYE Web3 Business Hub Testnet Payment Validation",
+      "amount": 0.1,
+      "currency": "PI",
+      "paymentProvider": "pi_network",
+      "status": "PENDING",
+      "createdAt": "2026-10-12T09:31:27.605Z",
+      "updatedAt": "2026-10-12T09:31:27.605Z"
+    },
+    {
       "id": "ORD-1791730386560",
       "orderReference": "ORD-REF-5849",
       "buyerName": "Test Enterprise",
@@ -188,6 +204,17 @@
   ],
   "order_items": [],
   "payments": [
+    {
+      "id": "PAY-TEST-1791797487605",
+      "orderId": "ORD-TEST-1791797487605",
+      "paymentProvider": "pi_network",
+      "amount": 0.1,
+      "currency": "PI",
+      "status": "CREATED",
+      "idempotencyKey": "IDEMP-TEST-REF-376829",
+      "evidenceNotes": "Official Pi Testnet User-to-App Payment",
+      "createdAt": "2026-10-12T09:31:27.605Z"
+    },
     {
       "id": "PAY-1791730386560",
       "orderId": "ORD-1791730386560",
@@ -703,6 +730,66 @@
   "notifications": [],
   "audit_logs": [
     {
+      "id": "AUD-1791797508337-32",
+      "timestamp": "2026-10-12T09:31:48.337Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test_payment_id",
+      "details": "Pi Platform API rejected completion (status 404): {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791797508138-748",
+      "timestamp": "2026-10-12T09:31:48.138Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REQUESTED",
+      "actor": "pioneer_client",
+      "entityId": "test_payment_id",
+      "details": "Payment completion dispatched to Pi Platform API with TxID: test_txid.",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791797498848-295",
+      "timestamp": "2026-10-12T09:31:38.848Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test_invalid_payment_id",
+      "details": "Pi Platform API returned status 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791797496339-916",
+      "timestamp": "2026-10-12T09:31:36.339Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REQUESTED",
+      "actor": "pioneer_client",
+      "entityId": "test_invalid_payment_id",
+      "details": "Approval requested for payment test_invalid_payment_id (order: N/A).",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791797487606-569",
+      "timestamp": "2026-10-12T09:31:27.606Z",
+      "eventType": "PI_TESTNET_PAYMENT_INITIATED",
+      "actor": "test_pioneer",
+      "entityId": "ORD-TEST-1791797487605",
+      "details": "Pi Testnet payment initiated for 0.1 Test-Pi on order TEST-REF-376829. Status: CREATED.",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1791794773730-326",
+      "timestamp": "2026-10-12T08:46:13.730Z",
+      "eventType": "PI_OAUTH_FAILED",
+      "actor": "unverified_pioneer",
+      "entityId": "N/A",
+      "details": "Official Pi Platform API returned HTTP 401: Authentication rejected by official Pi Platform API.",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
       "id": "AUD-1791730416917-146",
       "timestamp": "2026-10-11T14:53:36.917Z",
       "eventType": "INVOICE_CREATED",
@@ -791,6 +878,6 @@
   "meta": {
     "version": "1.0.0",
     "initializedAt": "2026-03-01T10:00:00Z",
-    "lastSavedAt": "2026-10-11T14:53:36.918Z"
+    "lastSavedAt": "2026-10-12T09:31:48.337Z"
   }
 }

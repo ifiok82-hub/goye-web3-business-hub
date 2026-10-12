@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { PiAuthProvider } from './context/PiAuthContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { HomeView } from './views/HomeView';
@@ -18,6 +19,8 @@ import { PiStatusView } from './views/PiStatusView';
 import { LegalView } from './views/LegalView';
 import { AdminView } from './views/AdminView';
 import { VerifyRecordView } from './views/VerifyRecordView';
+import { SigninView } from './views/SigninView';
+import { SigninCallbackView } from './views/SigninCallbackView';
 import { CreateBusinessModal } from './components/CreateBusinessModal';
 import { AiAssistantWidget } from './components/AiAssistantWidget';
 import { Bot } from 'lucide-react';
@@ -32,18 +35,32 @@ export default function App() {
     id: 'GOYE-BIZ-2026-000001',
   });
 
-  // Deep-linking URL detector for direct link & QR routing
+  // Deep-linking URL detector for OAuth redirect, direct links & QR routing
   useEffect(() => {
     try {
+      const pathname = window.location.pathname;
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get('view');
       const verifyType = params.get('type') as 'business' | 'invoice' | 'contract' | null;
       const verifyId = params.get('id');
 
+      // 1. Detect Pi OAuth Callback Route
+      if (pathname === '/signin/callback' || pathname.startsWith('/signin/callback')) {
+        setCurrentView('signin-callback');
+        return;
+      }
+
+      // 2. Detect Pi Signin Route
+      if (pathname === '/signin' || pathname.startsWith('/signin')) {
+        setCurrentView('signin');
+        return;
+      }
+
+      // 3. Detect Query or Path Parameters
       if (viewParam) {
         setCurrentView(viewParam);
-      } else if (window.location.pathname.startsWith('/verify/')) {
-        const parts = window.location.pathname.split('/').filter(Boolean);
+      } else if (pathname.startsWith('/verify/')) {
+        const parts = pathname.split('/').filter(Boolean);
         if (parts.length >= 3) {
           const type = parts[1] as 'business' | 'invoice' | 'contract';
           const id = decodeURIComponent(parts[2]);
@@ -74,95 +91,101 @@ export default function App() {
     setShowAssistantWidget(true);
   };
 
-  const handleBusinessCreated = (newBusiness: any) => {
+  const handleBusinessCreated = (_newBusiness: any) => {
     setCurrentView('business-id');
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-slate-100 flex flex-col justify-between selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]">
-      {/* Top Navigation */}
-      <Header
-        currentView={currentView}
-        onNavigate={handleNavigate}
-        onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
-      />
+    <PiAuthProvider>
+      <div className="min-h-screen bg-[#0B0E14] text-slate-100 flex flex-col justify-between selection:bg-[#D4AF37]/20 selection:text-[#D4AF37]">
+        {/* Top Navigation */}
+        <Header
+          currentView={currentView}
+          onNavigate={handleNavigate}
+          onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
+        />
 
-      {/* Main View Router */}
-      <main className="flex-1 pt-6 pb-12">
-        {currentView === 'home' && (
-          <HomeView
-            onNavigate={handleNavigate}
-            onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
-          />
+        {/* Main View Router */}
+        <main className="flex-1 pt-6 pb-12">
+          {currentView === 'home' && (
+            <HomeView
+              onNavigate={handleNavigate}
+              onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
+            />
+          )}
+
+          {currentView === 'signin' && <SigninView onNavigate={handleNavigate} />}
+
+          {currentView === 'signin-callback' && <SigninCallbackView onNavigate={handleNavigate} />}
+
+          {currentView === 'business-id' && (
+            <BusinessIdView
+              onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
+              onOpenAiAssistant={handleOpenAiAssistant}
+            />
+          )}
+
+          {currentView === 'marketplace' && (
+            <MarketplaceView
+              onOpenBusinessProfile={(_id) => {
+                setCurrentView('business-id');
+              }}
+              onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
+            />
+          )}
+
+          {currentView === 'contracts-invoices' && <ContractsAndInvoicesView />}
+
+          {currentView === 'ai-agents' && <AiAgentsView />}
+
+          {currentView === 'trade-assurance' && <TradeAssuranceView />}
+
+          {currentView === 'academy' && <AcademyView />}
+
+          {currentView === 'pi-status' && <PiStatusView />}
+
+          {currentView === 'legal' && <LegalView />}
+
+          {currentView === 'admin' && <AdminView />}
+
+          {currentView === 'verify' && (
+            <VerifyRecordView
+              initialType={verifyParams.type}
+              initialId={verifyParams.id}
+              onNavigateHome={() => handleNavigate('home')}
+            />
+          )}
+        </main>
+
+        {/* Persistent Floating AI Concierge Button */}
+        {!showAssistantWidget && (
+          <button
+            onClick={() => handleOpenAiAssistant()}
+            className="fixed bottom-6 right-6 z-40 px-4 py-2.5 text-xs font-semibold text-[#0B0E14] bg-[#D4AF37] hover:bg-[#e0bc46] rounded-full shadow-2xl transition-transform hover:scale-105 flex items-center gap-2 border border-white/20"
+            aria-label="Open AI Assistant Concierge"
+          >
+            <Bot className="w-4 h-4" />
+            <span className="hidden sm:inline">GOYE AI Concierge</span>
+          </button>
         )}
 
-        {currentView === 'business-id' && (
-          <BusinessIdView
-            onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
-            onOpenAiAssistant={handleOpenAiAssistant}
-          />
-        )}
+        {/* AI Assistant Chat Drawer */}
+        <AiAssistantWidget
+          businessId={activeAssistantBusinessId}
+          isOpen={showAssistantWidget}
+          onClose={() => setShowAssistantWidget(false)}
+        />
 
-        {currentView === 'marketplace' && (
-          <MarketplaceView
-            onOpenBusinessProfile={(id) => {
-              setCurrentView('business-id');
-            }}
-            onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
-          />
-        )}
+        {/* Business ID Self-Serve Registration Modal */}
+        <CreateBusinessModal
+          isOpen={showCreateBusinessModal}
+          onClose={() => setShowCreateBusinessModal(false)}
+          onSuccess={handleBusinessCreated}
+        />
 
-        {currentView === 'contracts-invoices' && <ContractsAndInvoicesView />}
-
-        {currentView === 'ai-agents' && <AiAgentsView />}
-
-        {currentView === 'trade-assurance' && <TradeAssuranceView />}
-
-        {currentView === 'academy' && <AcademyView />}
-
-        {currentView === 'pi-status' && <PiStatusView />}
-
-        {currentView === 'legal' && <LegalView />}
-
-        {currentView === 'admin' && <AdminView />}
-
-        {currentView === 'verify' && (
-          <VerifyRecordView
-            initialType={verifyParams.type}
-            initialId={verifyParams.id}
-            onNavigateHome={() => handleNavigate('home')}
-          />
-        )}
-      </main>
-
-      {/* Persistent Floating AI Concierge Button */}
-      {!showAssistantWidget && (
-        <button
-          onClick={() => handleOpenAiAssistant()}
-          className="fixed bottom-6 right-6 z-40 px-4 py-2.5 text-xs font-semibold text-[#0B0E14] bg-[#D4AF37] hover:bg-[#e0bc46] rounded-full shadow-2xl transition-transform hover:scale-105 flex items-center gap-2 border border-white/20"
-          aria-label="Open AI Assistant Concierge"
-        >
-          <Bot className="w-4 h-4" />
-          <span className="hidden sm:inline">GOYE AI Concierge</span>
-        </button>
-      )}
-
-      {/* AI Assistant Chat Drawer */}
-      <AiAssistantWidget
-        businessId={activeAssistantBusinessId}
-        isOpen={showAssistantWidget}
-        onClose={() => setShowAssistantWidget(false)}
-      />
-
-      {/* Business ID Self-Serve Registration Modal */}
-      <CreateBusinessModal
-        isOpen={showCreateBusinessModal}
-        onClose={() => setShowCreateBusinessModal(false)}
-        onSuccess={handleBusinessCreated}
-      />
-
-      {/* Footer */}
-      <Footer onNavigate={handleNavigate} />
-    </div>
+        {/* Footer */}
+        <Footer onNavigate={handleNavigate} />
+      </div>
+    </PiAuthProvider>
   );
 }

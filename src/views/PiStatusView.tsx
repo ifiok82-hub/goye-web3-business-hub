@@ -11,6 +11,7 @@ import {
   Layers,
   FileCheck2,
 } from 'lucide-react';
+import { PiTestnetPaymentPanel } from '../components/PiTestnetPaymentPanel';
 
 export const PiStatusView: React.FC = () => {
   const [piStatus, setPiStatus] = useState<any | null>(null);
@@ -200,11 +201,45 @@ export const PiStatusView: React.FC = () => {
                 {piStatus.mainnetActivation}
               </div>
             </div>
+
+            {/* Pi OAuth 2.0 Sign-in Status */}
+            <div className="p-4 rounded-lg bg-[#0B0E14] border border-[#D4AF37]/30 space-y-2 md:col-span-2 lg:col-span-3">
+              <div className="flex items-center justify-between">
+                <div className="text-[#D4AF37] font-semibold flex items-center gap-2">
+                  <span>PI OAUTH 2.0 SIGN-IN INTEGRATION</span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[11px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800">
+                  CONFIGURED
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-[11px]">
+                <div>
+                  <span className="text-slate-400 block">Client ID:</span>
+                  <span className="font-mono text-slate-200 break-all select-all">
+                    {piStatus.oauth?.clientId || 'oyEFvUGrkruWe8giGoqhq5py6Q60F6dtMT_WQedySqk'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Registered Production Redirect URI:</span>
+                  <span className="font-mono text-slate-200 break-all">
+                    https://goye-web3-business-hub.vercel.app/signin/callback
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Flow / Scope / Endpoint:</span>
+                  <span className="text-slate-200 block">Implicit Grant · scope=username</span>
+                  <span className="text-slate-500 font-mono text-[10px]">accounts.pinet.com/oauth/authorize</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* 2. Persistent Database Architecture & Integrity Audit */}
+      {/* 2. Official Pi Testnet Payment Validation Test Panel (Zero Simulation) */}
+      <PiTestnetPaymentPanel />
+
+      {/* 3. Persistent Database Architecture & Integrity Audit */}
       {systemAudit?.database && (
         <div className="p-6 sm:p-8 rounded-xl bg-[#121620] border border-white/10 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">

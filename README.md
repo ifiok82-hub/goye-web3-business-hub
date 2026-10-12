@@ -112,6 +112,7 @@ GOYE is positioned truthfully as a Web3-enabled digital business platform combin
 | `PI_SANDBOX` | Pi SDK Sandbox Flag (set to `false` for Production Developer Review) | `false` | Yes |
 | `PI_API_KEY` | Official Pi Developer Portal Platform API Key | *Configured in Portal* | Yes (for Pi payments) |
 | `PI_APP_ID` | Official Pi Developer Application ID | *Configured in Portal* | Yes (for Pi payments) |
+| `PI_OAUTH_CLIENT_ID` | Official Pi Developer Portal OAuth Public Client ID | `oyEFvUGrkruWe8giGoqhq5py6Q60F6dtMT_WQedySqk` | Yes (Public) |
 | `PI_TESTNET_WALLET` | Public Testnet Wallet Address for developer testing | *Public Address* | Optional |
 | `PI_MAINNET_WALLET` | Public Mainnet Wallet Address | `NOT CONFIGURED` | Disabled in Testnet |
 | `GEMINI_API_KEY` | Server-Side Google Gemini API Key | *User Secret* | Yes (for AI features) |
@@ -123,6 +124,26 @@ GOYE is positioned truthfully as a Web3-enabled digital business platform combin
 
 ---
 
+## Official Pi Network Sign-in (OAuth 2.0 Implicit Flow)
+
+GOYE Web3 Business Hub implements the official Pi Network OAuth 2.0 Sign-in specification for Pioneer authentication:
+
+- **Authorization Endpoint**: `https://accounts.pinet.com/oauth/authorize`
+- **Public Client ID**: `oyEFvUGrkruWe8giGoqhq5py6Q60F6dtMT_WQedySqk`
+- **OAuth Grant Type**: Implicit Grant (`response_type=token`)
+- **Minimum Required Scope**: `username`
+- **Registered Production Redirect URI**: `https://goye-web3-business-hub.vercel.app/signin/callback`
+- **Registered Local Development Redirect URI**: `http://localhost:3000/signin/callback`
+
+### Security Standards & Architecture:
+1. **CSRF Mitigation**: Cryptographically strong 192-bit state token stored in temporary session storage and strictly validated on callback (`/signin/callback`).
+2. **Server-Side Source of Truth**: Pioneer access tokens are validated server-to-server directly against the official Pi Platform API (`GET https://api.minepi.com/v2/me`) before establishing an authenticated session.
+3. **Strict Separation of Auth & Payments**: Pi Sign-in is strictly for Pioneer identity authentication. It never triggers or authorizes payments, orders, invoices, or contracts.
+4. **Zero Wallet Passphrase**: GOYE never asks for, stores, or transmits Pi wallet passphrases or private keys.
+5. **Anti-Simulation Policy**: No mock tokens, fake UIDs, or simulated Pioneers are accepted.
+
+---
+
 ## Pi Platform Integration & Anti-Mock Policy
 
 - **Current Network Mode**: `TESTNET`
@@ -130,7 +151,7 @@ GOYE is positioned truthfully as a Web3-enabled digital business platform combin
 - **Mainnet**: **DISABLED**. Mainnet transactions remain disabled until official Pi Developer Portal review and production key validation are completed.
 - **Strict Anti-Mock Policy**: GOYE does NOT simulate payments, invent txids, or forge wallet balances. If `PI_API_KEY` is not present in the backend environment, the system factually reports:
   > *"Pi payment verification is currently unavailable. Please try again later."*
-- **Status Dashboard**: Visit the live `/pi-status` view to verify SDK readiness, API configuration, and server connectivity.
+- **Status Dashboard**: Visit the live `/pi-status` view to verify SDK readiness, OAuth configuration, API status, and server connectivity.
 
 ---
 
