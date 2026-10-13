@@ -36,6 +36,7 @@ import {
   Loader2,
   Lock,
 } from 'lucide-react';
+import { GoyeLogo } from './GoyeLogo';
 
 export const PiTestnetPaymentPanel: React.FC = () => {
   const { user, isAuthenticated, setVerifiedSession } = usePiAuth();
@@ -175,13 +176,16 @@ export const PiTestnetPaymentPanel: React.FC = () => {
 
       {/* 1. Header Card Specification */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5 relative z-10">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-bold uppercase tracking-wider mb-2">
-            <span>Official Pi SDK Integration</span>
+        <div className="flex items-center gap-4">
+          <GoyeLogo size="sm" showText={false} useImage={true} />
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-[11px] font-bold uppercase tracking-wider mb-1">
+              <span>Official Pi SDK Integration</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              PI TESTNET PAYMENT TEST
+            </h2>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            PI TESTNET PAYMENT TEST
-          </h2>
         </div>
 
         <button

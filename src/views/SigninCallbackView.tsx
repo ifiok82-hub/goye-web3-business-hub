@@ -18,6 +18,7 @@ import {
 } from '../constants/piAuth';
 import { usePiAuth } from '../context/PiAuthContext';
 import { CheckCircle2, AlertTriangle, ShieldCheck, Loader2, ArrowRight, RefreshCw, Globe, Key } from 'lucide-react';
+import { GoyeLogo } from '../components/GoyeLogo';
 
 interface SigninCallbackViewProps {
   onNavigate: (view: string) => void;
@@ -155,6 +156,11 @@ export const SigninCallbackView: React.FC<SigninCallbackViewProps> = ({ onNaviga
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl -z-0 pointer-events-none" />
 
         <div className="relative z-10 text-center space-y-6">
+          {/* Brand Logo */}
+          <div className="flex justify-center pb-2 border-b border-white/5">
+            <GoyeLogo size="sm" subtitle="Official Callback" />
+          </div>
+
           {/* Header Icon */}
           <div className="flex justify-center">
             {status === 'processing' || status === 'verifying_api' ? (

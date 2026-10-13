@@ -1,25 +1,27 @@
 import React from 'react';
-import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { ExternalLink, ShieldCheck, Download } from 'lucide-react';
+import { GoyeLogo } from './GoyeLogo';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface FooterProps {
   onNavigate: (view: string) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+  const { openPromptManually, isInstalled } = usePWAInstall();
+
   return (
     <footer className="bg-[#080A0F] border-t border-white/10 text-slate-400 text-sm mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand & Purpose */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-[#123B72] border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37] font-bold text-xs">
-                G
-              </div>
-              <span className="text-base font-bold text-white tracking-tight">
-                GOYE <span className="text-[#D4AF37] text-xs font-semibold uppercase">Business Hub</span>
-              </span>
-            </div>
+            <button
+              onClick={() => onNavigate('home')}
+              className="text-left focus:outline-none cursor-pointer"
+            >
+              <GoyeLogo size="sm" subtitle="Business Hub" />
+            </button>
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               Build. Automate. Trade. Pay. Grow.
               <br />
@@ -152,6 +154,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   Compliance Admin Console
                 </button>
               </li>
+              {!isInstalled && (
+                <li>
+                  <button
+                    onClick={openPromptManually}
+                    className="text-[#D4AF37] hover:text-[#f3c643] transition-colors font-semibold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Install PWA App</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
         </div>

@@ -32,6 +32,7 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
+import { GoyeLogo } from '../components/GoyeLogo';
 
 interface SigninViewProps {
   onNavigate: (view: string) => void;
@@ -86,10 +87,13 @@ export const SigninView: React.FC<SigninViewProps> = ({ onNavigate }) => {
         {/* Left Column: Sign-in Action Card */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-[#12161F] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-            {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-semibold mb-6">
-              <Key className="w-3.5 h-3.5" />
-              Official Pi Network OAuth 2.0
+            {/* Logo and Top Badge */}
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <GoyeLogo size="md" subtitle="Web3 Authentication" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-semibold">
+                <Key className="w-3.5 h-3.5" />
+                <span>Pi OAuth 2.0</span>
+              </div>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">

@@ -15,6 +15,8 @@ import {
   Sparkles,
   UserCheck,
 } from 'lucide-react';
+import { GoyeLogo } from '../components/GoyeLogo';
+import { PWAInstallButton } from '../components/PWAInstallButton';
 
 interface HomeViewProps {
   onNavigate: (view: string) => void;
@@ -30,10 +32,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Left Column: Copy & CTAs */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
-                <span>AI + Web3 Business Infrastructure</span>
-                <span aria-hidden="true">·</span>
-                <span className="text-slate-400 font-normal">Global Digital Economy</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <GoyeLogo size="sm" subtitle="Business Hub" />
+                <div className="h-4 w-px bg-white/20 hidden sm:block" />
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#D4AF37] uppercase tracking-wider">
+                  <span>AI + Web3 Infrastructure</span>
+                </div>
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-[1.15] text-balance">
@@ -60,6 +64,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 >
                   Explore Services & Marketplace
                 </button>
+
+                <PWAInstallButton variant="hero" />
 
                 <button
                   onClick={() => onNavigate('pi-status')}

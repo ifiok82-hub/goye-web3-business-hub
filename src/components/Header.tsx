@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { detectPiEnvironment } from '../utils/piSdk';
 import { usePiAuth } from '../context/PiAuthContext';
 import { ShieldCheck, Smartphone, Globe, Menu, X, Key, LogOut, User } from 'lucide-react';
+import { GoyeLogo } from './GoyeLogo';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   currentView: string;
@@ -40,18 +42,13 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-[#0B0E14]/90 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-8 h-16">
-          {/* Zone 1: Single Wordmark Brand Zone */}
+          {/* Zone 1: Official GOYE Logo Brand Zone */}
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => onNavigate('home')}
-              className="text-left group flex items-center gap-2.5 focus:outline-none"
+              className="text-left group flex items-center focus:outline-none cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#123B72] to-[#0B0E14] border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] font-bold text-sm tracking-wider shadow-sm">
-                G
-              </div>
-              <span className="text-base sm:text-lg font-bold tracking-tight text-white group-hover:text-[#D4AF37] transition-colors whitespace-nowrap">
-                GOYE <span className="text-[#D4AF37] font-semibold text-xs tracking-widest uppercase ml-1">Business Hub</span>
-              </span>
+              <GoyeLogo size="sm" subtitle="Business Hub" />
             </button>
           </div>
 
@@ -156,6 +153,9 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* PWA Install Button */}
+            <PWAInstallButton variant="header" />
+
             {/* Register Business ID Action Button */}
             <button
               onClick={onOpenCreateBusiness}
@@ -249,7 +249,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           ))}
 
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
+            <PWAInstallButton variant="mobile" />
             <button
               onClick={() => {
                 onOpenCreateBusiness();

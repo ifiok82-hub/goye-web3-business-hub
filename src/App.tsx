@@ -23,6 +23,8 @@ import { SigninView } from './views/SigninView';
 import { SigninCallbackView } from './views/SigninCallbackView';
 import { CreateBusinessModal } from './components/CreateBusinessModal';
 import { AiAssistantWidget } from './components/AiAssistantWidget';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { Bot } from 'lucide-react';
 
 export default function App() {
@@ -182,6 +184,12 @@ export default function App() {
           onClose={() => setShowCreateBusinessModal(false)}
           onSuccess={handleBusinessCreated}
         />
+
+        {/* PWA Auto-Install Banner & iOS Guide */}
+        <PWAInstallBanner />
+
+        {/* Real-time Offline Connectivity Toast */}
+        <OfflineIndicator />
 
         {/* Footer */}
         <Footer onNavigate={handleNavigate} />
