@@ -6,6 +6,8 @@
 
 import express from 'express';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 import { apiRouter } from './routes/api.ts';
 import { piRouter } from './routes/pi.ts';
 import { verifyRouter } from './routes/verify.ts';
@@ -63,6 +65,27 @@ export function createExpressApp() {
   };
   app.get('/validation-key.txt', validationHandler);
   app.get('/api/validation-key.txt', validationHandler);
+
+  // Official Privacy Policy endpoint (serves public accessible semantic HTML with HTTP 200 OK)
+  const privacyHandler = (_req: express.Request, res: express.Response) => {
+    try {
+      const candidates = [
+        path.resolve(process.cwd(), 'public', 'privacy.html'),
+        path.resolve(process.cwd(), 'dist', 'privacy.html'),
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, 'utf-8');
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.status(200).send(content);
+        }
+      }
+    } catch (_) {}
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send('<!doctype html><html><head><title>GOYE Privacy Policy</title></head><body><h1>Privacy Policy</h1><p>GOYE Web3 Business Hub Official Privacy Policy</p><p>Contact: compliance@goye.services</p></body></html>');
+  };
+  app.get('/privacy', privacyHandler);
+  app.get('/api/privacy', privacyHandler);
 
   return app;
 }

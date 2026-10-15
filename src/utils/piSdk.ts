@@ -74,23 +74,87 @@ export function detectPiEnvironment(): PiEnvironmentDetection {
   };
 }
 
-let isInitialized = false;
+export type PiEnvironmentMode = 'development' | 'production';
+
+export interface PiSdkConfig {
+  version: '2.0';
+  sandbox: boolean;
+  environment: PiEnvironmentMode;
+}
 
 /**
- * Initializes the official Pi SDK.
- * Critical Production Requirement: sandbox = false (standard production SDK architecture).
+ * Returns current Pi SDK environment configuration according to architectural rules:
+ * - Development / Sandbox: http://localhost:3000 -> sandbox: true
+ * - Production: https://goye-web3-business-hub.vercel.app -> sandbox: false
+ * Explicit VITE_PI_ENV or VITE_PI_SANDBOX takes precedence.
  */
-export async function initializePiSDK(sandbox = false): Promise<boolean> {
+export function getPiSdkEnvironment(): PiSdkConfig {
+  const vitePiEnv = import.meta.env.VITE_PI_ENV;
+  const viteSandbox = import.meta.env.VITE_PI_SANDBOX;
+
+  if (viteSandbox === 'true') {
+    return { version: '2.0', sandbox: true, environment: 'development' };
+  }
+  if (viteSandbox === 'false') {
+    return { version: '2.0', sandbox: false, environment: 'production' };
+  }
+  if (vitePiEnv === 'development') {
+    return { version: '2.0', sandbox: true, environment: 'development' };
+  }
+  if (vitePiEnv === 'production') {
+    return { version: '2.0', sandbox: false, environment: 'production' };
+  }
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1' || window.location.port === '3000';
+    if (isLocal) {
+      return { version: '2.0', sandbox: true, environment: 'development' };
+    }
+    if (host.includes('vercel.app') || host.includes('goye')) {
+      return { version: '2.0', sandbox: false, environment: 'production' };
+    }
+  }
+
+  const isDev = Boolean(import.meta.env.DEV);
+  return {
+    version: '2.0',
+    sandbox: isDev,
+    environment: isDev ? 'development' : 'production',
+  };
+}
+
+let currentInitializedConfig: PiSdkConfig | null = null;
+
+/**
+ * Initializes the official Pi SDK with strict environment rules:
+ * - Development: sandbox = true
+ * - Production: sandbox = false
+ * Never hardcodes sandbox: true in production; never hardcodes sandbox: false in development.
+ */
+export async function initializePiSDK(options?: { forceSandbox?: boolean }): Promise<boolean> {
   if (typeof window === 'undefined' || !window.Pi) {
     return false;
   }
 
-  if (isInitialized) return true;
+  const baseConfig = getPiSdkEnvironment();
+  const effectiveSandbox = options?.forceSandbox !== undefined ? options.forceSandbox : baseConfig.sandbox;
+  const targetConfig: PiSdkConfig = {
+    version: '2.0',
+    sandbox: effectiveSandbox,
+    environment: effectiveSandbox ? 'development' : 'production',
+  };
+
+  if (currentInitializedConfig && currentInitializedConfig.sandbox === effectiveSandbox) {
+    return true;
+  }
 
   try {
-    // Official Pi SDK initialization (must be sandbox: false)
-    window.Pi.init({ version: '2.0', sandbox: false });
-    isInitialized = true;
+    window.Pi.init({ version: '2.0', sandbox: effectiveSandbox });
+    currentInitializedConfig = targetConfig;
+    console.log(
+      `[Pi SDK] Initialized (version: "2.0", sandbox: ${effectiveSandbox}, env: ${targetConfig.environment})`
+    );
     return true;
   } catch (err) {
     console.warn('[Pi SDK] Initialization warning:', err);
@@ -134,9 +198,11 @@ export async function resolveIncompletePaymentServer(payment: any): Promise<{
 /**
  * Authenticates before payment with:
  * Pi.authenticate(["username", "payments"], onIncompletePaymentFound)
+ * Strictly conforms to security guidelines: Never requests wallet passphrase, private key, or secret seed.
  */
 export async function authenticatePi(
-  onIncompleteFound?: (payment: any) => void
+  onIncompleteFound?: (payment: any) => void,
+  options?: { forceSandbox?: boolean }
 ): Promise<{
   success: boolean;
   user?: { uid: string; username: string };
@@ -152,7 +218,7 @@ export async function authenticatePi(
   }
 
   try {
-    await initializePiSDK(false);
+    await initializePiSDK(options);
 
     let detectedIncomplete: any = null;
 
@@ -179,7 +245,7 @@ export async function authenticatePi(
     console.error('Pi Authentication Error:', err);
     return {
       success: false,
-      errorMessage: 'Pi authentication failed. Please try again.',
+      errorMessage: err?.message || 'Pi authentication failed. Please try again.',
     };
   }
 }
@@ -222,6 +288,7 @@ export async function executePiTestnetPayment(options: {
   onSuccess: (evidence: RealPaymentEvidence) => void;
   onError: (errorMessage: string, details?: any) => void;
   onIncompleteFound?: (payment: any) => void;
+  forceSandbox?: boolean;
 }): Promise<void> {
   if (typeof window === 'undefined' || !window.Pi) {
     options.onStatusChange('FAILED', 'Pi SDK unavailable.');
@@ -231,10 +298,10 @@ export async function executePiTestnetPayment(options: {
 
   try {
     options.onStatusChange('AUTHENTICATING', 'Authenticating with Pi SDK...');
-    await initializePiSDK(false);
+    await initializePiSDK({ forceSandbox: options.forceSandbox });
 
     // Step 1: Authenticate with Pi SDK before payment
-    const authRes = await authenticatePi(options.onIncompleteFound);
+    const authRes = await authenticatePi(options.onIncompleteFound, { forceSandbox: options.forceSandbox });
     if (!authRes.success || !authRes.user) {
       options.onStatusChange('FAILED', 'Pi authentication failed.');
       options.onError(authRes.errorMessage || 'Pi authentication failed. Please try again.');
@@ -367,7 +434,7 @@ export async function executePiPayment(options: {
   options.onStatusChange('Initializing official Pi SDK (Production Architecture)...');
 
   try {
-    await initializePiSDK(false);
+    await initializePiSDK();
 
     window.Pi.createPayment(
       {

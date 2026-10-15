@@ -108,6 +108,21 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </button>
               </li>
               <li>
+                <button onClick={() => onNavigate('pi-readiness')} className="hover:text-[#D4AF37] transition-colors font-medium">
+                  Pi Readiness Diagnostic
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('pi-developer-checklist')} className="hover:text-[#D4AF37] transition-colors font-medium">
+                  Pi Developer Checklist
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('pi-sandbox-test')} className="hover:text-[#D4AF37] transition-colors font-medium">
+                  Pi Sandbox Test (/pi-sandbox-test)
+                </button>
+              </li>
+              <li>
                 <button onClick={() => onNavigate('pi-status')} className="hover:text-white transition-colors">
                   Pi Network Technical Status
                 </button>
@@ -125,8 +140,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-white">Compliance & Legal</h4>
             <ul className="space-y-2 text-xs">
               <li>
+                <button onClick={() => onNavigate('privacy')} className="hover:text-white transition-colors font-medium text-[#D4AF37]">
+                  Privacy Policy (/privacy)
+                </button>
+              </li>
+              <li>
                 <button onClick={() => onNavigate('legal')} className="hover:text-white transition-colors">
-                  Privacy Policy & Terms
+                  Terms of Service & Disclosures
                 </button>
               </li>
               <li>

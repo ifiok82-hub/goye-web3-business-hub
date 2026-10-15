@@ -18,6 +18,10 @@ import { TradeAssuranceView } from './views/TradeAssuranceView';
 import { AcademyView } from './views/AcademyView';
 import { PiStatusView } from './views/PiStatusView';
 import { LegalView } from './views/LegalView';
+import { PrivacyPolicyView } from './views/PrivacyPolicyView';
+import { PiReadinessView } from './views/PiReadinessView';
+import { PiSandboxTestView } from './views/PiSandboxTestView';
+import { PiDeveloperChecklistView } from './views/PiDeveloperChecklistView';
 import { AdminView } from './views/AdminView';
 import { VerifyRecordView } from './views/VerifyRecordView';
 import { SigninView } from './views/SigninView';
@@ -66,6 +70,24 @@ export default function App() {
       }
       if (pathname === '/admin' || pathname.startsWith('/admin')) {
         setCurrentView('admin');
+        return;
+      }
+
+      // 2C. Detect Pi Developer Portal & Compliance routes
+      if (pathname === '/privacy' || pathname.startsWith('/privacy')) {
+        setCurrentView('privacy');
+        return;
+      }
+      if (pathname === '/pi-readiness' || pathname.startsWith('/pi-readiness')) {
+        setCurrentView('pi-readiness');
+        return;
+      }
+      if (pathname === '/pi-sandbox-test' || pathname.startsWith('/pi-sandbox-test')) {
+        setCurrentView('pi-sandbox-test');
+        return;
+      }
+      if (pathname === '/pi-developer-checklist' || pathname.startsWith('/pi-developer-checklist')) {
+        setCurrentView('pi-developer-checklist');
         return;
       }
 
@@ -165,6 +187,14 @@ export default function App() {
           {currentView === 'academy' && <AcademyView />}
 
           {currentView === 'pi-status' && <PiStatusView />}
+
+          {currentView === 'privacy' && <PrivacyPolicyView onNavigateHome={() => handleNavigate('home')} />}
+
+          {currentView === 'pi-readiness' && <PiReadinessView onNavigate={handleNavigate} />}
+
+          {currentView === 'pi-sandbox-test' && <PiSandboxTestView />}
+
+          {currentView === 'pi-developer-checklist' && <PiDeveloperChecklistView onNavigate={handleNavigate} />}
 
           {currentView === 'legal' && <LegalView />}
 

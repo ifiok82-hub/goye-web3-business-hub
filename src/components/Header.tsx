@@ -37,6 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'trade-assurance', label: 'Trade Assurance' },
     { id: 'academy', label: 'Academy' },
     { id: 'admin', label: 'Admin' },
+    { id: 'pi-readiness', label: 'Pi Readiness' },
+    { id: 'pi-developer-checklist', label: 'Pi Checklist' },
     { id: 'pi-status', label: 'System Status' },
   ];
 

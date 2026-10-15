@@ -1556,6 +1556,66 @@
   "notifications": [],
   "audit_logs": [
     {
+      "id": "AUD-1792052885032-578",
+      "timestamp": "2026-10-15T08:28:05.032Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test-audit-probe",
+      "details": "Pi Platform API rejected completion (status 404): {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792052884778-27",
+      "timestamp": "2026-10-15T08:28:04.778Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REQUESTED",
+      "actor": "pioneer_client",
+      "entityId": "test-audit-probe",
+      "details": "Payment completion dispatched to Pi Platform API with TxID: tx-audit-probe.",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792052881311-675",
+      "timestamp": "2026-10-15T08:28:01.311Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test-audit-probe",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792052381803-552",
+      "timestamp": "2026-10-15T08:19:41.803Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test-pay-123",
+      "details": "Pi Platform API rejected completion (status 404): {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792052381619-18",
+      "timestamp": "2026-10-15T08:19:41.619Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REQUESTED",
+      "actor": "pioneer_client",
+      "entityId": "test-pay-123",
+      "details": "Payment completion dispatched to Pi Platform API with TxID: test-tx-123.",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792052376827-359",
+      "timestamp": "2026-10-15T08:19:36.827Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test-pay-123",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
       "id": "AUD-1791810572055-668",
       "timestamp": "2026-10-12T13:09:32.055Z",
       "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
@@ -1734,7 +1794,7 @@
   "meta": {
     "version": "1.0.0",
     "initializedAt": "2026-03-01T10:00:00Z",
-    "lastSavedAt": "2026-10-15T07:53:05.885Z"
+    "lastSavedAt": "2026-10-15T08:28:05.032Z"
   },
   "sales_leads": [],
   "bookings": [],

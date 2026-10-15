@@ -16,7 +16,11 @@
       "destination": "/validation-key.txt"
     },
     {
-      "source": "/((?!api|health|validation-key\\.txt).*)",
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/((?!api|health|validation-key\\.txt|privacy).*)",
       "destination": "/index.html"
     }
   ]
