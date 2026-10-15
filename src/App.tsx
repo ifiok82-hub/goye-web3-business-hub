@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { HomeView } from './views/HomeView';
 import { BusinessIdView } from './views/BusinessIdView';
 import { MarketplaceView } from './views/MarketplaceView';
+import { ProductsView } from './views/ProductsView';
 import { ContractsAndInvoicesView } from './views/ContractsAndInvoicesView';
 import { AiAgentsView } from './views/AiAgentsView';
 import { TradeAssuranceView } from './views/TradeAssuranceView';
@@ -55,6 +56,16 @@ export default function App() {
       // 2. Detect Pi Signin Route
       if (pathname === '/signin' || pathname.startsWith('/signin')) {
         setCurrentView('signin');
+        return;
+      }
+
+      // 2B. Detect Products or Admin routes
+      if (pathname === '/products' || pathname.startsWith('/products')) {
+        setCurrentView('products');
+        return;
+      }
+      if (pathname === '/admin' || pathname.startsWith('/admin')) {
+        setCurrentView('admin');
         return;
       }
 
@@ -124,6 +135,15 @@ export default function App() {
             <BusinessIdView
               onOpenCreateBusiness={() => setShowCreateBusinessModal(true)}
               onOpenAiAssistant={handleOpenAiAssistant}
+            />
+          )}
+
+          {currentView === 'products' && (
+            <ProductsView
+              onOpenBusinessProfile={(_id) => {
+                setCurrentView('business-id');
+              }}
+              onNavigate={handleNavigate}
             />
           )}
 

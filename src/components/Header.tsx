@@ -29,12 +29,14 @@ export const Header: React.FC<HeaderProps> = ({
 
   const navLinks = [
     { id: 'home', label: 'Ecosystem' },
+    { id: 'products', label: '15 Products' },
     { id: 'business-id', label: 'Business ID' },
     { id: 'marketplace', label: 'Marketplace' },
     { id: 'contracts-invoices', label: 'Contracts & Invoices' },
     { id: 'ai-agents', label: 'AI Agents' },
     { id: 'trade-assurance', label: 'Trade Assurance' },
     { id: 'academy', label: 'Academy' },
+    { id: 'admin', label: 'Admin' },
     { id: 'pi-status', label: 'System Status' },
   ];
 

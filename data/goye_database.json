@@ -148,7 +148,458 @@
       "createdAt": "2026-01-18T10:00:00Z"
     }
   ],
-  "products": [],
+  "products": [
+    {
+      "id": "PRD-2026-001",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Enterprise Web3 Business Website & Client Portal",
+      "category": "Websites",
+      "description": "Turnkey enterprise business portal engineered with React 19, Node.js, and Tailwind CSS. Features Web3 wallet connectivity, client portal dashboard, digital invoice generation, and full commercial license.",
+      "priceNGN": 480000,
+      "priceUSD": 320,
+      "pricePi": 32,
+      "deliverables": [
+        "Complete production-ready source code with full commercial transfer",
+        "Role-based customer and administrator portal with responsive layouts",
+        "Integrated multi-currency invoice generation and webhook endpoints",
+        "30-day technical warranty, deployment assistance & handover docs"
+      ],
+      "features": [
+        "Web3 Wallet Connect",
+        "Client Dashboard",
+        "Multi-Currency Checkout",
+        "99.9% Uptime Architecture"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 4.9,
+      "completedDeals": 28,
+      "badge": "Best Seller",
+      "status": "active",
+      "createdAt": "2026-02-01T10:00:00Z"
+    },
+    {
+      "id": "PRD-2026-002",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Custom Cloud SaaS & High-Concurrency Dashboard",
+      "category": "Web Apps",
+      "description": "Production-ready multi-tenant cloud software with PostgreSQL/Cloud SQL schema, secure RESTful API gateways, real-time analytics, and role-based access control.",
+      "priceNGN": 750000,
+      "priceUSD": 500,
+      "pricePi": 50,
+      "deliverables": [
+        "Scalable microservices/Express backend with database migrations",
+        "Real-time operational metrics & revenue analytics dashboard",
+        "Role-based permission matrix (SuperAdmin, Staff, Client, Auditor)",
+        "Automated CI/CD deployment scripts and architectural blueprint"
+      ],
+      "features": [
+        "Multi-Tenant RBAC",
+        "Cloud SQL Ready",
+        "Real-Time Telemetry",
+        "Audit-Ready Logs"
+      ],
+      "deliveryTimeDays": 14,
+      "ratingAverage": 5,
+      "completedDeals": 15,
+      "badge": "Enterprise Grade",
+      "status": "active",
+      "createdAt": "2026-02-03T11:00:00Z"
+    },
+    {
+      "id": "PRD-2026-003",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Autonomous AI Front-Desk Receptionist & WhatsApp Handoff",
+      "category": "AI Assistants",
+      "description": "24/7 autonomous front-desk conversational AI powered by server-side Google Gemini models. Answers company service inquiries, qualifies prospects, and routes warm leads directly to WhatsApp.",
+      "priceNGN": 220000,
+      "priceUSD": 150,
+      "pricePi": 15,
+      "deliverables": [
+        "Server-side Gemini AI integration with zero client key exposure",
+        "Custom business knowledge base ingestion (pricing, services, FAQs)",
+        "Automated lead capture modal with CRM dispatch",
+        "1-click WhatsApp click-to-chat escalation with lead summary context"
+      ],
+      "features": [
+        "Server-Side Gemini 2.5",
+        "Zero Client Key Exposure",
+        "WhatsApp Click-to-Chat",
+        "Lead Capture"
+      ],
+      "deliveryTimeDays": 3,
+      "ratingAverage": 4.8,
+      "completedDeals": 42,
+      "badge": "Popular",
+      "status": "active",
+      "createdAt": "2026-02-05T12:00:00Z"
+    },
+    {
+      "id": "PRD-2026-004",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Autonomous AI Operations & Business Workflow Suite",
+      "category": "AI Automation",
+      "description": "End-to-end automation engine that parses inbound inquiries, generates formal quotes, tracks delivery milestones, and automates multi-channel notifications.",
+      "priceNGN": 350000,
+      "priceUSD": 235,
+      "pricePi": 23.5,
+      "deliverables": [
+        "Automated invoice & contract generation pipeline",
+        "Document OCR & extraction engine for incoming invoices",
+        "Automated SMS, Email & WhatsApp milestone notification triggers",
+        "Custom webhook connectors for Zapier, Make, and internal ERPs"
+      ],
+      "features": [
+        "Automated Invoicing",
+        "Milestone Triggers",
+        "CRM Webhooks",
+        "Zero Manual Overhead"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.9,
+      "completedDeals": 21,
+      "badge": "High ROI",
+      "status": "active",
+      "createdAt": "2026-02-08T09:30:00Z"
+    },
+    {
+      "id": "PRD-2026-005",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Web3 Growth Engine & Performance Digital Marketing Suite",
+      "category": "Digital Marketing",
+      "description": "Omnichannel customer acquisition campaign engineered for Web3 products, local businesses, and digital services. Includes high-converting ad copy, Pioneer community campaigns, and conversion analytics.",
+      "priceNGN": 180000,
+      "priceUSD": 120,
+      "pricePi": 12,
+      "deliverables": [
+        "3 high-converting landing page variants with A/B testing setup",
+        "Targeted social media ad copy & creative pack (Meta, Google, X)",
+        "Pi Network pioneer community engagement strategy playbook",
+        "Conversion tracking pixel integration & weekly ROI performance audit"
+      ],
+      "features": [
+        "Pioneer Community Outreach",
+        "A/B Landing Pages",
+        "ROAS Analytics",
+        "Multi-Channel Ad Copy"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 4.7,
+      "completedDeals": 36,
+      "badge": "Growth",
+      "status": "active",
+      "createdAt": "2026-02-12T14:15:00Z"
+    },
+    {
+      "id": "PRD-2026-006",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Corporate CAC Incorporation & Verified Business Registration",
+      "category": "Business Services",
+      "description": "Full legal business entity registration in Nigeria (Corporate Affairs Commission RC/BN), Federal Tax Identification Number (TIN), corporate board resolution templates, and instant GOYE Level 4 Verified ID Badge.",
+      "priceNGN": 145000,
+      "priceUSD": 95,
+      "pricePi": 9.5,
+      "deliverables": [
+        "Official CAC Certificate of Incorporation & Status Report document",
+        "Federal Inland Revenue Service Tax Identification Number (TIN)",
+        "Standardized corporate resolution templates & MEMART documentation",
+        "GOYE Level 4 Identity Confirmed verified cryptographic business profile"
+      ],
+      "features": [
+        "Official CAC Filing",
+        "TIN Tax Registration",
+        "Level 4 Badge",
+        "Verified Director Records"
+      ],
+      "deliveryTimeDays": 10,
+      "ratingAverage": 5,
+      "completedDeals": 64,
+      "badge": "Essential",
+      "status": "active",
+      "createdAt": "2026-02-14T08:00:00Z"
+    },
+    {
+      "id": "PRD-2026-007",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "gasv.store Curated Digital Assets & Turnkey Codebases",
+      "category": "Digital Products",
+      "description": "Commercial developer asset bundle from gasv.store featuring production TypeScript boilerplates, smart contract integration scripts, e-commerce checkout components, and mobile web view wrappers.",
+      "priceNGN": 75000,
+      "priceUSD": 50,
+      "pricePi": 5,
+      "deliverables": [
+        "5 modular production GitHub repositories with full commercial rights",
+        "Pi SDK v2 boilerplate with server-side approval/completion endpoints",
+        "Plug-and-play Tailwind CSS v4 design token pack & component library",
+        "Comprehensive developer setup guide & 1-click Vercel/Docker deploy configs"
+      ],
+      "features": [
+        "Instant GitHub Access",
+        "Commercial License",
+        "Pi SDK v2 Starter",
+        "TypeScript / Tailwind v4"
+      ],
+      "deliveryTimeDays": 1,
+      "ratingAverage": 4.9,
+      "completedDeals": 88,
+      "badge": "Instant Delivery",
+      "status": "active",
+      "createdAt": "2026-02-18T16:20:00Z"
+    },
+    {
+      "id": "PRD-2026-008",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Enterprise Figma UI/UX Design System & Mobile App Templates",
+      "category": "Templates",
+      "description": "Enterprise Figma UI/UX design library with 120+ responsive Web3 & SaaS components, Dark Obsidian and Gold luxury themes, typography tokens, and complete mobile screen flows.",
+      "priceNGN": 60000,
+      "priceUSD": 40,
+      "pricePi": 4,
+      "deliverables": [
+        "Comprehensive Figma community-grade .FIG master file with variables",
+        "120+ pre-built components (buttons, modals, tables, QR cards, charts)",
+        "Complete desktop, tablet, and mobile responsive layout mockups",
+        "WCAG 2.1 AA accessibility compliant color palettes and typography rules"
+      ],
+      "features": [
+        "120+ Figma Components",
+        "Dark Luxury Theme",
+        "WCAG 2.1 Compliant",
+        "Mobile Screen Flows"
+      ],
+      "deliveryTimeDays": 1,
+      "ratingAverage": 4.8,
+      "completedDeals": 52,
+      "badge": "Designer Pack",
+      "status": "active",
+      "createdAt": "2026-02-20T10:00:00Z"
+    },
+    {
+      "id": "PRD-2026-009",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Cryptographic Legal Contracts & Smart Invoicing Engine",
+      "category": "Business Documents",
+      "description": "Cryptographically verified digital contracts and automated multi-currency billing suite. Features SHA-256 digital signature hashes, mutual sign-off timestamps, and verifiable QR validation endpoints.",
+      "priceNGN": 180000,
+      "priceUSD": 120,
+      "pricePi": 12,
+      "deliverables": [
+        "Standardized commercial contract templates for services, supply, and tech",
+        "Multi-currency invoice generation engine supporting NGN, USD, EUR, and Pi",
+        "Cryptographic SHA-256 signature verification endpoints & QR badges",
+        "Automatic audit trail logging and PDF export infrastructure"
+      ],
+      "features": [
+        "SHA-256 Signatures",
+        "Multi-Currency Billing",
+        "QR Verification",
+        "Audit Logging"
+      ],
+      "deliveryTimeDays": 3,
+      "ratingAverage": 5,
+      "completedDeals": 19,
+      "badge": "Verified Legal",
+      "status": "active",
+      "createdAt": "2026-02-22T13:45:00Z"
+    },
+    {
+      "id": "PRD-2026-010",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Official Pi Network Platform API & SDK Integration Suite",
+      "category": "Web3 Services",
+      "description": "Enterprise integration of official Pi Network Platform API v2 and Pi SDK v2. Includes server-to-server payment approval, payment completion, user authentication, and Pi Browser domain validation.",
+      "priceNGN": 380000,
+      "priceUSD": 250,
+      "pricePi": 25,
+      "deliverables": [
+        "Complete server-to-server approval (/api/pi/approve) & completion (/api/pi/complete) endpoints",
+        "Official Pi OAuth 2.0 Sign-in integration with CSRF state protection",
+        "Domain validation file deployment (/validation-key.txt)",
+        "Strict anti-mock architecture compliant with Pi Developer Portal guidelines"
+      ],
+      "features": [
+        "Platform API v2",
+        "Pi SDK v2",
+        "OAuth 2.0 Sign-in",
+        "Strict Anti-Mocking"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.9,
+      "completedDeals": 31,
+      "badge": "Core Web3",
+      "status": "active",
+      "createdAt": "2026-02-25T15:00:00Z"
+    },
+    {
+      "id": "PRD-2026-011",
+      "businessId": "GOYE-BIZ-2026-000002",
+      "sellerBusinessName": "Sirwise Digital Academy",
+      "sellerVerificationLevel": 3,
+      "title": "Sirwise Academy: Web3 & AI Business Architecture Masterclass",
+      "category": "Education",
+      "description": "Comprehensive executive video masterclass and hands-on developer training covering decentralized commerce models, Pi Network developer architecture, server-side AI engineering, and trade assurance.",
+      "priceNGN": 95000,
+      "priceUSD": 65,
+      "pricePi": 6.5,
+      "deliverables": [
+        "48 modular high-definition video lessons and downloadable code labs",
+        "10 production starter repositories with automated CI/CD configurations",
+        "Weekly live Q&A sessions with certified Web3 & AI enterprise architects",
+        "Verifiable digital graduation certificate with permanent QR verification reference"
+      ],
+      "features": [
+        "48 Video Lessons",
+        "10 GitHub Labs",
+        "Verifiable QR Certificate",
+        "Weekly Architect AMA"
+      ],
+      "deliveryTimeDays": 1,
+      "ratingAverage": 4.9,
+      "completedDeals": 114,
+      "badge": "Top Rated",
+      "status": "active",
+      "createdAt": "2026-02-28T09:00:00Z"
+    },
+    {
+      "id": "PRD-2026-012",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Enterprise Digital Transformation & Web3 Strategic Advisory",
+      "category": "Consulting",
+      "description": "Direct advisory engagement for mid-market and enterprise leadership navigating digital transformation, multi-rail payment adoption (fiat + Pi), corporate compliance, and automated AI operations.",
+      "priceNGN": 300000,
+      "priceUSD": 200,
+      "pricePi": 20,
+      "deliverables": [
+        "Four 90-minute executive strategy and technical scoping sessions",
+        "Comprehensive infrastructure and security architecture audit report",
+        "Tailored Web3 & AI adoption roadmap with 30-60-90 day milestone milestones",
+        "Regulatory compliance assessment & vendor selection recommendations"
+      ],
+      "features": [
+        "Executive Advisory",
+        "Security Audit",
+        "Adoption Roadmap",
+        "Regulatory Assessment"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 5,
+      "completedDeals": 17,
+      "badge": "Executive",
+      "status": "active",
+      "createdAt": "2026-03-01T14:30:00Z"
+    },
+    {
+      "id": "PRD-2026-013",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Multi-Tenant CRM & Inbound Lead Dispatch Cloud Platform",
+      "category": "Software/SaaS",
+      "description": "Enterprise customer relationship management software designed for digital sales teams. Automates lead intake from website forms and AI receptionists, assigns sales reps, and tracks deal closing.",
+      "priceNGN": 290000,
+      "priceUSD": 195,
+      "pricePi": 19.5,
+      "deliverables": [
+        "Cloud-hosted multi-tenant CRM portal with customized sales pipelines",
+        "Automated lead assignment engine based on sales agent capacity and region",
+        "Automated WhatsApp and email drip follow-up sequences",
+        "Customer lifetime value, conversion rate, and revenue reporting dashboards"
+      ],
+      "features": [
+        "Automated Pipeline",
+        "WhatsApp Drip",
+        "Revenue Reporting",
+        "Role-Based Access"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.8,
+      "completedDeals": 26,
+      "badge": "SaaS",
+      "status": "active",
+      "createdAt": "2026-03-03T11:20:00Z"
+    },
+    {
+      "id": "PRD-2026-014",
+      "businessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Corporate Web3 Brand Identity & Motion Design Suite",
+      "category": "Creative Services",
+      "description": "High-impact brand identity suite tailored for fintechs, Web3 projects, and modern enterprises. Includes 3D metallic logo emblems, motion logo reveal loops, investor pitch decks, and brand style guides.",
+      "priceNGN": 160000,
+      "priceUSD": 110,
+      "pricePi": 11,
+      "deliverables": [
+        "High-resolution vector brand mark package in SVG, PDF, and transparent PNG",
+        "3D metallic emblem animation loop (4K MP4 & transparent WebM)",
+        "Comprehensive 28-page brand identity guideline manual (typography, color codes)",
+        "Executive pitch deck template in Figma and PowerPoint formats"
+      ],
+      "features": [
+        "3D Emblem Loop",
+        "Vector Master Assets",
+        "Brand Style Manual",
+        "Pitch Deck Template"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.9,
+      "completedDeals": 38,
+      "badge": "Creative",
+      "status": "active",
+      "createdAt": "2026-03-05T16:00:00Z"
+    },
+    {
+      "id": "PRD-2026-015",
+      "businessId": "GOYE-BIZ-2026-000003",
+      "sellerBusinessName": "TradeShield Logistics & Assurance",
+      "sellerVerificationLevel": 4,
+      "title": "TradeShield Cross-Border Trade Assurance & Milestone Escrow",
+      "category": "Trade Assurance",
+      "description": "Structured trade protection protocol for cross-border and B2B commerce. Enforces a 7-stage milestone inspection pipeline, tamper-evident cargo documentation, and non-custodial milestone release.",
+      "priceNGN": 250000,
+      "priceUSD": 170,
+      "pricePi": 17,
+      "deliverables": [
+        "7-stage milestone verification agreement and milestone release contract",
+        "On-the-ground cargo inspection documentation and digital photographic logs",
+        "Third-party neutral dispute mitigation and record reconciliation desk",
+        "Verifiable trade assurance certificate and public QR status ledger"
+      ],
+      "features": [
+        "7-Stage Pipeline",
+        "Cargo Photo Logs",
+        "Neutral Mediation",
+        "QR Milestone Ledger"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 4.9,
+      "completedDeals": 47,
+      "badge": "Protected",
+      "status": "active",
+      "createdAt": "2026-03-07T08:30:00Z"
+    }
+  ],
   "services": [],
   "orders": [
     {
@@ -615,93 +1066,468 @@
   "marketplace_listings": [
     {
       "id": "MKT-2026-001",
+      "productId": "PRD-2026-001",
       "sellerBusinessId": "GOYE-BIZ-2026-000001",
       "sellerBusinessName": "GOYE Tech Innovations",
       "sellerVerificationLevel": 4,
-      "title": "Enterprise High-Converting Web Portal & Custom Dashboard",
-      "description": "Turnkey business portal built on modern React, Node.js, and Tailwind CSS. Includes user authentication, role-based dashboards, secure API gateways, and digital invoice generation.",
+      "title": "Enterprise Web3 Business Website & Client Portal",
+      "description": "Turnkey enterprise business portal engineered with React 19, Node.js, and Tailwind CSS. Features Web3 wallet connectivity, client portal dashboard, digital invoice generation, and full commercial license.",
       "category": "Websites",
       "priceNGN": 480000,
       "priceUSD": 320,
       "pricePi": 32,
       "deliverables": [
-        "Complete production-ready source code with full commercial license",
-        "Role-based admin and customer portals with responsive layouts",
-        "Integrated invoice generation and payment webhook endpoints",
-        "30-day technical warranty and engineering handover documentation"
+        "Complete production-ready source code with full commercial transfer",
+        "Role-based customer and administrator portal with responsive layouts",
+        "Integrated multi-currency invoice generation and webhook endpoints",
+        "30-day technical warranty, deployment assistance & handover docs"
+      ],
+      "features": [
+        "Web3 Wallet Connect",
+        "Client Dashboard",
+        "Multi-Currency Checkout",
+        "99.9% Uptime Architecture"
       ],
       "deliveryTimeDays": 7,
       "ratingAverage": 4.9,
       "completedDeals": 28,
+      "badge": "Best Seller",
       "status": "active",
       "createdAt": "2026-02-01T10:00:00Z"
     },
     {
       "id": "MKT-2026-002",
+      "productId": "PRD-2026-002",
       "sellerBusinessId": "GOYE-BIZ-2026-000001",
       "sellerBusinessName": "GOYE Tech Innovations",
       "sellerVerificationLevel": 4,
-      "title": "Autonomous Business AI Receptionist & WhatsApp Handoff Pipeline",
-      "description": "Custom-trained 24/7 AI Receptionist that handles client discovery, answers catalog pricing, qualifies inbound leads, and seamlessly routes hot prospects to WhatsApp.",
+      "title": "Custom Cloud SaaS & High-Concurrency Dashboard",
+      "description": "Production-ready multi-tenant cloud software with PostgreSQL/Cloud SQL schema, secure RESTful API gateways, real-time analytics, and role-based access control.",
+      "category": "Web Apps",
+      "priceNGN": 750000,
+      "priceUSD": 500,
+      "pricePi": 50,
+      "deliverables": [
+        "Scalable microservices/Express backend with database migrations",
+        "Real-time operational metrics & revenue analytics dashboard",
+        "Role-based permission matrix (SuperAdmin, Staff, Client, Auditor)",
+        "Automated CI/CD deployment scripts and architectural blueprint"
+      ],
+      "features": [
+        "Multi-Tenant RBAC",
+        "Cloud SQL Ready",
+        "Real-Time Telemetry",
+        "Audit-Ready Logs"
+      ],
+      "deliveryTimeDays": 14,
+      "ratingAverage": 5,
+      "completedDeals": 15,
+      "badge": "Enterprise Grade",
+      "status": "active",
+      "createdAt": "2026-02-03T11:00:00Z"
+    },
+    {
+      "id": "MKT-2026-003",
+      "productId": "PRD-2026-003",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Autonomous AI Front-Desk Receptionist & WhatsApp Handoff",
+      "description": "24/7 autonomous front-desk conversational AI powered by server-side Google Gemini models. Answers company service inquiries, qualifies prospects, and routes warm leads directly to WhatsApp.",
       "category": "AI Assistants",
       "priceNGN": 220000,
       "priceUSD": 150,
       "pricePi": 15,
       "deliverables": [
-        "Server-side Gemini AI integration with zero client-side API key exposure",
-        "Custom knowledge base ingestion (Services, FAQs, Pricing)",
+        "Server-side Gemini AI integration with zero client key exposure",
+        "Custom business knowledge base ingestion (pricing, services, FAQs)",
         "Automated lead capture modal with CRM dispatch",
-        "One-click WhatsApp click-to-chat escalation"
+        "1-click WhatsApp click-to-chat escalation with lead summary context"
       ],
-      "deliveryTimeDays": 4,
+      "features": [
+        "Server-Side Gemini 2.5",
+        "Zero Client Key Exposure",
+        "WhatsApp Click-to-Chat",
+        "Lead Capture"
+      ],
+      "deliveryTimeDays": 3,
       "ratingAverage": 4.8,
       "completedDeals": 42,
+      "badge": "Popular",
       "status": "active",
       "createdAt": "2026-02-05T12:00:00Z"
     },
     {
-      "id": "MKT-2026-003",
-      "sellerBusinessId": "GOYE-BIZ-2026-000002",
-      "sellerBusinessName": "Sirwise Digital Academy",
-      "sellerVerificationLevel": 3,
-      "title": "Web3 & AI Business Architecture Masterclass (Curriculum & Code Access)",
-      "description": "Comprehensive structured curriculum covering practical decentralized business models, Pi Network developer architecture, stablecoin settlement integration, and business automation.",
-      "category": "Education",
-      "priceNGN": 95000,
-      "priceUSD": 65,
-      "pricePi": 6.5,
-      "deliverables": [
-        "Full access to 48 structured modular video lessons and interactive labs",
-        "10 real-world repository starter kits with automated CI/CD configurations",
-        "Verifiable digital completion certificate with QR credential verification"
-      ],
-      "deliveryTimeDays": 1,
-      "ratingAverage": 4.9,
-      "completedDeals": 114,
-      "status": "active",
-      "createdAt": "2026-02-10T14:00:00Z"
-    },
-    {
       "id": "MKT-2026-004",
+      "productId": "PRD-2026-004",
       "sellerBusinessId": "GOYE-BIZ-2026-000001",
       "sellerBusinessName": "GOYE Tech Innovations",
       "sellerVerificationLevel": 4,
-      "title": "Verified Commercial Digital Contracts & Invoicing Infrastructure Suite",
-      "description": "Enterprise legal contract and multi-currency billing engine. Generate enforceable milestones, digital signature timestamps, and verifiable QR verification references.",
+      "title": "Autonomous AI Operations & Business Workflow Suite",
+      "description": "End-to-end automation engine that parses inbound inquiries, generates formal quotes, tracks delivery milestones, and automates multi-channel notifications.",
+      "category": "AI Automation",
+      "priceNGN": 350000,
+      "priceUSD": 235,
+      "pricePi": 23.5,
+      "deliverables": [
+        "Automated invoice & contract generation pipeline",
+        "Document OCR & extraction engine for incoming invoices",
+        "Automated SMS, Email & WhatsApp milestone notification triggers",
+        "Custom webhook connectors for Zapier, Make, and internal ERPs"
+      ],
+      "features": [
+        "Automated Invoicing",
+        "Milestone Triggers",
+        "CRM Webhooks",
+        "Zero Manual Overhead"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.9,
+      "completedDeals": 21,
+      "badge": "High ROI",
+      "status": "active",
+      "createdAt": "2026-02-08T09:30:00Z"
+    },
+    {
+      "id": "MKT-2026-005",
+      "productId": "PRD-2026-005",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Web3 Growth Engine & Performance Digital Marketing Suite",
+      "description": "Omnichannel customer acquisition campaign engineered for Web3 products, local businesses, and digital services. Includes high-converting ad copy, Pioneer community campaigns, and conversion analytics.",
+      "category": "Digital Marketing",
+      "priceNGN": 180000,
+      "priceUSD": 120,
+      "pricePi": 12,
+      "deliverables": [
+        "3 high-converting landing page variants with A/B testing setup",
+        "Targeted social media ad copy & creative pack (Meta, Google, X)",
+        "Pi Network pioneer community engagement strategy playbook",
+        "Conversion tracking pixel integration & weekly ROI performance audit"
+      ],
+      "features": [
+        "Pioneer Community Outreach",
+        "A/B Landing Pages",
+        "ROAS Analytics",
+        "Multi-Channel Ad Copy"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 4.7,
+      "completedDeals": 36,
+      "badge": "Growth",
+      "status": "active",
+      "createdAt": "2026-02-12T14:15:00Z"
+    },
+    {
+      "id": "MKT-2026-006",
+      "productId": "PRD-2026-006",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Corporate CAC Incorporation & Verified Business Registration",
+      "description": "Full legal business entity registration in Nigeria (Corporate Affairs Commission RC/BN), Federal Tax Identification Number (TIN), corporate board resolution templates, and instant GOYE Level 4 Verified ID Badge.",
+      "category": "Business Services",
+      "priceNGN": 145000,
+      "priceUSD": 95,
+      "pricePi": 9.5,
+      "deliverables": [
+        "Official CAC Certificate of Incorporation & Status Report document",
+        "Federal Inland Revenue Service Tax Identification Number (TIN)",
+        "Standardized corporate resolution templates & MEMART documentation",
+        "GOYE Level 4 Identity Confirmed verified cryptographic business profile"
+      ],
+      "features": [
+        "Official CAC Filing",
+        "TIN Tax Registration",
+        "Level 4 Badge",
+        "Verified Director Records"
+      ],
+      "deliveryTimeDays": 10,
+      "ratingAverage": 5,
+      "completedDeals": 64,
+      "badge": "Essential",
+      "status": "active",
+      "createdAt": "2026-02-14T08:00:00Z"
+    },
+    {
+      "id": "MKT-2026-007",
+      "productId": "PRD-2026-007",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "gasv.store Curated Digital Assets & Turnkey Codebases",
+      "description": "Commercial developer asset bundle from gasv.store featuring production TypeScript boilerplates, smart contract integration scripts, e-commerce checkout components, and mobile web view wrappers.",
+      "category": "Digital Products",
+      "priceNGN": 75000,
+      "priceUSD": 50,
+      "pricePi": 5,
+      "deliverables": [
+        "5 modular production GitHub repositories with full commercial rights",
+        "Pi SDK v2 boilerplate with server-side approval/completion endpoints",
+        "Plug-and-play Tailwind CSS v4 design token pack & component library",
+        "Comprehensive developer setup guide & 1-click Vercel/Docker deploy configs"
+      ],
+      "features": [
+        "Instant GitHub Access",
+        "Commercial License",
+        "Pi SDK v2 Starter",
+        "TypeScript / Tailwind v4"
+      ],
+      "deliveryTimeDays": 1,
+      "ratingAverage": 4.9,
+      "completedDeals": 88,
+      "badge": "Instant Delivery",
+      "status": "active",
+      "createdAt": "2026-02-18T16:20:00Z"
+    },
+    {
+      "id": "MKT-2026-008",
+      "productId": "PRD-2026-008",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Enterprise Figma UI/UX Design System & Mobile App Templates",
+      "description": "Enterprise Figma UI/UX design library with 120+ responsive Web3 & SaaS components, Dark Obsidian and Gold luxury themes, typography tokens, and complete mobile screen flows.",
+      "category": "Templates",
+      "priceNGN": 60000,
+      "priceUSD": 40,
+      "pricePi": 4,
+      "deliverables": [
+        "Comprehensive Figma community-grade .FIG master file with variables",
+        "120+ pre-built components (buttons, modals, tables, QR cards, charts)",
+        "Complete desktop, tablet, and mobile responsive layout mockups",
+        "WCAG 2.1 AA accessibility compliant color palettes and typography rules"
+      ],
+      "features": [
+        "120+ Figma Components",
+        "Dark Luxury Theme",
+        "WCAG 2.1 Compliant",
+        "Mobile Screen Flows"
+      ],
+      "deliveryTimeDays": 1,
+      "ratingAverage": 4.8,
+      "completedDeals": 52,
+      "badge": "Designer Pack",
+      "status": "active",
+      "createdAt": "2026-02-20T10:00:00Z"
+    },
+    {
+      "id": "MKT-2026-009",
+      "productId": "PRD-2026-009",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Cryptographic Legal Contracts & Smart Invoicing Engine",
+      "description": "Cryptographically verified digital contracts and automated multi-currency billing suite. Features SHA-256 digital signature hashes, mutual sign-off timestamps, and verifiable QR validation endpoints.",
       "category": "Business Documents",
       "priceNGN": 180000,
       "priceUSD": 120,
       "pricePi": 12,
       "deliverables": [
-        "Structured legal contract templates tailored for trade and digital services",
-        "Automated invoice generation engine supporting NGN, USD, EUR, and Pi",
-        "Server-side verification endpoints and QR code metadata"
+        "Standardized commercial contract templates for services, supply, and tech",
+        "Multi-currency invoice generation engine supporting NGN, USD, EUR, and Pi",
+        "Cryptographic SHA-256 signature verification endpoints & QR badges",
+        "Automatic audit trail logging and PDF export infrastructure"
+      ],
+      "features": [
+        "SHA-256 Signatures",
+        "Multi-Currency Billing",
+        "QR Verification",
+        "Audit Logging"
       ],
       "deliveryTimeDays": 3,
       "ratingAverage": 5,
       "completedDeals": 19,
+      "badge": "Verified Legal",
       "status": "active",
-      "createdAt": "2026-02-15T09:00:00Z"
+      "createdAt": "2026-02-22T13:45:00Z"
+    },
+    {
+      "id": "MKT-2026-010",
+      "productId": "PRD-2026-010",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Official Pi Network Platform API & SDK Integration Suite",
+      "description": "Enterprise integration of official Pi Network Platform API v2 and Pi SDK v2. Includes server-to-server payment approval, payment completion, user authentication, and Pi Browser domain validation.",
+      "category": "Web3 Services",
+      "priceNGN": 380000,
+      "priceUSD": 250,
+      "pricePi": 25,
+      "deliverables": [
+        "Complete server-to-server approval (/api/pi/approve) & completion (/api/pi/complete) endpoints",
+        "Official Pi OAuth 2.0 Sign-in integration with CSRF state protection",
+        "Domain validation file deployment (/validation-key.txt)",
+        "Strict anti-mock architecture compliant with Pi Developer Portal guidelines"
+      ],
+      "features": [
+        "Platform API v2",
+        "Pi SDK v2",
+        "OAuth 2.0 Sign-in",
+        "Strict Anti-Mocking"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.9,
+      "completedDeals": 31,
+      "badge": "Core Web3",
+      "status": "active",
+      "createdAt": "2026-02-25T15:00:00Z"
+    },
+    {
+      "id": "MKT-2026-011",
+      "productId": "PRD-2026-011",
+      "sellerBusinessId": "GOYE-BIZ-2026-000002",
+      "sellerBusinessName": "Sirwise Digital Academy",
+      "sellerVerificationLevel": 3,
+      "title": "Sirwise Academy: Web3 & AI Business Architecture Masterclass",
+      "description": "Comprehensive executive video masterclass and hands-on developer training covering decentralized commerce models, Pi Network developer architecture, server-side AI engineering, and trade assurance.",
+      "category": "Education",
+      "priceNGN": 95000,
+      "priceUSD": 65,
+      "pricePi": 6.5,
+      "deliverables": [
+        "48 modular high-definition video lessons and downloadable code labs",
+        "10 production starter repositories with automated CI/CD configurations",
+        "Weekly live Q&A sessions with certified Web3 & AI enterprise architects",
+        "Verifiable digital graduation certificate with permanent QR verification reference"
+      ],
+      "features": [
+        "48 Video Lessons",
+        "10 GitHub Labs",
+        "Verifiable QR Certificate",
+        "Weekly Architect AMA"
+      ],
+      "deliveryTimeDays": 1,
+      "ratingAverage": 4.9,
+      "completedDeals": 114,
+      "badge": "Top Rated",
+      "status": "active",
+      "createdAt": "2026-02-28T09:00:00Z"
+    },
+    {
+      "id": "MKT-2026-012",
+      "productId": "PRD-2026-012",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Enterprise Digital Transformation & Web3 Strategic Advisory",
+      "description": "Direct advisory engagement for mid-market and enterprise leadership navigating digital transformation, multi-rail payment adoption (fiat + Pi), corporate compliance, and automated AI operations.",
+      "category": "Consulting",
+      "priceNGN": 300000,
+      "priceUSD": 200,
+      "pricePi": 20,
+      "deliverables": [
+        "Four 90-minute executive strategy and technical scoping sessions",
+        "Comprehensive infrastructure and security architecture audit report",
+        "Tailored Web3 & AI adoption roadmap with 30-60-90 day milestone milestones",
+        "Regulatory compliance assessment & vendor selection recommendations"
+      ],
+      "features": [
+        "Executive Advisory",
+        "Security Audit",
+        "Adoption Roadmap",
+        "Regulatory Assessment"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 5,
+      "completedDeals": 17,
+      "badge": "Executive",
+      "status": "active",
+      "createdAt": "2026-03-01T14:30:00Z"
+    },
+    {
+      "id": "MKT-2026-013",
+      "productId": "PRD-2026-013",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Multi-Tenant CRM & Inbound Lead Dispatch Cloud Platform",
+      "description": "Enterprise customer relationship management software designed for digital sales teams. Automates lead intake from website forms and AI receptionists, assigns sales reps, and tracks deal closing.",
+      "category": "Software/SaaS",
+      "priceNGN": 290000,
+      "priceUSD": 195,
+      "pricePi": 19.5,
+      "deliverables": [
+        "Cloud-hosted multi-tenant CRM portal with customized sales pipelines",
+        "Automated lead assignment engine based on sales agent capacity and region",
+        "Automated WhatsApp and email drip follow-up sequences",
+        "Customer lifetime value, conversion rate, and revenue reporting dashboards"
+      ],
+      "features": [
+        "Automated Pipeline",
+        "WhatsApp Drip",
+        "Revenue Reporting",
+        "Role-Based Access"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.8,
+      "completedDeals": 26,
+      "badge": "SaaS",
+      "status": "active",
+      "createdAt": "2026-03-03T11:20:00Z"
+    },
+    {
+      "id": "MKT-2026-014",
+      "productId": "PRD-2026-014",
+      "sellerBusinessId": "GOYE-BIZ-2026-000001",
+      "sellerBusinessName": "GOYE Tech Innovations",
+      "sellerVerificationLevel": 4,
+      "title": "Corporate Web3 Brand Identity & Motion Design Suite",
+      "description": "High-impact brand identity suite tailored for fintechs, Web3 projects, and modern enterprises. Includes 3D metallic logo emblems, motion logo reveal loops, investor pitch decks, and brand style guides.",
+      "category": "Creative Services",
+      "priceNGN": 160000,
+      "priceUSD": 110,
+      "pricePi": 11,
+      "deliverables": [
+        "High-resolution vector brand mark package in SVG, PDF, and transparent PNG",
+        "3D metallic emblem animation loop (4K MP4 & transparent WebM)",
+        "Comprehensive 28-page brand identity guideline manual (typography, color codes)",
+        "Executive pitch deck template in Figma and PowerPoint formats"
+      ],
+      "features": [
+        "3D Emblem Loop",
+        "Vector Master Assets",
+        "Brand Style Manual",
+        "Pitch Deck Template"
+      ],
+      "deliveryTimeDays": 5,
+      "ratingAverage": 4.9,
+      "completedDeals": 38,
+      "badge": "Creative",
+      "status": "active",
+      "createdAt": "2026-03-05T16:00:00Z"
+    },
+    {
+      "id": "MKT-2026-015",
+      "productId": "PRD-2026-015",
+      "sellerBusinessId": "GOYE-BIZ-2026-000003",
+      "sellerBusinessName": "TradeShield Logistics & Assurance",
+      "sellerVerificationLevel": 4,
+      "title": "TradeShield Cross-Border Trade Assurance & Milestone Escrow",
+      "description": "Structured trade protection protocol for cross-border and B2B commerce. Enforces a 7-stage milestone inspection pipeline, tamper-evident cargo documentation, and non-custodial milestone release.",
+      "category": "Trade Assurance",
+      "priceNGN": 250000,
+      "priceUSD": 170,
+      "pricePi": 17,
+      "deliverables": [
+        "7-stage milestone verification agreement and milestone release contract",
+        "On-the-ground cargo inspection documentation and digital photographic logs",
+        "Third-party neutral dispute mitigation and record reconciliation desk",
+        "Verifiable trade assurance certificate and public QR status ledger"
+      ],
+      "features": [
+        "7-Stage Pipeline",
+        "Cargo Photo Logs",
+        "Neutral Mediation",
+        "QR Milestone Ledger"
+      ],
+      "deliveryTimeDays": 7,
+      "ratingAverage": 4.9,
+      "completedDeals": 47,
+      "badge": "Protected",
+      "status": "active",
+      "createdAt": "2026-03-07T08:30:00Z"
     }
   ],
   "documents": [
@@ -908,6 +1734,12 @@
   "meta": {
     "version": "1.0.0",
     "initializedAt": "2026-03-01T10:00:00Z",
-    "lastSavedAt": "2026-10-12T13:09:32.055Z"
-  }
+    "lastSavedAt": "2026-10-15T07:53:05.885Z"
+  },
+  "sales_leads": [],
+  "bookings": [],
+  "booking_availability": [],
+  "trade_deals": [],
+  "document_vault": [],
+  "growth_reports": []
 }

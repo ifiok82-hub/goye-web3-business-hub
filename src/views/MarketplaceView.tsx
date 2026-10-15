@@ -74,6 +74,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
     'Consulting',
     'Software/SaaS',
     'Creative Services',
+    'Trade Assurance',
   ];
 
   const VERIFICATION_LEVEL_LABELS: Record<number, string> = {

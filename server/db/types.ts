@@ -91,8 +91,18 @@ export interface ProductRecord {
   priceNGN: number;
   priceUSD: number;
   pricePi?: number;
+  deliverables?: string[];
+  features?: string[];
+  deliveryTimeDays?: number;
+  ratingAverage?: number;
+  completedDeals?: number;
+  sellerBusinessName?: string;
+  sellerVerificationLevel?: number;
+  badge?: string;
+  slaHours?: number;
   status: 'active' | 'archived';
   createdAt: string;
+  updatedAt?: string;
 }
 
 // 7. services
@@ -359,7 +369,7 @@ export interface AuditLogRecord {
   isImmutable: boolean;
 }
 
-// 25. admin_users & support_tickets
+// 25. admin_users
 export interface AdminUserRecord {
   id: string;
   username: string;
@@ -368,12 +378,116 @@ export interface AdminUserRecord {
   createdAt: string;
 }
 
+// 26. support_tickets
 export interface SupportTicketRecord {
-  id: string;
+  id: string; // TCK-XXXXXX
   businessId?: string;
+  requesterName?: string;
   requesterEmail: string;
   subject: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  description?: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'WAITING' | 'RESOLVED' | 'CLOSED';
+  priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  messages?: { sender: string; text: string; timestamp: string }[];
   createdAt: string;
+  updatedAt?: string;
 }
+
+// 27. sales_leads
+export interface SalesLeadRecord {
+  id: string; // LEAD-XXXXXX
+  businessId: string;
+  name: string;
+  contact: string;
+  email: string;
+  interest: string;
+  budget?: string;
+  intent?: 'HIGH' | 'MEDIUM' | 'LOW' | 'INFORMATIVE';
+  source: string;
+  status: 'NEW' | 'QUALIFIED' | 'CONTACTED' | 'CONVERTED' | 'CLOSED';
+  notes?: string;
+  qualificationScore?: number;
+  recommendedAction?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 28. bookings & availability
+export interface BookingRecord {
+  id: string; // BKG-XXXXXX
+  serviceId?: string;
+  serviceName: string;
+  businessId: string;
+  providerName: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  date: string;
+  timeSlot: string;
+  status: 'REQUESTED' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BookingAvailabilityRecord {
+  id: string;
+  businessId: string;
+  dayOfWeek: number; // 0=Sun, 1=Mon, ..., 6=Sat
+  timeSlots: string[];
+  isAvailable: boolean;
+}
+
+// 29. trade_deals
+export interface TradeDealRecord {
+  id: string; // TDL-XXXXXX
+  title: string;
+  buyerBusinessId: string;
+  buyerName: string;
+  buyerEmail: string;
+  sellerBusinessId: string;
+  sellerName: string;
+  sellerEmail: string;
+  contractId?: string;
+  invoiceId?: string;
+  totalAmount: number;
+  currency: string;
+  currentStage: number; // 1 to 10
+  stageName: string;
+  status: 'DRAFT' | 'ACTIVE' | 'AWAITING_PAYMENT' | 'IN_PROGRESS' | 'DELIVERED' | 'CONFIRMATION_PENDING' | 'DISPUTED' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED';
+  milestones: { id: string; title: string; amount: number; status: string; completedAt?: string }[];
+  disputeDetails?: string;
+  disclaimer: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 30. document_vault
+export interface DocumentVaultRecord {
+  id: string; // DOC-VLT-XXXXXX
+  businessId: string;
+  documentName: string;
+  documentType: 'Business Registration' | 'Contracts' | 'Invoices' | 'Receipts' | 'Identity/verification documents' | 'Business certificates' | 'Agreements' | 'Other';
+  fileHash: string;
+  fileSizeKB: number;
+  status: 'UPLOADED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
+  ownerEmail: string;
+  version: number;
+  uploadedAt: string;
+  updatedAt: string;
+}
+
+// 31. growth_reports
+export interface GrowthReportRecord {
+  id: string; // GRP-XXXXXX
+  businessId: string;
+  overallScore: number;
+  websiteAudit: string[];
+  marketingIdeas: string[];
+  seoRecommendations: string[];
+  cxSuggestions: string[];
+  workflowRecommendations: string[];
+  productPositioning: string[];
+  generatedAt: string;
+}
+

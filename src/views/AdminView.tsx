@@ -12,6 +12,8 @@ import {
   X,
   Server,
   Layers,
+  Package,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const AdminView: React.FC = () => {
@@ -22,6 +24,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Verification modal / action
+  const [adminProducts, setAdminProducts] = useState<any[]>([]);
   const [verifyingBusinessId, setVerifyingBusinessId] = useState<string | null>(null);
   const [newVerificationLevel, setNewVerificationLevel] = useState<number>(3);
   const [verificationNotes, setVerificationNotes] = useState('');
@@ -51,6 +54,8 @@ export const AdminView: React.FC = () => {
       if (res.ok) {
         setIsAuthenticated(true);
         setOverview(data);
+        // Also fetch 15 products
+        fetchAdminProducts(adminKey.trim());
       } else {
         setAuthError(data.error || 'Invalid administrative key.');
       }
@@ -58,6 +63,20 @@ export const AdminView: React.FC = () => {
       setAuthError('Connection failed. Please retry.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAdminProducts = async (key = adminKey) => {
+    try {
+      const res = await fetch('/api/admin/products', {
+        headers: { 'x-admin-key': key },
+      });
+      const pData = await res.json();
+      if (res.ok) {
+        setAdminProducts(pData.products || []);
+      }
+    } catch (e) {
+      // Ignore product fetch errors
     }
   };
 
@@ -72,10 +91,35 @@ export const AdminView: React.FC = () => {
       if (res.ok) {
         setOverview(data);
       }
+      await fetchAdminProducts();
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleProductStatus = async (productId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
+    try {
+      const res = await fetch(`/api/admin/products/${productId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setActionSuccess(`Product ${productId} status changed to ${newStatus}.`);
+        fetchAdminProducts();
+        setTimeout(() => setActionSuccess(null), 3000);
+      } else {
+        setActionError(data.error || 'Failed to update status.');
+      }
+    } catch (err) {
+      setActionError('Error changing product status.');
     }
   };
 
@@ -368,7 +412,89 @@ export const AdminView: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Immutable Audit Logs (Read-Only) */}
+      {/* 4. 15-Product Infrastructure Catalog Management */}
+      <div className="p-6 rounded-xl bg-[#121620] border border-white/10 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div>
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Package className="w-4 h-4 text-[#D4AF37]" />
+              <span>15-Product Infrastructure Catalog Management</span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Audit catalog solutions, pricing models across NGN/USD/Pi, and control publication status.
+            </p>
+          </div>
+          <span className="text-xs font-mono text-[#D4AF37]">
+            {adminProducts.length} Solutions Registered
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                <th className="py-2.5 px-3">Product / ID</th>
+                <th className="py-2.5 px-3">Category</th>
+                <th className="py-2.5 px-3">Pricing (NGN / USD / Pi)</th>
+                <th className="py-2.5 px-3">Seller</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {adminProducts.map((prd: any) => (
+                <tr key={prd.id} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="py-3 px-3">
+                    <div className="font-bold text-white max-w-xs">{prd.title}</div>
+                    <div className="text-[10px] font-mono text-slate-500">{prd.id}</div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-[#D4AF37]">
+                      {prd.category}
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 font-mono">
+                    <div className="text-white font-semibold">₦{prd.priceNGN?.toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-400">${prd.priceUSD} · {prd.pricePi || (prd.priceNGN / 15000).toFixed(2)} π</div>
+                  </td>
+                  <td className="py-3 px-3 text-slate-300">
+                    <div>{prd.sellerBusinessName || prd.businessId}</div>
+                    <div className="text-[10px] text-emerald-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" />
+                      Level {prd.sellerVerificationLevel || 4}
+                    </div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        prd.status === 'active'
+                          ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800'
+                          : 'bg-rose-950/60 text-rose-400 border border-rose-800'
+                      }`}
+                    >
+                      {prd.status}
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 text-right">
+                    <button
+                      onClick={() => handleToggleProductStatus(prd.id, prd.status)}
+                      className={`px-2.5 py-1 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
+                        prd.status === 'active'
+                          ? 'bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800'
+                          : 'bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800'
+                      }`}
+                    >
+                      {prd.status === 'active' ? 'Archive' : 'Activate'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 5. Immutable Audit Logs (Read-Only) */}
       <div className="p-6 rounded-xl bg-[#121620] border border-white/10 space-y-4">
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div>

@@ -320,6 +320,195 @@ apiRouter.post('/marketplace/orders', (req: Request, res: Response) => {
   });
 });
 
+// ---------------- 2B. 15-PRODUCT INFRASTRUCTURE ROUTES ----------------
+
+/**
+ * GET /api/products
+ * Comprehensive filtering across the 15 official GOYE Web3 Business Hub products
+ */
+apiRouter.get('/products', (req: Request, res: Response) => {
+  const { category, search, minPrice, maxPrice, currency, businessId, sort } = req.query;
+  const state = dbAdapter.getState();
+  let products = [...(state.products || [])];
+
+  if (category && typeof category === 'string' && category !== 'All') {
+    products = products.filter((p) => p.category.toLowerCase() === category.toLowerCase());
+  }
+
+  if (businessId && typeof businessId === 'string') {
+    products = products.filter((p) => p.businessId === businessId);
+  }
+
+  if (search && typeof search === 'string') {
+    const q = search.toLowerCase();
+    products = products.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        (p.sellerBusinessName && p.sellerBusinessName.toLowerCase().includes(q)) ||
+        (p.deliverables && p.deliverables.some((d) => d.toLowerCase().includes(q)))
+    );
+  }
+
+  // Price filters (based on currency, default NGN)
+  const curr = (currency as string)?.toUpperCase() || 'NGN';
+  if (minPrice) {
+    const min = parseFloat(minPrice as string);
+    if (!isNaN(min)) {
+      products = products.filter((p) => {
+        const val = curr === 'USD' ? p.priceUSD : curr === 'PI' ? (p.pricePi || 0) : p.priceNGN;
+        return val >= min;
+      });
+    }
+  }
+
+  if (maxPrice) {
+    const max = parseFloat(maxPrice as string);
+    if (!isNaN(max)) {
+      products = products.filter((p) => {
+        const val = curr === 'USD' ? p.priceUSD : curr === 'PI' ? (p.pricePi || 0) : p.priceNGN;
+        return val <= max;
+      });
+    }
+  }
+
+  // Sorting
+  if (sort === 'price_asc') {
+    products.sort((a, b) => (curr === 'USD' ? a.priceUSD - b.priceUSD : curr === 'PI' ? (a.pricePi || 0) - (b.pricePi || 0) : a.priceNGN - b.priceNGN));
+  } else if (sort === 'price_desc') {
+    products.sort((a, b) => (curr === 'USD' ? b.priceUSD - a.priceUSD : curr === 'PI' ? (b.pricePi || 0) - (a.pricePi || 0) : b.priceNGN - a.priceNGN));
+  } else if (sort === 'rating') {
+    products.sort((a, b) => (b.ratingAverage || 5) - (a.ratingAverage || 5));
+  } else if (sort === 'deals') {
+    products.sort((a, b) => (b.completedDeals || 0) - (a.completedDeals || 0));
+  }
+
+  const allCategories = Array.from(new Set((state.products || []).map((p) => p.category)));
+
+  res.json({
+    total: products.length,
+    products,
+    categories: ['All', ...allCategories],
+  });
+});
+
+/**
+ * GET /api/products/:id
+ */
+apiRouter.get('/products/:id', (req: Request, res: Response) => {
+  const state = dbAdapter.getState();
+  const product = (state.products || []).find((p) => p.id === req.params.id);
+  if (!product) {
+    return res.status(404).json({ error: 'Product not found in GOYE catalog.' });
+  }
+
+  const business = state.businesses.find((b) => b.id === product.businessId);
+  const relatedProducts = (state.products || [])
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .slice(0, 3);
+
+  res.json({
+    product,
+    business,
+    relatedProducts,
+  });
+});
+
+/**
+ * POST /api/products
+ * Merchant adds product listing
+ */
+apiRouter.post('/products', (req: Request, res: Response) => {
+  const {
+    businessId,
+    title,
+    description,
+    category,
+    priceNGN,
+    priceUSD,
+    pricePi,
+    deliverables,
+    features,
+    deliveryTimeDays,
+    badge,
+  } = req.body;
+
+  if (!businessId || !title || !category || priceNGN === undefined) {
+    return res.status(400).json({ error: 'businessId, title, category, and priceNGN are required.' });
+  }
+
+  const state = dbAdapter.getState();
+  const business = state.businesses.find((b) => b.id === businessId);
+  if (!business) {
+    return res.status(404).json({ error: 'Associated business ID not found in GOYE registry.' });
+  }
+
+  const nextSeq = String((state.products || []).length + 1).padStart(3, '0');
+  const productId = `PRD-2026-${nextSeq}`;
+  const now = new Date().toISOString();
+
+  const newProduct: any = {
+    id: productId,
+    businessId: business.id,
+    sellerBusinessName: business.name,
+    sellerVerificationLevel: business.verificationLevel,
+    title: title.trim(),
+    description: description?.trim() || '',
+    category: category.trim(),
+    priceNGN: Number(priceNGN),
+    priceUSD: Number(priceUSD || (priceNGN / 1500).toFixed(2)),
+    pricePi: pricePi ? Number(pricePi) : Number((priceNGN / 15000).toFixed(2)),
+    deliverables: Array.isArray(deliverables) ? deliverables : deliverables ? [deliverables] : [],
+    features: Array.isArray(features) ? features : [],
+    deliveryTimeDays: deliveryTimeDays ? Number(deliveryTimeDays) : 3,
+    ratingAverage: 5.0,
+    completedDeals: 0,
+    badge: badge || 'New',
+    status: 'active' as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  if (!state.products) state.products = [];
+  state.products.unshift(newProduct);
+
+  // Sync with marketplace_listings
+  state.marketplace_listings.unshift({
+    id: `MKT-2026-${nextSeq}`,
+    sellerBusinessId: business.id,
+    sellerBusinessName: business.name,
+    sellerVerificationLevel: business.verificationLevel as any,
+    title: newProduct.title,
+    description: newProduct.description,
+    category: newProduct.category,
+    priceNGN: newProduct.priceNGN,
+    priceUSD: newProduct.priceUSD,
+    pricePi: newProduct.pricePi,
+    deliverables: newProduct.deliverables,
+    deliveryTimeDays: newProduct.deliveryTimeDays,
+    ratingAverage: 5.0,
+    completedDeals: 0,
+    status: 'active',
+    createdAt: now,
+  });
+
+  recordAuditLog(
+    'PRODUCT_CREATED',
+    business.email,
+    productId,
+    `New product "${title}" registered under category "${category}".`,
+    req.ip
+  );
+  dbAdapter.persist();
+
+  res.status(201).json({
+    success: true,
+    message: 'Product listing successfully registered in GOYE catalog.',
+    product: newProduct,
+  });
+});
+
 // ---------------- 3. INVOICE ROUTES ----------------
 
 /**
@@ -849,4 +1038,67 @@ apiRouter.get('/audit/system-status', (_req: Request, res: Response) => {
   });
 });
 
+// ---------------- 8. GLOBAL UNIFIED SEARCH ROUTE ----------------
+
+/**
+ * GET /api/search
+ * Global search across products, businesses, invoices, contracts
+ */
+apiRouter.get('/search', (req: Request, res: Response) => {
+  const { q } = req.query;
+  if (!q || typeof q !== 'string' || !q.trim()) {
+    return res.status(400).json({ error: 'Query parameter q is required.' });
+  }
+
+  const query = q.trim().toLowerCase();
+  const state = dbAdapter.getState();
+
+  const matchingProducts = (state.products || []).filter(
+    (p) =>
+      p.title.toLowerCase().includes(query) ||
+      p.description.toLowerCase().includes(query) ||
+      p.category.toLowerCase().includes(query) ||
+      (p.sellerBusinessName && p.sellerBusinessName.toLowerCase().includes(query))
+  );
+
+  const matchingBusinesses = state.businesses.filter(
+    (b) =>
+      b.name.toLowerCase().includes(query) ||
+      b.id.toLowerCase().includes(query) ||
+      b.category.toLowerCase().includes(query) ||
+      b.tagline.toLowerCase().includes(query)
+  );
+
+  const matchingInvoices = state.invoices.filter(
+    (i) =>
+      i.id.toLowerCase().includes(query) ||
+      i.buyerName.toLowerCase().includes(query) ||
+      i.sellerName.toLowerCase().includes(query)
+  );
+
+  const matchingContracts = state.contracts.filter(
+    (c) =>
+      c.id.toLowerCase().includes(query) ||
+      c.title.toLowerCase().includes(query) ||
+      c.clientName.toLowerCase().includes(query) ||
+      c.providerName.toLowerCase().includes(query)
+  );
+
+  res.json({
+    query: q,
+    totalResults:
+      matchingProducts.length +
+      matchingBusinesses.length +
+      matchingInvoices.length +
+      matchingContracts.length,
+    results: {
+      products: matchingProducts,
+      businesses: matchingBusinesses,
+      invoices: matchingInvoices,
+      contracts: matchingContracts,
+    },
+  });
+});
+
 export { apiRouter };
+

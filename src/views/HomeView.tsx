@@ -14,6 +14,7 @@ import {
   Globe2,
   Sparkles,
   UserCheck,
+  Package,
 } from 'lucide-react';
 import { GoyeLogo } from '../components/GoyeLogo';
 import { PWAInstallButton } from '../components/PWAInstallButton';
@@ -56,6 +57,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 >
                   <span>Create Business Profile</span>
                   <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => onNavigate('products')}
+                  className="px-5 py-3 text-sm font-semibold text-white bg-[#123B72] hover:bg-[#1a4e94] border border-[#D4AF37]/40 rounded-md transition-colors shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
+                >
+                  <Package className="w-4 h-4 text-[#D4AF37]" />
+                  <span>15 Flagship Products</span>
                 </button>
 
                 <button

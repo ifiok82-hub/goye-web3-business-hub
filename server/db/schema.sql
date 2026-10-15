@@ -79,8 +79,15 @@ CREATE TABLE IF NOT EXISTS products (
     price_ngn NUMERIC(15, 2) NOT NULL,
     price_usd NUMERIC(15, 2) NOT NULL,
     price_pi NUMERIC(15, 4),
+    deliverables JSONB,
+    features JSONB,
+    delivery_time_days INT DEFAULT 3,
+    rating_average NUMERIC(3, 2) DEFAULT 5.0,
+    completed_deals INT DEFAULT 0,
+    badge VARCHAR(64),
     status VARCHAR(32) NOT NULL DEFAULT 'active',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 7. services

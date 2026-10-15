@@ -200,6 +200,60 @@ adminRouter.post('/invoices/:id/reconcile', (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/admin/products
+ */
+adminRouter.get('/products', (_req: Request, res: Response) => {
+  const state = dbAdapter.getState();
+  const products = state.products || [];
+  res.json({
+    total: products.length,
+    activeCount: products.filter((p) => p.status === 'active').length,
+    products,
+  });
+});
+
+/**
+ * POST /api/admin/products/:id/status
+ */
+adminRouter.post('/products/:id/status', (req: Request, res: Response) => {
+  const { status, reason } = req.body;
+  if (!status || !['active', 'archived'].includes(status)) {
+    return res.status(400).json({ error: 'Status must be active or archived.' });
+  }
+
+  const state = dbAdapter.getState();
+  const product = (state.products || []).find((p) => p.id === req.params.id);
+  if (!product) {
+    return res.status(404).json({ error: 'Product not found.' });
+  }
+
+  const oldStatus = product.status;
+  product.status = status;
+  product.updatedAt = new Date().toISOString();
+
+  // Also update corresponding marketplace listing
+  const listing = state.marketplace_listings.find((m: any) => m.productId === product.id || m.title === product.title);
+  if (listing) {
+    listing.status = status;
+  }
+
+  recordAuditLog(
+    'ADMIN_PRODUCT_STATUS_CHANGE',
+    'AUTHORIZED_ADMIN',
+    product.id,
+    `Product ${product.id} status changed from ${oldStatus} to ${status}. Reason: ${reason || 'Administrative review'}.`,
+    req.ip
+  );
+  dbAdapter.persist();
+
+  res.json({
+    success: true,
+    message: `Product status updated to ${status}.`,
+    product,
+  });
+});
+
+/**
  * GET /api/admin/audit-logs
  */
 adminRouter.get('/audit-logs', (_req: Request, res: Response) => {
@@ -208,3 +262,4 @@ adminRouter.get('/audit-logs', (_req: Request, res: Response) => {
 });
 
 export { adminRouter };
+
