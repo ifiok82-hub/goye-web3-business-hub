@@ -195,6 +195,16 @@ export async function resolveIncompletePaymentServer(payment: any): Promise<{
   }
 }
 
+let cachedAccessToken: string | null = null;
+
+export function getCachedAccessToken(): string | null {
+  return cachedAccessToken;
+}
+
+export function setCachedAccessToken(token: string | null) {
+  cachedAccessToken = token;
+}
+
 /**
  * Authenticates before payment with:
  * Pi.authenticate(["username", "payments"], onIncompletePaymentFound)
@@ -224,16 +234,20 @@ export async function authenticatePi(
 
     const authResult = await window.Pi.authenticate(
       ['username', 'payments'],
-      (incompletePayment) => {
+      async (incompletePayment) => {
         console.warn('[Pi SDK] Incomplete payment found on authentication:', incompletePayment);
         detectedIncomplete = incompletePayment;
         if (onIncompleteFound) {
           onIncompleteFound(incompletePayment);
         }
-        // Asynchronously notify backend to inspect and resolve
-        resolveIncompletePaymentServer(incompletePayment);
+        // Asynchronously notify backend to inspect and resolve before creating new payments
+        await resolveIncompletePaymentServer(incompletePayment);
       }
     );
+
+    if (authResult?.accessToken) {
+      cachedAccessToken = authResult.accessToken;
+    }
 
     return {
       success: true,
@@ -268,14 +282,14 @@ export interface RealPaymentEvidence {
  *
  * Parameters:
  * - Amount: 0.1 Test-Pi
- * - Memo: "GOYE Web3 Business Hub Testnet Payment"
- * - Metadata: { purpose: "goye_testnet_payment", network: "TESTNET" }
+ * - Memo: "GOYE Testnet Payment Test"
+ * - Metadata: { purpose: "GOYE_TESTNET_PAYMENT" }
  *
  * Sequence:
  * 1. Authenticate with ["username", "payments"]
  * 2. Pi.createPayment(...)
  * 3. onReadyForServerApproval(paymentId) -> POST /api/pi/approve -> Pi Platform API /approve
- * 4. Pioneer signs on Testnet blockchain
+ * 4. Pioneer signs on Testnet blockchain with personal KYC wallet
  * 5. onReadyForServerCompletion(paymentId, txid) -> POST /api/pi/complete -> Pi Platform API /complete
  * 6. Only after backend official completion -> TESTNET PAYMENT SUCCESSFUL
  *
@@ -308,16 +322,19 @@ export async function executePiTestnetPayment(options: {
       return;
     }
 
+    if (authRes.accessToken) {
+      cachedAccessToken = authRes.accessToken;
+    }
+
     // Step 2: Call official Pi.createPayment()
     options.onStatusChange('PAYMENT CREATED', 'Payment created. Opening Pi Wallet interface...');
 
     window.Pi.createPayment(
       {
         amount: 0.1,
-        memo: 'GOYE Web3 Business Hub Testnet Payment',
+        memo: 'GOYE Testnet Payment Test',
         metadata: {
-          purpose: 'goye_testnet_payment',
-          network: 'TESTNET',
+          purpose: 'GOYE_TESTNET_PAYMENT',
         },
       },
       {
@@ -326,26 +343,32 @@ export async function executePiTestnetPayment(options: {
             options.onPaymentCreated(paymentId);
           }
 
-          options.onStatusChange('WAITING FOR APPROVAL', 'Payment created. Waiting for server approval...');
+          options.onStatusChange('WAITING FOR APPROVAL', `Payment ${paymentId} created. Waiting for server approval...`);
 
           try {
+            const approveHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (cachedAccessToken) {
+              approveHeaders['Authorization'] = `Bearer ${cachedAccessToken}`;
+            }
+
             const approveRes = await fetch('/api/pi/approve', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: approveHeaders,
               body: JSON.stringify({ paymentId }),
             });
 
             const approveData = await approveRes.json();
             if (!approveRes.ok || !approveData.success) {
-              options.onStatusChange('FAILED', 'Pi server approval failed.');
-              options.onError('Pi server approval failed.', approveData);
+              const errMsg = approveData.message || approveData.error || 'Pi server approval failed.';
+              options.onStatusChange('FAILED', `Approval failed (${approveData.errorCode || approveRes.status}): ${errMsg}`);
+              options.onError(errMsg, approveData);
               return;
             }
 
-            options.onStatusChange('WAITING FOR USER CONFIRMATION', 'Waiting for user confirmation in Pi Wallet...');
+            options.onStatusChange('WAITING FOR USER CONFIRMATION', 'Approval confirmed. Waiting for user signature in Pi Wallet...');
           } catch (err: any) {
-            options.onStatusChange('FAILED', 'Pi server approval failed.');
-            options.onError('Pi server approval failed.');
+            options.onStatusChange('FAILED', 'Pi server approval network error.');
+            options.onError(err?.message || 'Pi server approval failed.');
           }
         },
 
@@ -354,23 +377,26 @@ export async function executePiTestnetPayment(options: {
             options.onTransactionReceived(txid);
           }
 
-          options.onStatusChange('TRANSACTION SUBMITTED', 'Testnet transaction received. Submitting for server completion...');
-          options.onStatusChange('COMPLETING PAYMENT', 'Testnet transaction received. Completing payment...');
+          options.onStatusChange('TRANSACTION SUBMITTED', `Testnet transaction received. Submitting for server completion...`);
+          options.onStatusChange('COMPLETING PAYMENT', 'Finalizing payment completion with Pi Platform API...');
 
           try {
+            const completeHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (cachedAccessToken) {
+              completeHeaders['Authorization'] = `Bearer ${cachedAccessToken}`;
+            }
+
             const completeRes = await fetch('/api/pi/complete', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: completeHeaders,
               body: JSON.stringify({ paymentId, txid }),
             });
 
             const completeData = await completeRes.json();
             if (!completeRes.ok || !completeData.success || !completeData.verified) {
-              options.onStatusChange('FAILED', 'Pi payment completion failed. Payment has NOT been marked successful.');
-              options.onError(
-                completeData.error || 'Pi payment completion failed. Payment has NOT been marked successful.',
-                completeData
-              );
+              const errMsg = completeData.message || completeData.error || 'Pi payment completion failed.';
+              options.onStatusChange('FAILED', `Completion failed: ${errMsg}`);
+              options.onError(errMsg, completeData);
               return;
             }
 

@@ -145,8 +145,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </button>
               </li>
               <li>
+                <button onClick={() => onNavigate('terms')} className="hover:text-white transition-colors font-medium text-[#D4AF37]">
+                  Terms of Service (/terms)
+                </button>
+              </li>
+              <li>
                 <button onClick={() => onNavigate('legal')} className="hover:text-white transition-colors">
-                  Terms of Service & Disclosures
+                  Legal Disclosures & Overview
                 </button>
               </li>
               <li>
@@ -199,6 +204,21 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </p>
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <div>© 2026 GOYE Technologies. All rights reserved.</div>
+            <div className="flex items-center gap-3 text-slate-400">
+              <button
+                onClick={() => onNavigate('privacy')}
+                className="hover:text-[#D4AF37] transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </button>
+              <span className="text-slate-600">|</span>
+              <button
+                onClick={() => onNavigate('terms')}
+                className="hover:text-[#D4AF37] transition-colors cursor-pointer"
+              >
+                Terms of Service
+              </button>
+            </div>
             <div className="text-slate-400">Build. Automate. Trade. Pay. Grow.</div>
           </div>
         </div>

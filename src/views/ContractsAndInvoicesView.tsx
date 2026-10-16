@@ -839,6 +839,22 @@ export const ContractsAndInvoicesView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Legal & Governance Notice */}
+      <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div>
+          Commercial invoices and cryptographic contracts are software utilities subject to our{' '}
+          <a href="/terms" className="text-[#D4AF37] hover:underline font-medium">
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a href="/privacy" className="text-[#D4AF37] hover:underline font-medium">
+            Privacy Policy
+          </a>
+          .
+        </div>
+        <div className="text-[11px] text-slate-500">Does Not Constitute Formal Legal Advice · Non-Custodial</div>
+      </div>
     </div>
   );
 };

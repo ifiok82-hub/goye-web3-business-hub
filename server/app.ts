@@ -29,6 +29,14 @@ export function createExpressApp() {
     next();
   });
 
+  // Support pre-parsed body in Vercel Serverless environment to prevent timeout hangs
+  app.use((req, _res, next) => {
+    if ((req as any).body && typeof (req as any).body === 'object') {
+      (req as any)._body = true;
+    }
+    next();
+  });
+
   // JSON Body Parser
   app.use(express.json());
 
@@ -86,6 +94,27 @@ export function createExpressApp() {
   };
   app.get('/privacy', privacyHandler);
   app.get('/api/privacy', privacyHandler);
+
+  // Official Terms of Service endpoint (serves public accessible semantic HTML with HTTP 200 OK)
+  const termsHandler = (_req: express.Request, res: express.Response) => {
+    try {
+      const candidates = [
+        path.resolve(process.cwd(), 'public', 'terms.html'),
+        path.resolve(process.cwd(), 'dist', 'terms.html'),
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, 'utf-8');
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.status(200).send(content);
+        }
+      }
+    } catch (_) {}
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send('<!doctype html><html><head><title>GOYE Terms of Service</title></head><body><h1>Terms of Service</h1><p>GOYE Web3 Business Hub Official Terms of Service</p><p>Contact: compliance@goye.services</p></body></html>');
+  };
+  app.get('/terms', termsHandler);
+  app.get('/api/terms', termsHandler);
 
   return app;
 }

@@ -20,7 +20,11 @@
       "destination": "/privacy.html"
     },
     {
-      "source": "/((?!api|health|validation-key\\.txt|privacy).*)",
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/((?!api|health|validation-key\\.txt|privacy|terms).*)",
       "destination": "/index.html"
     }
   ]

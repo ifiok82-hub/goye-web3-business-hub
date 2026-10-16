@@ -19,6 +19,7 @@ import { AcademyView } from './views/AcademyView';
 import { PiStatusView } from './views/PiStatusView';
 import { LegalView } from './views/LegalView';
 import { PrivacyPolicyView } from './views/PrivacyPolicyView';
+import { TermsOfServiceView } from './views/TermsOfServiceView';
 import { PiReadinessView } from './views/PiReadinessView';
 import { PiSandboxTestView } from './views/PiSandboxTestView';
 import { PiDeveloperChecklistView } from './views/PiDeveloperChecklistView';
@@ -76,6 +77,10 @@ export default function App() {
       // 2C. Detect Pi Developer Portal & Compliance routes
       if (pathname === '/privacy' || pathname.startsWith('/privacy')) {
         setCurrentView('privacy');
+        return;
+      }
+      if (pathname === '/terms' || pathname.startsWith('/terms')) {
+        setCurrentView('terms');
         return;
       }
       if (pathname === '/pi-readiness' || pathname.startsWith('/pi-readiness')) {
@@ -188,7 +193,19 @@ export default function App() {
 
           {currentView === 'pi-status' && <PiStatusView />}
 
-          {currentView === 'privacy' && <PrivacyPolicyView onNavigateHome={() => handleNavigate('home')} />}
+          {currentView === 'privacy' && (
+            <PrivacyPolicyView
+              onNavigateHome={() => handleNavigate('home')}
+              onNavigateTerms={() => handleNavigate('terms')}
+            />
+          )}
+
+          {currentView === 'terms' && (
+            <TermsOfServiceView
+              onNavigateHome={() => handleNavigate('home')}
+              onNavigatePrivacy={() => handleNavigate('privacy')}
+            />
+          )}
 
           {currentView === 'pi-readiness' && <PiReadinessView onNavigate={handleNavigate} />}
 

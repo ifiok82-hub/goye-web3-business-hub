@@ -15,8 +15,11 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import http from 'http';
+
 async function startServer() {
   const app = createExpressApp();
+  const server = http.createServer(app);
   const portArgIndex = process.argv.indexOf('--port');
   const portArg = portArgIndex !== -1 ? Number(process.argv[portArgIndex + 1]) : null;
   const port = portArg || (process.env.PORT && process.env.PORT !== '8080' ? Number(process.env.PORT) : 3000);
@@ -30,13 +33,13 @@ async function startServer() {
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   } else {
-    // Mount Vite middlewares in development
+    // Mount Vite middlewares in development with HMR attached to server
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        host: '0.0.0.0',
-        port: 3000,
-        hmr: false,
+        hmr: {
+          server,
+        },
       },
       appType: 'spa',
     });
@@ -44,7 +47,7 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  app.listen(port, '0.0.0.0', () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`[GOYE Web3 Business Hub] Hardened server running on http://0.0.0.0:${port}`);
     console.log(`[GOYE Mode]: ${isProduction ? 'Production' : 'Development (Vite Middleware)'}`);
   });

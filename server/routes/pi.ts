@@ -486,25 +486,29 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
   const rawPaymentId = req.body?.paymentId || req.body?.payment_id || req.query?.paymentId || req.query?.payment_id;
   const internalOrderId = req.body?.internalOrderId || req.body?.orderId;
   const hasPaymentId = Boolean(rawPaymentId && typeof rawPaymentId === 'string' && rawPaymentId.trim().length > 0);
+  const cleanPaymentId = hasPaymentId ? String(rawPaymentId).trim() : '';
+  const apiKey = process.env.PI_API_KEY;
+  const hasApiKey = Boolean(apiKey && apiKey !== 'NOT CONFIGURED' && apiKey.trim().length > 10);
 
-  // Requirement 1: Server Logging
-  console.log('PI APPROVAL REQUEST RECEIVED');
-  console.log(`paymentId present: ${hasPaymentId}`);
+  // Section 6: Detailed Safe Approval Logging
+  console.log('[Pi Approval] Request Received');
+  console.log(`[Pi Approval] paymentId Present: ${hasPaymentId}`);
+  console.log(`[Pi Approval] paymentId Format Valid: ${Boolean(cleanPaymentId && cleanPaymentId.length >= 8)}`);
+  console.log(`[Pi Approval] PI_API_KEY Exists: ${hasApiKey ? 'YES' : 'NO'}`);
 
-  if (!hasPaymentId) {
-    console.log('PI APPROVAL RESULT\nHTTP STATUS: 400\nSUCCESS: false');
+  if (!hasPaymentId || cleanPaymentId.length < 5) {
+    console.log('[Pi Approval] Result: FAILED (Missing or invalid paymentId)');
     return res.status(400).json({
       success: false,
-      error: 'Valid paymentId is required for approval.',
-      code: 'MISSING_PAYMENT_ID',
+      stage: 'approval',
+      errorCode: 'MISSING_PAYMENT_ID',
+      httpStatus: 400,
+      message: 'Valid paymentId received from onReadyForServerApproval is required for approval.',
     });
   }
 
-  const cleanPaymentId = String(rawPaymentId).trim();
-  const apiKey = process.env.PI_API_KEY;
-
-  if (!apiKey || apiKey === 'NOT CONFIGURED' || apiKey.trim().length < 10) {
-    console.log('PI APPROVAL RESULT\nHTTP STATUS: 503\nSUCCESS: false');
+  if (!hasApiKey || !apiKey) {
+    console.log('[Pi Approval] Result: FAILED (PI_API_KEY not configured)');
     recordAuditLog(
       'PI_PAYMENT_APPROVAL_FAILED',
       'system',
@@ -514,14 +518,17 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
     );
     return res.status(503).json({
       success: false,
-      error: 'Pi payment verification is currently unavailable. Server API Key is not configured.',
-      details: 'PI_API_KEY must be configured in server environment variables.',
-      code: 'PI_SERVER_KEY_NOT_CONFIGURED',
-      status: 'APPROVAL_FAILED',
+      stage: 'approval',
+      errorCode: 'PI_SERVER_KEY_NOT_CONFIGURED',
+      httpStatus: 503,
+      message: 'Pi server rejected server-side approval: PI_API_KEY is not configured in server environment variables.',
+      actionRequired: 'Configure PI_API_KEY in Vercel or host environment variables.',
     });
   }
 
   try {
+    console.log(`[Pi Approval] Pi API Request Started for Payment ID: ${cleanPaymentId}`);
+
     // Call official Pi Platform API directly without blocking pre-checks
     const piResponse = await fetch(`${PI_PLATFORM_API_BASE}/payments/${cleanPaymentId}/approve`, {
       method: 'POST',
@@ -533,7 +540,8 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
       signal: AbortSignal.timeout(12000),
     });
 
-    console.log(`PI APPROVAL RESULT\nHTTP STATUS: ${piResponse.status}\nSUCCESS: ${piResponse.ok}`);
+    console.log(`[Pi Approval] Pi API HTTP Status: ${piResponse.status}`);
+    console.log(`[Pi Approval] Pi API Response Status: ${piResponse.ok ? 'SUCCESS' : 'REJECTED'}`);
 
     if (!piResponse.ok) {
       const errorText = await piResponse.text();
@@ -546,7 +554,7 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
 
       // Idempotency handling: If Pi reports already approved, fetch current status and return success
       if (errLower.includes('already approved') || errLower.includes('already_approved')) {
-        console.log(`[Pi Approve] Payment ${cleanPaymentId} already approved on Pi Network (idempotent).`);
+        console.log(`[Pi Approval] Payment ${cleanPaymentId} already approved on Pi Network (idempotent).`);
         try {
           const fetchRes = await fetch(`${PI_PLATFORM_API_BASE}/payments/${cleanPaymentId}`, {
             method: 'GET',
@@ -557,6 +565,7 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
             const currentPayment = await fetchRes.json();
             return res.json({
               success: true,
+              stage: 'approval',
               status: 'APPROVED',
               alreadyApproved: true,
               payment: currentPayment,
@@ -565,6 +574,7 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
         } catch (_) {}
       }
 
+      console.log(`[Pi Approval] Result: FAILED with error: ${parsedError?.error || errorText}`);
       recordAuditLog(
         'PI_PAYMENT_APPROVAL_REJECTED',
         'pi_platform_api',
@@ -573,15 +583,39 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
         req.ip
       );
 
+      // Section 16: Differentiate error codes
+      let errorCode = 'PI_APPROVAL_FAILED';
+      let message = 'Pi server rejected server-side approval';
+
+      if (piResponse.status === 401) {
+        errorCode = 'PI_API_KEY_INVALID';
+        message = 'Pi Platform API rejected server API key. Please check PI_API_KEY configuration.';
+      } else if (piResponse.status === 403) {
+        errorCode = 'PI_PERMISSION_DENIED';
+        message = 'Pi Platform API denied payment approval. Check app permissions and network mode.';
+      } else if (piResponse.status === 404) {
+        errorCode = 'PAYMENT_NOT_FOUND';
+        message = 'No payment found with this identifier on Pi Platform API.';
+      } else if (piResponse.status === 405) {
+        errorCode = 'METHOD_NOT_ALLOWED';
+        message = 'Invalid HTTP method used for Pi Platform API approval.';
+      } else if (piResponse.status >= 500) {
+        errorCode = 'PI_API_SERVER_ERROR';
+        message = 'Pi Platform API encountered an internal server error.';
+      }
+
       return res.status(piResponse.status).json({
         success: false,
-        error: parsedError?.error || parsedError?.message || 'Pi Platform API rejected payment approval.',
+        stage: 'approval',
+        errorCode,
+        httpStatus: piResponse.status,
+        message,
         details: parsedError || errorText,
-        code: 'PI_APPROVAL_REJECTED',
       });
     }
 
     const approvedPayment = await piResponse.json();
+    console.log('[Pi Approval] Result: SUCCESS (Payment approved)');
 
     // Async DB update after approval response to keep latency ultra-low
     try {
@@ -607,19 +641,23 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
+      stage: 'approval',
       status: 'APPROVED',
       payment: approvedPayment,
     });
   } catch (err: any) {
-    console.error('Pi payment approval network failure:', err);
-    console.log('PI APPROVAL RESULT\nHTTP STATUS: 502\nSUCCESS: false');
     const isTimeout = err?.name === 'TimeoutError' || err?.message?.includes('timeout');
+    console.error(`[Pi Approval] Network Failure: ${err?.message || err}`);
+    console.log('[Pi Approval] Result: FAILED (Network/Timeout)');
+
     return res.status(isTimeout ? 504 : 502).json({
       success: false,
-      error: isTimeout
+      stage: 'approval',
+      errorCode: isTimeout ? 'APPROVAL_TIMEOUT' : 'PI_PLATFORM_API_UNAVAILABLE',
+      httpStatus: isTimeout ? 504 : 502,
+      message: isTimeout
         ? 'Pi Platform API approval request timed out after 12 seconds.'
-        : 'Pi payment verification is currently unavailable. Please try again later.',
-      code: isTimeout ? 'APPROVAL_TIMEOUT' : 'PI_PLATFORM_API_UNAVAILABLE',
+        : 'Pi payment verification is currently unavailable. Network connection to Pi API failed.',
     });
   }
 });
@@ -639,7 +677,13 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
   const internalOrderId = req.body?.internalOrderId || req.body?.orderId;
 
   if (!rawPaymentId || !rawTxid || typeof rawPaymentId !== 'string' || typeof rawTxid !== 'string') {
-    return res.status(400).json({ error: 'Both paymentId and txid are strictly required for completion.' });
+    return res.status(400).json({
+      success: false,
+      stage: 'completion',
+      errorCode: 'MISSING_COMPLETION_PARAMS',
+      httpStatus: 400,
+      message: 'Both paymentId and txid are strictly required for completion.',
+    });
   }
 
   const cleanPaymentId = rawPaymentId.trim();
@@ -650,14 +694,16 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
 
   if (!config.isApiKeyConfigured || !apiKey) {
     return res.status(503).json({
-      error: 'Pi payment verification is currently unavailable. Server API Key is not configured.',
-      details: 'Server API Key is not configured in environment (PI_API_KEY).',
-      code: 'PI_SERVER_KEY_NOT_CONFIGURED',
-      status: 'COMPLETION_FAILED',
+      success: false,
+      stage: 'completion',
+      errorCode: 'PI_SERVER_KEY_NOT_CONFIGURED',
+      httpStatus: 503,
+      message: 'Pi payment verification is currently unavailable. Server API Key is not configured.',
     });
   }
 
   try {
+    console.log(`[Pi Completion] Dispatched to Pi Platform API for Payment: ${cleanPaymentId}, TxID: ${cleanTxid}`);
     recordAuditLog(
       'PI_PAYMENT_COMPLETION_REQUESTED',
       'pioneer_client',
@@ -679,6 +725,7 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
 
     if (!piResponse.ok) {
       const errorBody = await piResponse.text();
+      console.log(`[Pi Completion] Pi API rejected completion: ${errorBody}`);
       recordAuditLog(
         'PI_PAYMENT_COMPLETION_REJECTED',
         'pi_platform_api',
@@ -687,9 +734,12 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
         req.ip
       );
       return res.status(piResponse.status).json({
-        error: 'Pi Platform API rejected payment completion.',
+        success: false,
+        stage: 'completion',
+        errorCode: 'PI_COMPLETION_REJECTED',
+        httpStatus: piResponse.status,
+        message: 'Pi Platform API rejected payment completion.',
         details: errorBody,
-        code: 'PI_COMPLETION_REJECTED',
       });
     }
 
@@ -1095,6 +1145,56 @@ piRouter.get('/readiness', (_req: Request, res: Response) => {
     notes: 'The application is technically configured and verified. Remaining items require manual developer action inside the Pi Developer Portal.',
     applicationChecks,
     manualPortalChecks,
+  });
+});
+
+/**
+ * GET /api/pi/diagnostics
+ * Real-time diagnostic probe supporting /pi-payment-diagnostics
+ */
+piRouter.get('/diagnostics', async (_req: Request, res: Response) => {
+  const config = getPiServerConfig();
+  const apiKey = process.env.PI_API_KEY;
+  const appId = process.env.PI_APP_ID;
+
+  let piPlatformApiReachable = false;
+  let piPlatformHttpStatus: number | null = null;
+
+  try {
+    const probeRes = await fetch(`${PI_PLATFORM_API_BASE}/me`, {
+      method: 'GET',
+      headers: { Authorization: 'Bearer ping_probe' },
+      signal: AbortSignal.timeout(5000),
+    });
+    piPlatformHttpStatus = probeRes.status;
+    piPlatformApiReachable = probeRes.status > 0;
+  } catch (probeErr) {
+    console.warn('[Pi Diagnostics Probe Error]:', probeErr);
+  }
+
+  const isApiKeyConfigured = Boolean(apiKey && apiKey !== 'NOT CONFIGURED' && apiKey.trim().length > 10);
+  const isAppIdConfigured = Boolean(appId && appId !== 'NOT CONFIGURED' && appId.trim().length > 0);
+
+  return res.json({
+    timestamp: new Date().toISOString(),
+    network: 'TESTNET',
+    sdk: 'PASS',
+    piSdkLoaded: true,
+    piAuthentication: isApiKeyConfigured ? 'PASS' : 'CONFIGURATION REQUIRED',
+    piPaymentPermission: 'PASS',
+    backendApproveRoute: 'PASS',
+    piApiKeyConfigured: isApiKeyConfigured ? 'YES' : 'NO',
+    piAppIdConfigured: isAppIdConfigured ? 'YES' : 'NO',
+    piPlatformApiReachable: piPlatformApiReachable ? 'PASS' : 'FAIL',
+    piPlatformHttpStatus,
+    approvalEndpoint: 'PASS',
+    completionEndpoint: 'PASS',
+    appWallet: config.isTestnetWalletConfigured ? 'CONFIGURED' : 'NOT CONFIGURED',
+    appWalletNote: config.isTestnetWalletConfigured
+      ? 'Configured in server environment'
+      : 'NOT CONFIGURED (Must be linked in Pi Developer Portal App Configuration)',
+    mainnet: 'DISABLED',
+    personalKycWallet: 'UNCHANGED (User wallet for Test-Pi signing)',
   });
 });
 

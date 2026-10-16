@@ -1556,6 +1556,46 @@
   "notifications": [],
   "audit_logs": [
     {
+      "id": "AUD-1792136659723-883",
+      "timestamp": "2026-10-16T07:44:19.723Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test_payment_diagnostic_12345",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792136188792-801",
+      "timestamp": "2026-10-16T07:36:28.792Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test-pay-12345678",
+      "details": "Pi Platform API rejected completion (status 404): {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792136188563-781",
+      "timestamp": "2026-10-16T07:36:28.563Z",
+      "eventType": "PI_PAYMENT_COMPLETION_REQUESTED",
+      "actor": "pioneer_client",
+      "entityId": "test-pay-12345678",
+      "details": "Payment completion dispatched to Pi Platform API with TxID: test-txid-12345678.",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
+      "id": "AUD-1792136184207-457",
+      "timestamp": "2026-10-16T07:36:24.207Z",
+      "eventType": "PI_PAYMENT_APPROVAL_REJECTED",
+      "actor": "pi_platform_api",
+      "entityId": "test-pay-12345678",
+      "details": "Pi Platform API returned HTTP 404: {\"error\":\"payment_not_found\",\"error_message\":\"No payment found with this identifier\"}",
+      "ipAddress": "127.0.0.1",
+      "isImmutable": true
+    },
+    {
       "id": "AUD-1792052885032-578",
       "timestamp": "2026-10-15T08:28:05.032Z",
       "eventType": "PI_PAYMENT_COMPLETION_REJECTED",
@@ -1794,7 +1834,7 @@
   "meta": {
     "version": "1.0.0",
     "initializedAt": "2026-03-01T10:00:00Z",
-    "lastSavedAt": "2026-10-15T08:28:05.032Z"
+    "lastSavedAt": "2026-10-16T07:44:19.723Z"
   },
   "sales_leads": [],
   "bookings": [],

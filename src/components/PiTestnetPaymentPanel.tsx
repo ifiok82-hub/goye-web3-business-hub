@@ -399,6 +399,19 @@ export const PiTestnetPaymentPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Terms and Privacy Policy Binding Notice */}
+      <div className="pt-2 text-center text-[11px] text-slate-500 leading-normal">
+        By initiating Testnet transactions, you acknowledge the{' '}
+        <a href="/terms" className="text-[#D4AF37] hover:underline font-medium">
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a href="/privacy" className="text-[#D4AF37] hover:underline font-medium">
+          Privacy Policy
+        </a>
+        . Test-Pi has zero monetary value.
+      </div>
     </div>
   );
 };

@@ -58,5 +58,10 @@ export default function handler(req: IncomingMessage, res: ServerResponse) {
 
   req.url = targetPath;
 
+  // Prevent Express body-parser from hanging if Vercel pre-parsed the body stream
+  if ((req as any).body && typeof (req as any).body === 'object' && !(req as any)._body) {
+    (req as any)._body = true;
+  }
+
   return (app as unknown as (req: IncomingMessage, res: ServerResponse) => void)(req, res);
 }

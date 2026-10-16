@@ -3,21 +3,32 @@ import { ShieldCheck, Lock, FileText, ArrowLeft, ExternalLink, Globe, Smartphone
 
 interface PrivacyPolicyViewProps {
   onNavigateHome?: () => void;
+  onNavigateTerms?: () => void;
 }
 
-export const PrivacyPolicyView: React.FC<PrivacyPolicyViewProps> = ({ onNavigateHome }) => {
+export const PrivacyPolicyView: React.FC<PrivacyPolicyViewProps> = ({ onNavigateHome, onNavigateTerms }) => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Top Breadcrumb & Navigation */}
-      {onNavigateHome && (
-        <button
-          onClick={onNavigateHome}
-          className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Return to GOYE Ecosystem</span>
-        </button>
-      )}
+      <div className="flex items-center justify-between gap-4">
+        {onNavigateHome && (
+          <button
+            onClick={onNavigateHome}
+            className="flex items-center gap-2 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer group"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Return to GOYE Ecosystem</span>
+          </button>
+        )}
+        {onNavigateTerms && (
+          <button
+            onClick={onNavigateTerms}
+            className="text-xs text-[#D4AF37] hover:underline transition-colors cursor-pointer font-medium"
+          >
+            Read Terms of Service (/terms) &rarr;
+          </button>
+        )}
+      </div>
 
       {/* Header Banner */}
       <div className="border-b border-white/10 pb-6 space-y-3">
