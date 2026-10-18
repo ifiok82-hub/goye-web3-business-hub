@@ -37,6 +37,8 @@ import {
   Lock,
 } from 'lucide-react';
 import { GoyeLogo } from './GoyeLogo';
+import { PiTestnetTestButton } from './PiTestnetTestButton';
+import { PiPayButton } from './PiPayButton';
 
 export const PiTestnetPaymentPanel: React.FC = () => {
   const { user, isAuthenticated, setVerifiedSession } = usePiAuth();
@@ -389,6 +391,12 @@ export const PiTestnetPaymentPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Dedicated Direct Pi Testnet Test Button */}
+      <div className="pt-2 space-y-3">
+        <PiTestnetTestButton />
+        <PiPayButton />
+      </div>
 
       {/* Environment Context Warning */}
       {!envStatus.isPiBrowser && (

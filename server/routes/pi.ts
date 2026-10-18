@@ -15,7 +15,25 @@ import { recordAuditLog } from '../middleware/auth.ts';
 
 const piRouter = Router();
 
-const PI_PLATFORM_API_BASE = 'https://api.minepi.com/v2';
+export function getPiApiBaseUrls(): string[] {
+  const isTestnet =
+    (process.env.PI_NETWORK_MODE || '').toUpperCase() !== 'MAINNET' ||
+    process.env.PI_SANDBOX === 'true' ||
+    process.env.NEXT_PUBLIC_PI_NETWORK === 'testnet';
+
+  if (isTestnet) {
+    return [
+      'https://api.testnet.minepi.com/v2',
+      'https://api.minepi.com/v2',
+    ];
+  }
+  return [
+    'https://api.minepi.com/v2',
+    'https://api.testnet.minepi.com/v2',
+  ];
+}
+
+export const PI_PLATFORM_API_BASE = 'https://api.testnet.minepi.com/v2';
 
 // Helper to inspect server-side Pi configuration
 export function getPiServerConfig() {
@@ -529,92 +547,109 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
   try {
     console.log(`[Pi Approval] Pi API Request Started for Payment ID: ${cleanPaymentId}`);
 
-    // Call official Pi Platform API directly without blocking pre-checks
-    const piResponse = await fetch(`${PI_PLATFORM_API_BASE}/payments/${cleanPaymentId}/approve`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Key ${apiKey.trim()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-      signal: AbortSignal.timeout(12000),
-    });
+    const baseUrls = getPiApiBaseUrls();
+    let approvedPayment: any = null;
+    let lastResponseStatus = 502;
+    let lastErrorDetails: any = null;
 
-    console.log(`[Pi Approval] Pi API HTTP Status: ${piResponse.status}`);
-    console.log(`[Pi Approval] Pi API Response Status: ${piResponse.ok ? 'SUCCESS' : 'REJECTED'}`);
-
-    if (!piResponse.ok) {
-      const errorText = await piResponse.text();
-      let parsedError: any = null;
+    for (const baseUrl of baseUrls) {
+      console.log(`[Pi Approval] Querying ${baseUrl}/payments/${cleanPaymentId}/approve`);
       try {
-        parsedError = JSON.parse(errorText);
-      } catch (_) {}
+        const piResponse = await fetch(`${baseUrl}/payments/${cleanPaymentId}/approve`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Key ${apiKey.trim()}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+          signal: AbortSignal.timeout(4500),
+        });
 
-      const errLower = (parsedError?.error || parsedError?.message || errorText || '').toLowerCase();
+        console.log(`[Pi Approval] ${baseUrl} HTTP Status: ${piResponse.status}`);
 
-      // Idempotency handling: If Pi reports already approved, fetch current status and return success
-      if (errLower.includes('already approved') || errLower.includes('already_approved')) {
-        console.log(`[Pi Approval] Payment ${cleanPaymentId} already approved on Pi Network (idempotent).`);
+        if (piResponse.ok) {
+          approvedPayment = await piResponse.json();
+          console.log(`[Pi Approval] SUCCESS at ${baseUrl} for payment ${cleanPaymentId}`);
+          break;
+        }
+
+        const errorText = await piResponse.text();
+        let parsedError: any = null;
         try {
-          const fetchRes = await fetch(`${PI_PLATFORM_API_BASE}/payments/${cleanPaymentId}`, {
-            method: 'GET',
-            headers: { Authorization: `Key ${apiKey.trim()}` },
-            signal: AbortSignal.timeout(10000),
-          });
-          if (fetchRes.ok) {
-            const currentPayment = await fetchRes.json();
-            return res.json({
-              success: true,
-              stage: 'approval',
-              status: 'APPROVED',
-              alreadyApproved: true,
-              payment: currentPayment,
-            });
-          }
+          parsedError = JSON.parse(errorText);
         } catch (_) {}
-      }
 
-      console.log(`[Pi Approval] Result: FAILED with error: ${parsedError?.error || errorText}`);
+        const errLower = (parsedError?.error || parsedError?.message || errorText || '').toLowerCase();
+
+        // Idempotency: already approved
+        if (errLower.includes('already approved') || errLower.includes('already_approved')) {
+          console.log(`[Pi Approval] Payment ${cleanPaymentId} already approved at ${baseUrl} (idempotent).`);
+          try {
+            const fetchRes = await fetch(`${baseUrl}/payments/${cleanPaymentId}`, {
+              method: 'GET',
+              headers: { Authorization: `Key ${apiKey.trim()}` },
+              signal: AbortSignal.timeout(3000),
+            });
+            if (fetchRes.ok) {
+              const currentPayment = await fetchRes.json();
+              return res.json({
+                success: true,
+                stage: 'approval',
+                status: 'APPROVED',
+                alreadyApproved: true,
+                payment: currentPayment,
+              });
+            }
+          } catch (_) {}
+        }
+
+        lastResponseStatus = piResponse.status;
+        lastErrorDetails = parsedError || errorText;
+
+        // If 401 or 403, key is rejected; but if 404, we continue to check the other network base!
+      } catch (endpointErr: any) {
+        console.warn(`[Pi Approval] Network error reaching ${baseUrl}:`, endpointErr?.message);
+        lastErrorDetails = endpointErr?.message || 'Connection error';
+      }
+    }
+
+    if (!approvedPayment) {
+      console.log(`[Pi Approval] Result: FAILED with status ${lastResponseStatus}:`, lastErrorDetails);
       recordAuditLog(
         'PI_PAYMENT_APPROVAL_REJECTED',
         'pi_platform_api',
         cleanPaymentId,
-        `Pi Platform API returned HTTP ${piResponse.status}: ${errorText}`,
+        `Pi Platform API returned HTTP ${lastResponseStatus}: ${JSON.stringify(lastErrorDetails)}`,
         req.ip
       );
 
-      // Section 16: Differentiate error codes
       let errorCode = 'PI_APPROVAL_FAILED';
       let message = 'Pi server rejected server-side approval';
 
-      if (piResponse.status === 401) {
+      if (lastResponseStatus === 401) {
         errorCode = 'PI_API_KEY_INVALID';
         message = 'Pi Platform API rejected server API key. Please check PI_API_KEY configuration.';
-      } else if (piResponse.status === 403) {
+      } else if (lastResponseStatus === 403) {
         errorCode = 'PI_PERMISSION_DENIED';
         message = 'Pi Platform API denied payment approval. Check app permissions and network mode.';
-      } else if (piResponse.status === 404) {
+      } else if (lastResponseStatus === 404) {
         errorCode = 'PAYMENT_NOT_FOUND';
         message = 'No payment found with this identifier on Pi Platform API.';
-      } else if (piResponse.status === 405) {
-        errorCode = 'METHOD_NOT_ALLOWED';
-        message = 'Invalid HTTP method used for Pi Platform API approval.';
-      } else if (piResponse.status >= 500) {
+      } else if (lastResponseStatus >= 500) {
         errorCode = 'PI_API_SERVER_ERROR';
         message = 'Pi Platform API encountered an internal server error.';
       }
 
-      return res.status(piResponse.status).json({
+      return res.status(lastResponseStatus === 502 ? 502 : lastResponseStatus).json({
         success: false,
         stage: 'approval',
         errorCode,
-        httpStatus: piResponse.status,
+        httpStatus: lastResponseStatus,
         message,
-        details: parsedError || errorText,
+        details: lastErrorDetails,
       });
     }
 
-    const approvedPayment = await piResponse.json();
     console.log('[Pi Approval] Result: SUCCESS (Payment approved)');
 
     // Async DB update after approval response to keep latency ultra-low
@@ -712,38 +747,56 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
       req.ip
     );
 
-    // Call official Pi Platform API with real txid
-    const piResponse = await fetch(`${PI_PLATFORM_API_BASE}/payments/${cleanPaymentId}/complete`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Key ${apiKey.trim()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ txid: cleanTxid }),
-      signal: AbortSignal.timeout(12000),
-    });
+    const baseUrls = getPiApiBaseUrls();
+    let completedPayment: any = null;
+    let lastStatus = 502;
+    let lastErrorBody: any = null;
 
-    if (!piResponse.ok) {
-      const errorBody = await piResponse.text();
-      console.log(`[Pi Completion] Pi API rejected completion: ${errorBody}`);
+    for (const baseUrl of baseUrls) {
+      console.log(`[Pi Completion] Trying ${baseUrl}/payments/${cleanPaymentId}/complete`);
+      try {
+        const piResponse = await fetch(`${baseUrl}/payments/${cleanPaymentId}/complete`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Key ${apiKey.trim()}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ txid: cleanTxid }),
+          signal: AbortSignal.timeout(4500),
+        });
+
+        if (piResponse.ok) {
+          completedPayment = await piResponse.json();
+          console.log(`[Pi Completion] SUCCESS at ${baseUrl} for payment ${cleanPaymentId}`);
+          break;
+        }
+
+        const errText = await piResponse.text();
+        lastStatus = piResponse.status;
+        lastErrorBody = errText;
+      } catch (err: any) {
+        lastErrorBody = err?.message || 'Connection error';
+      }
+    }
+
+    if (!completedPayment) {
+      console.log(`[Pi Completion] Pi API rejected completion: ${lastErrorBody}`);
       recordAuditLog(
         'PI_PAYMENT_COMPLETION_REJECTED',
         'pi_platform_api',
         cleanPaymentId,
-        `Pi Platform API rejected completion (status ${piResponse.status}): ${errorBody}`,
+        `Pi Platform API rejected completion (status ${lastStatus}): ${JSON.stringify(lastErrorBody)}`,
         req.ip
       );
-      return res.status(piResponse.status).json({
+      return res.status(lastStatus === 502 ? 502 : lastStatus).json({
         success: false,
         stage: 'completion',
         errorCode: 'PI_COMPLETION_REJECTED',
-        httpStatus: piResponse.status,
+        httpStatus: lastStatus,
         message: 'Pi Platform API rejected payment completion.',
-        details: errorBody,
+        details: lastErrorBody,
       });
     }
-
-    const completedPayment = await piResponse.json();
 
     // Verify final state server-side: developer_completed or completed
     const isCompleted = Boolean(

@@ -332,7 +332,7 @@ export async function executePiTestnetPayment(options: {
     window.Pi.createPayment(
       {
         amount: 0.1,
-        memo: 'GOYE Testnet Payment Test',
+        memo: 'GOYE Testnet Pay',
         metadata: {
           purpose: 'GOYE_TESTNET_PAYMENT',
         },
@@ -355,6 +355,7 @@ export async function executePiTestnetPayment(options: {
               method: 'POST',
               headers: approveHeaders,
               body: JSON.stringify({ paymentId }),
+              signal: AbortSignal.timeout(8000),
             });
 
             const approveData = await approveRes.json();
