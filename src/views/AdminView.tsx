@@ -15,6 +15,7 @@ import {
   Package,
   ShieldCheck,
 } from 'lucide-react';
+import { TestnetPaymentTest } from '../components/PiPaymentButtons';
 
 export const AdminView: React.FC = () => {
   const [adminKey, setAdminKey] = useState('');
@@ -319,6 +320,9 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Testnet Payment Test Widget for 10/10 Green Check */}
+      <TestnetPaymentTest />
 
       {/* 2. Payment Reconciliation Queue (Pending / Under Review) */}
       <div className="p-6 rounded-xl bg-[#121620] border border-white/10 space-y-4">

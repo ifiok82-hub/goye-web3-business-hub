@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { executePiPayment, detectPiEnvironment } from '../utils/piSdk';
 import { GoyeLogo } from '../components/GoyeLogo';
+import { RealPiPayment } from '../components/PiPaymentButtons';
 import {
   Search,
   Tag,
@@ -874,22 +875,34 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 py-3 px-4 bg-[#D4AF37] hover:bg-[#e0bc46] disabled:opacity-50 text-[#0B0E14] font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer"
-                  >
-                    <span>Confirm Order & Proceed</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCheckoutProduct(null)}
-                    className="py-3 px-4 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
+                <div className="pt-2">
+                  {selectedPaymentProvider === 'pi' ? (
+                    <RealPiPayment
+                      product={{
+                        id: checkoutProduct.id,
+                        title: checkoutProduct.title,
+                        price_pi: checkoutProduct.pricePi || Number((checkoutProduct.priceNGN / 15000).toFixed(2)),
+                      }}
+                    />
+                  ) : (
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex-1 py-3 px-4 bg-[#D4AF37] hover:bg-[#e0bc46] disabled:opacity-50 text-[#0B0E14] font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                      >
+                        <span>Confirm Order & Proceed</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCheckoutProduct(null)}
+                        className="py-3 px-4 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               </form>
             )}
