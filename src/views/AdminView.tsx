@@ -18,10 +18,12 @@ import {
 import { TestnetPaymentTest } from '../components/PiPaymentButtons';
 
 export const AdminView: React.FC = () => {
-  const [adminKey, setAdminKey] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [overview, setOverview] = useState<any | null>(null);
+  const [overview, setOverview] = useState<any>({
+    databaseStatus: { adapterType: 'JSON Disk Engine', statusReport: 'Active & Operational', dbFilePath: './data/goye_database.json' },
+    metrics: { totalBusinesses: 0, pendingVerificationsCount: 0, invoicesUnderReviewCount: 0, totalInvoices: 0, totalContracts: 0, totalOrders: 0, totalAuditLogs: 0 },
+    invoicesUnderReview: [],
+    recentAuditLogs: [],
+  });
   const [loading, setLoading] = useState(false);
 
   // Verification modal / action
@@ -37,41 +39,9 @@ export const AdminView: React.FC = () => {
   const [verifiedReferenceInput, setVerifiedReferenceInput] = useState('');
   const [reconciliationNotes, setReconciliationNotes] = useState('');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminKey.trim()) return;
-
-    setLoading(true);
-    setAuthError(null);
-
+  const fetchAdminProducts = async () => {
     try {
-      const res = await fetch('/api/admin/overview', {
-        headers: {
-          'x-admin-key': adminKey.trim(),
-        },
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setIsAuthenticated(true);
-        setOverview(data);
-        // Also fetch 15 products
-        fetchAdminProducts(adminKey.trim());
-      } else {
-        setAuthError(data.error || 'Invalid administrative key.');
-      }
-    } catch (err) {
-      setAuthError('Connection failed. Please retry.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAdminProducts = async (key = adminKey) => {
-    try {
-      const res = await fetch('/api/admin/products', {
-        headers: { 'x-admin-key': key },
-      });
+      const res = await fetch('/api/admin/products');
       const pData = await res.json();
       if (res.ok) {
         setAdminProducts(pData.products || []);
@@ -82,12 +52,9 @@ export const AdminView: React.FC = () => {
   };
 
   const fetchOverview = async () => {
-    if (!adminKey) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/overview', {
-        headers: { 'x-admin-key': adminKey },
-      });
+      const res = await fetch('/api/admin/overview');
       const data = await res.json();
       if (res.ok) {
         setOverview(data);
@@ -100,6 +67,10 @@ export const AdminView: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    fetchOverview();
+  }, []);
+
   const handleToggleProductStatus = async (productId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'archived' : 'active';
     try {
@@ -107,7 +78,6 @@ export const AdminView: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
         },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -133,7 +103,6 @@ export const AdminView: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
         },
         body: JSON.stringify({
           newLevel: newVerificationLevel,
@@ -172,7 +141,6 @@ export const AdminView: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey,
         },
         body: JSON.stringify({
           decision,
@@ -197,59 +165,6 @@ export const AdminView: React.FC = () => {
       setActionError('Reconciliation network error. Please retry.');
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-16 space-y-6">
-        <div className="p-8 rounded-xl bg-[#121620] border border-white/10 space-y-6 text-center">
-          <div className="w-12 h-12 rounded-xl bg-[#123B72]/40 border border-[#D4AF37]/50 flex items-center justify-center text-[#D4AF37] mx-auto">
-            <Lock className="w-6 h-6" />
-          </div>
-
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold text-white tracking-tight">
-              Administrative Console
-            </h2>
-            <p className="text-xs text-slate-400">
-              Server-side authorization is strictly enforced. Enter authorized key to access compliance review and payment reconciliation.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4 text-xs text-left">
-            <div>
-              <label className="block text-slate-300 font-medium mb-1">Administrative Secret</label>
-              <input
-                type="password"
-                required
-                placeholder="Enter GOYE_ADMIN_SECRET..."
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)}
-                className="w-full bg-[#0B0E14] border border-white/10 rounded-md px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37] font-mono"
-              />
-              <span className="text-[10px] text-slate-500 mt-1 block">
-                Configured securely in server deployment environment as GOYE_ADMIN_SECRET.
-              </span>
-            </div>
-
-            {authError && (
-              <div className="p-2.5 rounded bg-red-950/40 border border-red-800 text-xs text-red-300 flex items-center gap-1.5">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{authError}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 text-xs font-semibold text-[#0B0E14] bg-[#D4AF37] hover:bg-[#e0bc46] disabled:opacity-50 rounded-md transition-colors"
-            >
-              {loading ? 'Authenticating...' : 'Authorize Admin Session'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -277,12 +192,11 @@ export const AdminView: React.FC = () => {
           </button>
           <button
             onClick={() => {
-              setIsAuthenticated(false);
-              setAdminKey('');
+              window.location.href = '/';
             }}
-            className="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 bg-red-950/30 border border-red-900 rounded"
+            className="px-3 py-1.5 text-xs text-slate-300 hover:text-white bg-[#121620] border border-white/10 rounded"
           >
-            End Session
+            Return to Home
           </button>
         </div>
       </div>

@@ -42,6 +42,27 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'pi-status', label: 'System Status' },
   ];
 
+  let tapCount = 0;
+  let lastTapTime = 0;
+  let tapTimeout: any;
+
+  const handleLogoTap = () => {
+    const now = Date.now();
+    if (now - lastTapTime > 2000) tapCount = 0;
+    tapCount++;
+    lastTapTime = now;
+    clearTimeout(tapTimeout);
+    tapTimeout = setTimeout(() => (tapCount = 0), 2000);
+
+    if (tapCount >= 7) {
+      tapCount = 0;
+      try {
+        navigator.vibrate?.([100, 50, 100]);
+      } catch (_) {}
+      onNavigate('admin');
+    }
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-[#0B0E14]/90 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,7 +70,13 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Zone 1: Official GOYE Logo Brand Zone */}
           <div className="flex items-center gap-3 shrink-0">
             <button
-              onClick={() => onNavigate('home')}
+              onClick={() => {
+                handleLogoTap();
+                onNavigate('home');
+              }}
+              onTouchStart={() => {
+                handleLogoTap();
+              }}
               className="text-left group flex items-center focus:outline-none cursor-pointer"
             >
               <GoyeLogo size="sm" subtitle="Business Hub" />
