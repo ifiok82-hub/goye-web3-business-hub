@@ -6,8 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { dbAdapter } from '../db/adapter.ts';
-
-const ADMIN_SECRET = process.env.GOYE_ADMIN_SECRET || 'goye_internal_admin_sec_2026';
+import { isAdminValid } from '../../lib/adminAuth';
 
 export function requireAdminAuth(req: Request, res: Response, next: NextFunction) {
   const adminKey = req.headers['x-admin-key'];
@@ -21,8 +20,8 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
     providedToken = authHeader.replace('Bearer ', '').trim();
   }
 
-  // Check if token matches server-side configured secret
-  if (!providedToken || providedToken !== ADMIN_SECRET) {
+  // Check if token matches server-side configured admin password
+  if (!providedToken || !isAdminValid(providedToken)) {
     // Log unauthorized access attempt in persistent audit logs
     const state = dbAdapter.getState();
     state.audit_logs.unshift({
@@ -38,7 +37,7 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
     dbAdapter.persist();
 
     return res.status(401).json({
-      error: 'Unauthorized: Valid server-side administrative credentials are required.',
+      error: 'Invalid password',
       code: 'ADMIN_AUTH_REQUIRED',
       status: 'ACCESS_DENIED',
     });
