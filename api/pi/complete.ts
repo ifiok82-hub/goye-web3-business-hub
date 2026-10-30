@@ -1,6 +1,8 @@
 /**
  * Vercel Serverless Function: POST /api/pi/complete
  */
+const DEFAULT_PI_API_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r';
+
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
@@ -11,23 +13,25 @@ export default async function handler(req: any, res: any) {
   try {
     const body = req.body || {};
     const { paymentId, txid } = body;
-    const apiKey = process.env.PI_API_KEY;
+    const apiKey = process.env.PI_API_KEY || DEFAULT_PI_API_KEY;
 
     if (!paymentId || !txid) {
       return res.status(400).json({ completed: false, error: 'paymentId and txid required' });
     }
 
+    console.log('[PI COMPLETE FN] Completing payment:', paymentId, 'txid:', txid);
+
     const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${apiKey || ''}`,
+        'Authorization': `Key ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ txid })
     });
 
     const data = await piRes.text();
-    console.log('Complete:', piRes.status, data);
+    console.log('[PI COMPLETE FN] Response:', piRes.status, data);
 
     if (piRes.ok) {
       let json = {};
@@ -37,6 +41,7 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ completed: false, error: data });
     }
   } catch (e: any) {
+    console.error('[PI COMPLETE FN ERROR]', e);
     return res.status(500).json({ completed: false, error: e?.message || 'Server error' });
   }
 }
