@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { initPi, detectPiBrowser } from '../lib/pi';
+import { detectPiBrowser } from '../lib/pi';
 import { Coins, Loader2, Smartphone } from 'lucide-react';
 
 export const PiPayButton: React.FC = () => {
@@ -16,10 +16,12 @@ export const PiPayButton: React.FC = () => {
     setStatus('Initializing Pi SDK...');
 
     try {
-      initPi();
+      if (window.Pi) {
+        window.Pi.init({ version: '2.0', sandbox: true });
+      }
 
       setStatus('Authenticating with Pi Network...');
-      await window.Pi!.authenticate(['username', 'payments'], async (incompletePayment) => {
+      await window.Pi!.authenticate(['username', 'payments', 'wallet_address'], async (incompletePayment) => {
         console.log('Incomplete payment found:', incompletePayment);
         if (incompletePayment?.identifier && incompletePayment?.transaction?.txid) {
           try {
@@ -42,7 +44,7 @@ export const PiPayButton: React.FC = () => {
       const paymentData = {
         amount: 1,
         memo: 'Goye Hub Test',
-        metadata: { productId: 'test-001', userId: 'test' },
+        metadata: { from: 'GBR4... KYC', to: 'GDDT... Business', testnet: true },
       };
 
       const callbacks = {
