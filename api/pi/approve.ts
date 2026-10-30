@@ -18,7 +18,7 @@ export default async function handler(req: any, res: any) {
     const apiKey = process.env.PI_API_KEY;
     console.log('Approving', paymentId, 'with key', apiKey ? 'present' : 'missing');
 
-    const piRes = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
+    const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/approve`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${apiKey || ''}`,

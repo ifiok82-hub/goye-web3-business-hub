@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ completed: false, error: 'paymentId and txid required' });
     }
 
-    const piRes = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
+    const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${apiKey || ''}`,

@@ -232,14 +232,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             onClick={handleTap}
             onTouchStart={handleTap}
             onTouchEnd={(e) => e.preventDefault()}
-            className="cursor-pointer select-none p-4 flex flex-col items-center group transition-transform duration-100"
+            className="flex items-center gap-2 p-4 opacity-60 cursor-default select-none group transition-transform duration-100"
             style={{ touchAction: 'manipulation', userSelect: 'none' }}
           >
-            <div className="flex items-center gap-2.5 opacity-60 group-hover:opacity-100 transition-opacity">
-              <div className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0B0E14] font-black text-sm shadow-md">G</div>
-              <span className="text-sm font-bold text-white tracking-wider">GOYE WEB3</span>
-            </div>
-            <p className="text-[10px] text-amber-400/80 mt-1.5 text-center font-mono">Tap 7x for admin</p>
+            <div className="w-10 h-10 rounded-full bg-[#c9a84c] flex items-center justify-center font-bold text-[#0B0E14]">G</div>
+            <span className="text-sm font-bold text-white">GOYE WEB3</span>
           </div>
         </div>
       </div>
