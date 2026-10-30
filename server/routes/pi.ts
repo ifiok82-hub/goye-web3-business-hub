@@ -505,7 +505,8 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
   const internalOrderId = req.body?.internalOrderId || req.body?.orderId;
   const hasPaymentId = Boolean(rawPaymentId && typeof rawPaymentId === 'string' && rawPaymentId.trim().length > 0);
   const cleanPaymentId = hasPaymentId ? String(rawPaymentId).trim() : '';
-  const apiKey = process.env.PI_API_KEY;
+  const DEFAULT_PI_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r';
+  const apiKey = process.env.PI_API_KEY || DEFAULT_PI_KEY;
   const hasApiKey = Boolean(apiKey && apiKey !== 'NOT CONFIGURED' && apiKey.trim().length > 10);
 
   // Section 6: Detailed Safe Approval Logging
@@ -724,10 +725,10 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
   const cleanPaymentId = rawPaymentId.trim();
   const cleanTxid = rawTxid.trim();
 
-  const config = getPiServerConfig();
-  const apiKey = process.env.PI_API_KEY;
+  const DEFAULT_PI_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r';
+  const apiKey = process.env.PI_API_KEY || DEFAULT_PI_KEY;
 
-  if (!config.isApiKeyConfigured || !apiKey) {
+  if (!apiKey) {
     return res.status(503).json({
       success: false,
       stage: 'completion',

@@ -10,18 +10,21 @@ export class NextResponse extends Response {
   }
 }
 
+const DEFAULT_PI_API_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r';
+
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const { paymentId, txid } = body;
     if (!paymentId || !txid) return NextResponse.json({ error: 'paymentId and txid required' }, { status: 400 });
 
+    const apiKey = process.env.PI_API_KEY || DEFAULT_PI_API_KEY;
     console.log('[PI COMPLETE] Payment:', paymentId, 'txid:', txid);
 
     const res = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${process.env.PI_API_KEY}`,
+        'Authorization': `Key ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ txid })
