@@ -20,8 +20,8 @@ export const PiPayButton: React.FC = () => {
         window.Pi.init({ version: '2.0', sandbox: true });
       }
 
-      setStatus('Authenticating with Pi Network...');
-      await window.Pi!.authenticate(['username', 'payments', 'wallet_address'], async (incompletePayment) => {
+      setStatus('Authenticating Pi user & wallet...');
+      const auth = await window.Pi!.authenticate(['username', 'payments', 'wallet_address'], async (incompletePayment) => {
         console.log('Incomplete payment found:', incompletePayment);
         if (incompletePayment?.identifier && incompletePayment?.transaction?.txid) {
           try {
@@ -39,12 +39,18 @@ export const PiPayButton: React.FC = () => {
         }
       });
 
-      setStatus('Opening Pi Wallet for payment...');
+      console.log('Authenticated user:', auth?.user?.username, auth?.user?.uid);
+      setStatus(`Authenticated as ${auth?.user?.username || 'Pioneer'}. Opening Pi Wallet...`);
 
       const paymentData = {
         amount: 1,
-        memo: 'Goye Hub Test',
-        metadata: { from: 'GBR4... KYC', to: 'GDDT... Business', testnet: true },
+        memo: 'Goye Hub Test Payment',
+        metadata: {
+          user: auth?.user?.username || 'Pioneer',
+          fromWallet: 'GBR4B47WY7JDK2JKUUQQTWWQENOUUYTAQAOYLXZ7XE36YFQY6LKPVO6R',
+          toWallet: 'GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E',
+          testnet: true
+        },
       };
 
       const callbacks = {
@@ -57,6 +63,7 @@ export const PiPayButton: React.FC = () => {
               body: JSON.stringify({ paymentId }),
             });
             const data = await res.json();
+            console.log('Approve result:', data);
             if (!res.ok || !data.success) {
               console.error('Server approval failed:', data);
             }
@@ -75,7 +82,7 @@ export const PiPayButton: React.FC = () => {
             const data = await res.json();
             setLoading(false);
             setStatus('');
-            if (res.ok && (data.success || data.verified)) {
+            if (res.ok && (data.success || data.completed || data.verified)) {
               alert(`Payment successful! ID: ${paymentId}, TxID: ${txid}`);
             } else {
               alert(`Payment completed. TxID: ${txid}`);
@@ -137,7 +144,7 @@ export const PiPayButton: React.FC = () => {
         ) : (
           <>
             <Coins className="w-4 h-4 text-[#0B0E14]" />
-            <span>Pay with Pi - Testnet Test</span>
+            <span>Pay 1 Pi Testnet (Authenticate First)</span>
           </>
         )}
       </button>
