@@ -6,12 +6,11 @@ export default function PiAuth() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !(window as any).Pi) {
-      const script = document.createElement('script')
-      script.src = 'https://sdk.minepi.com/pi-sdk.js'
-      script.async = true
-      script.onload = () => console.log('[Pi] SDK loaded')
-      document.head.appendChild(script)
+    if (typeof window !== 'undefined' && !window.Pi) {
+      const s = document.createElement('script')
+      s.src = 'https://sdk.minepi.com/pi-sdk.js'
+      s.async = true
+      document.head.appendChild(s)
     }
   }, [])
 
@@ -26,10 +25,8 @@ export default function PiAuth() {
   const signIn = async () => {
     setLoading(true)
     try {
-      const Pi = (window as any).Pi
-      if (!Pi) throw new Error('Pi SDK not initialized')
-      await Pi.init({ version: '2.0' })
-      const auth = await Pi.authenticate(['username'], onIncompletePaymentFound)
+      await window.Pi!.init({ version: '2.0' })
+      const auth = await window.Pi!.authenticate(['username'], onIncompletePaymentFound)
       const accessToken = auth.accessToken
       const res = await fetch('/api/pi/auth', {
         method: 'POST',
@@ -37,18 +34,18 @@ export default function PiAuth() {
         body: JSON.stringify({ accessToken })
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Auth failed')
+      if (!res.ok) throw new Error(data.error)
       setUser(data.user)
-    } catch (err: any) {
-      console.error(err)
-      alert('Pi auth failed: ' + (err?.message || err))
+    } catch (e: any) {
+      console.error(e)
+      alert('Pi auth failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div>
       {!user ? (
         <button
           onClick={signIn}

@@ -5,7 +5,7 @@
 declare global {
   interface Window {
     Pi?: {
-      init: (options: { version: string; sandbox: boolean }) => void;
+      init: (options: { version: string; sandbox?: boolean }) => Promise<void> | void;
       authenticate: (
         scopes: string[],
         onIncompletePaymentFound: (payment: any) => void

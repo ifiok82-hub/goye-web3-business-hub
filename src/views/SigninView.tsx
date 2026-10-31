@@ -33,6 +33,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { GoyeLogo } from '../components/GoyeLogo';
+import PiAuth from '../components/PiAuth';
 
 interface SigninViewProps {
   onNavigate: (view: string) => void;
@@ -185,6 +186,13 @@ export const SigninView: React.FC<SigninViewProps> = ({ onNavigate }) => {
                     <span>1-Tap Sign-in via Pi Browser SDK</span>
                   </button>
                 )}
+
+                <div className="pt-3 border-t border-white/5 flex flex-col items-center gap-2">
+                  <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+                    Direct Pi SDK Sign-In
+                  </div>
+                  <PiAuth />
+                </div>
 
                 <div className="text-[11px] text-slate-400 text-center pt-2">
                   Opens official Pi OAuth endpoint:{' '}
