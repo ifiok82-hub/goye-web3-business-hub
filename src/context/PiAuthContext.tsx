@@ -162,29 +162,47 @@ export const PiAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setAuthError(null);
 
     try {
-      const sdkResult = await authenticatePi();
-      if (!sdkResult.success || !sdkResult.accessToken) {
-        const msg = sdkResult.errorMessage || 'Pi authentication is currently unavailable. Please try again later.';
-        setAuthError(msg);
+      const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
+      if (!Pi) {
+        setAuthError('Pi SDK unavailable. Please open in Pi Browser.');
         setIsLoading(false);
         return false;
       }
 
-      // Authoritative verification against Pi Platform API
-      const verifyRes = await fetch('/api/pi/oauth-verify', {
+      await Pi.init({ version: '2.0' });
+      const auth = await Pi.authenticate(['username'], (incompletePayment: any) => {
+        fetch('/api/pi/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentId: incompletePayment?.identifier,
+            txid: incompletePayment?.transaction?.txid,
+          }),
+        });
+      });
+
+      const accessToken = auth?.accessToken;
+      if (!accessToken) {
+        setAuthError('Failed to obtain Pi access token.');
+        setIsLoading(false);
+        return false;
+      }
+
+      // Step 2 & 3: Authoritative verification against App Studio via /api/pi/auth
+      const verifyRes = await fetch('/api/pi/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: sdkResult.accessToken }),
+        body: JSON.stringify({ accessToken }),
       });
 
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok || !verifyData.success) {
-        setAuthError(verifyData.error || 'Failed to verify Pioneer identity against Pi Platform API.');
+        setAuthError(verifyData.error || 'Failed to verify Pioneer identity against Pi Platform.');
         setIsLoading(false);
         return false;
       }
 
-      setVerifiedSession(verifyData.sessionToken, verifyData.user, verifyData.expiresAt);
+      setVerifiedSession(verifyData.sessionToken, verifyData.user);
       setIsLoading(false);
       return true;
     } catch (err: any) {
