@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/validation-key.txt", "destination": "/validation-key.txt" },
+    { "source": "/pi-app-validation.txt", "destination": "/pi-app-validation.txt" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
@@ -10,11 +11,16 @@
       "headers": [{ "key": "Content-Type", "value": "text/plain" }]
     },
     {
-      "source": "/api/(.*)",
+      "source": "/pi-app-validation.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain" }]
+    },
+    {
+      "source": "/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "POST, GET, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com https://*.minepi.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://socialchain.app https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com https://api.testnet.minepi.com https://api.minepi.com; frame-ancestors 'self' https://*.pinet.com https://*.minepi.com;" }
       ]
     }
   ]

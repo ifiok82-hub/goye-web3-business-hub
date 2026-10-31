@@ -22,7 +22,7 @@ export const PiTestnetTestButton: React.FC = () => {
       // 2. Authenticate with username and payments scopes
       const authResult = await window.Pi.authenticate(
         ['username', 'payments'],
-        (incompletePayment) => {
+        (incompletePayment: any) => {
           console.warn('Incomplete payment found:', incompletePayment);
         }
       );

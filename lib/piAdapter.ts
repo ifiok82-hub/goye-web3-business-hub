@@ -175,7 +175,7 @@ export async function authenticatePi(
   try {
     const authResult = await window.Pi.authenticate(
       ['username', 'payments'],
-      async (incompletePayment) => {
+      async (incompletePayment: any) => {
         if (onIncomplete) {
           await onIncomplete(incompletePayment);
         } else {

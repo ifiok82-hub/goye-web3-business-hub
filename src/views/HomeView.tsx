@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { GoyeLogo } from '../components/GoyeLogo';
 import { PWAInstallButton } from '../components/PWAInstallButton';
+import PiAuth from '../components/PiAuth';
 
 interface HomeViewProps {
   onNavigate: (view: string) => void;
@@ -82,6 +83,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 >
                   Pi System Audit
                 </button>
+              </div>
+
+              {/* Pi Authentication Widget */}
+              <div className="pt-2 pb-1 flex flex-col items-start sm:items-center">
+                <PiAuth />
               </div>
 
               {/* Verified Trust Markers */}

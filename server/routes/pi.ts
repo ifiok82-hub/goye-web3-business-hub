@@ -153,6 +153,41 @@ piRouter.get('/status', (_req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/pi/auth
+ * Authenticates Pioneer user via App Studio backend login endpoint
+ */
+piRouter.post('/auth', async (req: Request, res: Response) => {
+  try {
+    const { accessToken } = req.body || {};
+    if (!accessToken) return res.status(400).json({ error: 'Missing accessToken' });
+
+    const response = await fetch('https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('[Pi Auth] App Studio failed', data);
+      return res.status(response.status).json({ error: 'Auth validation failed', details: data });
+    }
+
+    const { sessionToken, user } = data;
+    res.cookie('pi_session', sessionToken, { httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 604800000 });
+    res.cookie('pi_user', JSON.stringify({ uid: user.uid, username: user.username }), { httpOnly: false, secure: true, sameSite: 'none', path: '/', maxAge: 604800000 });
+
+    return res.status(200).json({
+      success: true,
+      user: { uid: user.uid, username: user.username },
+      sessionToken
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/pi/verify-user
  * Verifies an authenticated Pioneer access token via official Pi API /v2/me
  */

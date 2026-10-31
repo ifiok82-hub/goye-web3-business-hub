@@ -234,7 +234,7 @@ export async function authenticatePi(
 
     const authResult = await window.Pi.authenticate(
       ['username', 'payments'],
-      async (incompletePayment) => {
+      async (incompletePayment: any) => {
         console.warn('[Pi SDK] Incomplete payment found on authentication:', incompletePayment);
         detectedIncomplete = incompletePayment;
         if (onIncompleteFound) {

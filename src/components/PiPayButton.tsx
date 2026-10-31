@@ -21,7 +21,7 @@ export const PiPayButton: React.FC = () => {
       }
 
       setStatus('Authenticating Pi user & wallet...');
-      const auth = await window.Pi!.authenticate(['username', 'payments', 'wallet_address'], async (incompletePayment) => {
+      const auth = await window.Pi!.authenticate(['username', 'payments', 'wallet_address'], async (incompletePayment: any) => {
         console.log('Incomplete payment found:', incompletePayment);
         if (incompletePayment?.identifier && incompletePayment?.transaction?.txid) {
           try {
