@@ -11,32 +11,7 @@
 
 declare global {
   interface Window {
-    Pi?: {
-      init: (options: { version: string; sandbox?: boolean }) => Promise<void> | void;
-      authenticate: (
-        scopes: string[],
-        onIncompletePaymentFound: (payment: any) => void
-      ) => Promise<{
-        accessToken: string;
-        user: {
-          uid: string;
-          username: string;
-        };
-      }>;
-      createPayment: (
-        paymentData: {
-          amount: number;
-          memo: string;
-          metadata: Record<string, any>;
-        },
-        callbacks: {
-          onReadyForServerApproval: (paymentId: string) => Promise<void> | void;
-          onReadyForServerCompletion: (paymentId: string, txid: string) => Promise<void> | void;
-          onCancel: (paymentId: string) => void;
-          onError: (error: Error, payment?: any) => void;
-        }
-      ) => void;
-    };
+    Pi?: any;
   }
 }
 

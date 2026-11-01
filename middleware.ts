@@ -1,8 +1,11 @@
-export function middleware(request: any) {
-  if (request?.nextUrl?.pathname === '/pi-app-validation.txt') {
-    return (Response as any).next ? (Response as any).next() : new Response(null);
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === '/pi-app-validation.txt') {
+    return NextResponse.next();
   }
-  return (Response as any).next ? (Response as any).next() : new Response(null);
+  return NextResponse.next();
 }
 
 export const config = {
