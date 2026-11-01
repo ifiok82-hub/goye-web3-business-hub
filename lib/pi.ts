@@ -1,12 +1,13 @@
-/**
- * GOYE Web3 Business Hub - Pi Network Client SDK Helper
- */
-
 declare global {
   interface Window {
     Pi?: any;
   }
 }
+
+export const PI_CONFIG = {
+  apiUrl: process.env.NEXT_PUBLIC_PI_API_URL || 'https://api.testnet.minepi.com',
+  apiKey: process.env.PI_API_KEY || '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r'
+};
 
 export const initPi = () => {
   if (typeof window !== 'undefined' && window.Pi) {

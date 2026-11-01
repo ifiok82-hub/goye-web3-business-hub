@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { accessToken } = await req.json()
-  const response = await fetch('https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accessToken })
-  })
-  const data = await response.json()
-  if (!response.ok) return NextResponse.json({ error: 'failed', details: data }, { status: 400 })
-  return NextResponse.json({ success: true, user: data.user, sessionToken: data.sessionToken })
+  try {
+    const { accessToken } = await req.json()
+    if (!accessToken) return NextResponse.json({ error: 'no token' }, { status: 400 })
+    const piRes = await fetch('https://api.testnet.minepi.com/v2/me', {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    })
+    const piMe = await piRes.json()
+    if (!piRes.ok) return NextResponse.json({ error: 'pi me failed', details: piMe }, { status: 400 })
+    return NextResponse.json({ success: true, user: piMe })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 })
+  }
 }

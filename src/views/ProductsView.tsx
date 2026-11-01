@@ -792,86 +792,27 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
                 {/* Payment Rail Options */}
                 <div className="space-y-2">
-                  <label className="text-xs text-slate-300 font-semibold block">Select Settlement Rail</label>
+                  <label className="text-xs text-slate-300 font-semibold block">Settlement Rail (Pi Only)</label>
                   <div className="grid grid-cols-1 gap-2">
-                    {/* Bank Wire */}
-                    <label
-                      className={`p-3 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                        selectedPaymentProvider === 'bank_transfer'
-                          ? 'bg-[#123B72]/30 border-[#D4AF37]'
-                          : 'bg-[#0B0E14] border-white/10 hover:border-white/20'
-                      }`}
-                    >
+                    {/* Pi Network Only */}
+                    <div className="p-3.5 rounded-xl border bg-[#123B72]/30 border-[#D4AF37] flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <input
-                          type="radio"
-                          name="paymentProvider"
-                          value="bank_transfer"
-                          checked={selectedPaymentProvider === 'bank_transfer'}
-                          onChange={() => setSelectedPaymentProvider('bank_transfer')}
-                          className="text-[#D4AF37] focus:ring-0"
-                        />
-                        <div>
-                          <span className="text-xs font-bold text-white block">Direct Bank Wire / NIP (₦ NGN)</span>
-                          <span className="text-[10px] text-slate-400">Corporate invoice with verifiable account reference</span>
+                        <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 text-[#D4AF37] flex items-center justify-center font-bold">
+                          π
                         </div>
-                      </div>
-                      <Building2 className="w-4 h-4 text-slate-400" />
-                    </label>
-
-                    {/* Pi Network */}
-                    <label
-                      className={`p-3 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                        selectedPaymentProvider === 'pi'
-                          ? 'bg-[#123B72]/30 border-[#D4AF37]'
-                          : 'bg-[#0B0E14] border-white/10 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <input
-                          type="radio"
-                          name="paymentProvider"
-                          value="pi"
-                          checked={selectedPaymentProvider === 'pi'}
-                          onChange={() => setSelectedPaymentProvider('pi')}
-                          className="text-[#D4AF37] focus:ring-0"
-                        />
                         <div>
                           <span className="text-xs font-bold text-[#D4AF37] flex items-center gap-1">
-                            Pi Network Platform API (π Pi)
+                            Pay with Pi (Testnet) - @ifiok1967
                           </span>
-                          <span className="text-[10px] text-slate-400">
-                            Server-to-server approval in Pi Browser ({checkoutProduct.pricePi || (checkoutProduct.priceNGN / 15000).toFixed(2)} π)
+                          <span className="text-[10px] text-slate-300">
+                            Instant server approval ({checkoutProduct.pricePi || (checkoutProduct.priceNGN / 15000).toFixed(2)} π)
                           </span>
                         </div>
                       </div>
-                      <Smartphone className="w-4 h-4 text-[#D4AF37]" />
-                    </label>
-
-                    {/* Paystack / Card */}
-                    <label
-                      className={`p-3 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
-                        selectedPaymentProvider === 'paystack'
-                          ? 'bg-[#123B72]/30 border-[#D4AF37]'
-                          : 'bg-[#0B0E14] border-white/10 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <input
-                          type="radio"
-                          name="paymentProvider"
-                          value="paystack"
-                          checked={selectedPaymentProvider === 'paystack'}
-                          onChange={() => setSelectedPaymentProvider('paystack')}
-                          className="text-[#D4AF37] focus:ring-0"
-                        />
-                        <div>
-                          <span className="text-xs font-bold text-white block">Card / Paystack Gateway</span>
-                          <span className="text-[10px] text-slate-400">Debit card, USSD, Apple Pay & bank checkout</span>
-                        </div>
-                      </div>
-                      <CreditCard className="w-4 h-4 text-slate-400" />
-                    </label>
+                      <span className="px-2 py-0.5 rounded-full bg-[#D4AF37] text-[#0B0E14] text-[10px] font-bold uppercase tracking-wider">
+                        Active
+                      </span>
+                    </div>
                   </div>
                 </div>
 

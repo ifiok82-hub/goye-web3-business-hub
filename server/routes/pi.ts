@@ -535,7 +535,7 @@ piRouter.post('/test-payment/initiate', (req: Request, res: Response) => {
  * 5. Handle idempotency (if already approved, return approved status).
  * 6. High performance: No extra database queries or pre-check round trips before approval!
  */
-piRouter.post('/approve', async (req: Request, res: Response) => {
+const approveHandler = async (req: Request, res: Response) => {
   const rawPaymentId = req.body?.paymentId || req.body?.payment_id || req.query?.paymentId || req.query?.payment_id;
   const internalOrderId = req.body?.internalOrderId || req.body?.orderId;
   const hasPaymentId = Boolean(rawPaymentId && typeof rawPaymentId === 'string' && rawPaymentId.trim().length > 0);
@@ -731,18 +731,17 @@ piRouter.post('/approve', async (req: Request, res: Response) => {
         : 'Pi payment verification is currently unavailable. Network connection to Pi API failed.',
     });
   }
-});
+};
+
+piRouter.post('/approve', approveHandler);
+piRouter.post('/payments/approve', approveHandler);
 
 /**
  * POST /api/pi/complete
  * Server-side payment completion with Pi Platform API:
  * POST https://api.minepi.com/v2/payments/{paymentId}/complete
- *
- * CRITICAL RULE:
- * ONLY mark the order PAID after the backend receives a successful official Pi Platform API
- * completion response and the payment data is confirmed complete.
  */
-piRouter.post('/complete', async (req: Request, res: Response) => {
+const completeHandler = async (req: Request, res: Response) => {
   const rawPaymentId = req.body?.paymentId || req.body?.payment_id;
   const rawTxid = req.body?.txid || req.body?.txId || req.body?.transaction_id;
   const internalOrderId = req.body?.internalOrderId || req.body?.orderId;
@@ -903,11 +902,32 @@ piRouter.post('/complete', async (req: Request, res: Response) => {
       status: 'FAILED',
     });
   } catch (err: unknown) {
-    console.error('Pi payment completion network failure:', err);
     return res.status(502).json({
       error: 'Pi payment verification is currently unavailable. Please try again later.',
       code: 'PI_PLATFORM_API_UNAVAILABLE',
     });
+  }
+};
+
+piRouter.post('/complete', completeHandler);
+piRouter.post('/payments/complete', completeHandler);
+
+/**
+ * POST /api/pi/appstudio-auth
+ * Forwards access token to App Studio login endpoint
+ */
+piRouter.post('/appstudio-auth', async (req: Request, res: Response) => {
+  try {
+    const { accessToken } = req.body || {};
+    const response = await fetch('https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken })
+    });
+    const data = await response.json();
+    return res.status(response.status).json(data);
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || 'Server error' });
   }
 });
 

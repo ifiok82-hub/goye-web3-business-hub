@@ -530,46 +530,22 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                   />
                 </div>
 
-                {/* Modular Payment Provider Selection */}
+                {/* Pi-Only Settlement Selection */}
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                    Select Verified Settlement Method
+                    Settlement Method (Pi Only)
                   </label>
-                  <div className="space-y-2 text-xs">
-                    <label className="flex items-center gap-2 p-2.5 rounded border border-white/10 bg-[#0B0E14] cursor-pointer hover:border-white/20">
-                      <input
-                        type="radio"
-                        name="payment_provider"
-                        value="bank_transfer"
-                        checked={selectedPaymentProvider === 'bank_transfer'}
-                        onChange={() => setSelectedPaymentProvider('bank_transfer')}
-                        className="text-[#D4AF37] focus:ring-0"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-white">Direct Bank Wire / NIP Transfer (NGN)</div>
-                        <div className="text-[11px] text-slate-400">Verifiable bank invoice and cryptographic audit receipt.</div>
+                  <div className="p-3 rounded-lg border border-[#D4AF37] bg-[#123B72]/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="w-4 h-4 text-[#D4AF37]" />
+                      <div>
+                        <div className="font-semibold text-white text-xs">Pay with Pi (Testnet) - @ifiok1967</div>
+                        <div className="text-[10px] text-slate-300">Official Pi SDK with sub-second server approval.</div>
                       </div>
-                    </label>
-
-                    <label className="flex items-center gap-2 p-2.5 rounded border border-white/10 bg-[#0B0E14] cursor-pointer hover:border-white/20">
-                      <input
-                        type="radio"
-                        name="payment_provider"
-                        value="pi"
-                        checked={selectedPaymentProvider === 'pi'}
-                        onChange={() => setSelectedPaymentProvider('pi')}
-                        className="text-[#D4AF37] focus:ring-0"
-                      />
-                      <div className="flex-1">
-                        <div className="font-semibold text-white flex items-center gap-1.5">
-                          <Smartphone className="w-3.5 h-3.5 text-[#D4AF37]" />
-                          <span>Pi Network Platform API (Pi-Enabled Commerce)</span>
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          Official Pi SDK integration. Server-to-server cryptographic verification.
-                        </div>
-                      </div>
-                    </label>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-[#D4AF37] text-black font-bold text-[10px] uppercase">
+                      Pi Only
+                    </span>
                   </div>
                 </div>
 

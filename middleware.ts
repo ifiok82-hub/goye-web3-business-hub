@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === '/pi-app-validation.txt') {
-    return NextResponse.next();
-  }
+export function middleware(req: NextRequest) {
+  if (req.nextUrl.pathname === '/pi-app-validation.txt') return NextResponse.next();
+  if (req.nextUrl.pathname.startsWith('/api/pi/')) return NextResponse.next();
   return NextResponse.next();
 }
 

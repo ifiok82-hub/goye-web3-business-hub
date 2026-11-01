@@ -9,6 +9,10 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>GOYE Web3 Business Hub</title>
+        <meta name="description" content="AI + Web3 Business Infrastructure on Pi Network" />
       </head>
       <body className="bg-[#0B0E14] text-slate-100 antialiased">
         {children}

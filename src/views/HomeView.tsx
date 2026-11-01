@@ -19,6 +19,8 @@ import {
 import { GoyeLogo } from '../components/GoyeLogo';
 import { PWAInstallButton } from '../components/PWAInstallButton';
 import PiAuth from '../components/PiAuth';
+import PiAuthButton from '../components/PiAuthButton';
+import PiPayment from '../components/PiPayment';
 
 interface HomeViewProps {
   onNavigate: (view: string) => void;
@@ -85,9 +87,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 </button>
               </div>
 
-              {/* Pi Authentication Widget */}
-              <div className="pt-2 pb-1 flex flex-col items-start sm:items-center">
-                <PiAuth />
+              {/* Pi Network Pioneer Action Card */}
+              <div className="pt-2 pb-1 space-y-3 max-w-md w-full">
+                <PiAuthButton />
+                <PiPayment
+                  amount={1}
+                  memo="Goye Web3 Hub Test Payment for ifiok1967"
+                  metadata={{ product: "test", user: "ifiok1967", wallet: "GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E" }}
+                />
               </div>
 
               {/* Verified Trust Markers */}

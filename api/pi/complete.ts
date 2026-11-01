@@ -1,7 +1,4 @@
-/**
- * Vercel Serverless Function: POST /api/pi/complete
- */
-const DEFAULT_PI_API_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r';
+const DEFAULT_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r'
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,15 +8,13 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const body = req.body || {};
-    const { paymentId, txid } = body;
-    const apiKey = process.env.PI_API_KEY || DEFAULT_PI_API_KEY;
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    const paymentId = body.paymentId || body.payment_id;
+    const txid = body.txid || body.transactionId;
+    if (!paymentId) return res.status(400).json({ error: 'no paymentId' });
 
-    if (!paymentId || !txid) {
-      return res.status(400).json({ completed: false, error: 'paymentId and txid required' });
-    }
-
-    console.log('[PI COMPLETE FN] Completing payment:', paymentId, 'txid:', txid);
+    const apiKey = process.env.PI_API_KEY || DEFAULT_KEY;
+    console.log(`Completing payment ${paymentId} with txid ${txid}...`);
 
     const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
@@ -30,18 +25,18 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({ txid })
     });
 
-    const data = await piRes.text();
-    console.log('[PI COMPLETE FN] Response:', piRes.status, data);
+    const data = await piRes.json().catch(() => ({}));
+    console.log('Complete result', data);
 
-    if (piRes.ok) {
-      let json = {};
-      try { json = JSON.parse(data); } catch (_) {}
-      return res.status(200).json({ completed: true, payment: json });
-    } else {
-      return res.status(400).json({ completed: false, error: data });
+    if (!piRes.ok) {
+      if (JSON.stringify(data).toLowerCase().includes('already completed')) {
+        return res.status(200).json({ success: true, alreadyCompleted: true, data });
+      }
+      return res.status(400).json({ error: 'complete failed', details: data });
     }
+
+    return res.status(200).json({ success: true, data });
   } catch (e: any) {
-    console.error('[PI COMPLETE FN ERROR]', e);
-    return res.status(500).json({ completed: false, error: e?.message || 'Server error' });
+    return res.status(500).json({ error: e?.message || 'Server error' });
   }
 }
