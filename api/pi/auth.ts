@@ -10,7 +10,7 @@ export default async function handler(req: any, res: any) {
     const { accessToken } = body;
     if (!accessToken) return res.status(400).json({ error: 'no token' });
 
-    const piRes = await fetch('https://api.testnet.minepi.com/v2/me', {
+    const piRes = await fetch('https://api.minepi.com/v2/me', {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
     const piMe = await piRes.json();

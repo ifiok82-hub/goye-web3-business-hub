@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { PiAuthProvider } from './context/PiAuthContext';
 import { Header } from './components/Header';
-import { Footer } from './components/Footer';
+import FooterWithAdminTap from './components/FooterWithAdminTap';
 import { HomeView } from './views/HomeView';
 import { BusinessIdView } from './views/BusinessIdView';
 import { MarketplaceView } from './views/MarketplaceView';
@@ -258,8 +258,8 @@ export default function App() {
         {/* Real-time Offline Connectivity Toast */}
         <OfflineIndicator />
 
-        {/* Footer */}
-        <Footer onNavigate={handleNavigate} />
+        {/* Footer with 7-Tap Hidden Admin Access */}
+        <FooterWithAdminTap onNavigate={handleNavigate} />
       </div>
     </PiAuthProvider>
   );

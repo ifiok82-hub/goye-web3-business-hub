@@ -1,42 +1,35 @@
 'use client'
 import React from 'react'
-import PiAuthButton from '../components/PiAuthButton'
-import PiPayment from '../components/PiPayment'
+import LockedProducts from '../components/LockedProducts'
+import FooterWithAdminTap from '../components/FooterWithAdminTap'
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-[#08080f] text-white flex flex-col items-center justify-center p-6 space-y-6">
-      <div className="w-full max-w-md bg-[#12121f] border border-[#2a2a44] p-6 rounded-2xl shadow-2xl space-y-5">
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 text-[#facc15] text-xs font-bold uppercase tracking-wider">
-            Pi Network Only
+    <main className="min-h-screen bg-[#08080f] text-white flex flex-col justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 w-full space-y-8">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-gray-800">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-xs font-bold uppercase tracking-wider mb-2">
+              Official Pi Mainnet Hub
+            </div>
+            <h1 className="text-3xl font-extrabold text-white">GOYE Web3 Business Hub</h1>
+            <p className="text-sm text-gray-400 mt-1">
+              AI + Web3 Business Infrastructure for the Global Digital Economy
+            </p>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#f5f3ff]">GOYE Web3 Business Hub</h1>
-          <p className="text-xs text-zinc-400">
-            Official Pi Testnet Checkout for @ifiok1967
-          </p>
-        </div>
+          <div className="text-right hidden md:block">
+            <span className="text-xs text-gray-500 block">Settlement Asset</span>
+            <span className="text-sm font-bold text-yellow-400 font-mono">Pi (Mainnet)</span>
+          </div>
+        </header>
 
-        {/* 1. Pi Auth Button at top so user sees username popup before paying */}
-        <div className="space-y-2">
-          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Step 1: Pioneer Authentication</label>
-          <PiAuthButton />
-        </div>
-
-        {/* 2. Pi Payment Component */}
-        <div className="space-y-2 pt-2 border-t border-[#23233a]">
-          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Step 2: Testnet Payment (1 Pi)</label>
-          <PiPayment
-            amount={1}
-            memo="Goye Web3 Hub Test Payment for ifiok1967"
-            metadata={{ product: "test", user: "ifiok1967", wallet: "GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E" }}
-          />
-        </div>
-
-        <div className="text-[11px] text-zinc-500 text-center leading-relaxed">
-          Pi Testnet Sandbox Active • Zero monetary loss • Recipient: GDDTB2...X24E
-        </div>
+        {/* 15 Flagship Products in Locked state with Pi pricing */}
+        <section className="space-y-4">
+          <LockedProducts />
+        </section>
       </div>
+
+      <FooterWithAdminTap />
     </main>
   )
 }

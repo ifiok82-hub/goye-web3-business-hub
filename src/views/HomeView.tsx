@@ -18,9 +18,7 @@ import {
 } from 'lucide-react';
 import { GoyeLogo } from '../components/GoyeLogo';
 import { PWAInstallButton } from '../components/PWAInstallButton';
-import PiAuth from '../components/PiAuth';
-import PiAuthButton from '../components/PiAuthButton';
-import PiPayment from '../components/PiPayment';
+import LockedProducts from '../components/LockedProducts';
 
 interface HomeViewProps {
   onNavigate: (view: string) => void;
@@ -63,7 +61,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 </button>
 
                 <button
-                  onClick={() => onNavigate('products')}
+                  onClick={() => {
+                    const el = document.getElementById('flagship-products');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    else onNavigate('products');
+                  }}
                   className="px-5 py-3 text-sm font-semibold text-white bg-[#123B72] hover:bg-[#1a4e94] border border-[#D4AF37]/40 rounded-md transition-colors shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
                 >
                   <Package className="w-4 h-4 text-[#D4AF37]" />
@@ -85,16 +87,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 >
                   Pi System Audit
                 </button>
-              </div>
-
-              {/* Pi Network Pioneer Action Card */}
-              <div className="pt-2 pb-1 space-y-3 max-w-md w-full">
-                <PiAuthButton />
-                <PiPayment
-                  amount={1}
-                  memo="Goye Web3 Hub Test Payment for ifiok1967"
-                  metadata={{ product: "test", user: "ifiok1967", wallet: "GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E" }}
-                />
               </div>
 
               {/* Verified Trust Markers */}
@@ -176,6 +168,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
             <p className="text-xs text-slate-400">Digital contracts, verifiable milestones & invoice QR codes.</p>
           </div>
         </div>
+      </section>
+
+      {/* 2.5 15 Flagship Products & Infrastructure (Pi Mainnet Locked) */}
+      <section id="flagship-products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <LockedProducts />
       </section>
 
       {/* 3. CORE PHOTOGRAPHIC VISUAL SYSTEM SHOWCASE (4-Quadrant Mood Board Layout) */}
