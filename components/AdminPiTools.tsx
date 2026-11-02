@@ -2,18 +2,12 @@
 import React, { useState } from 'react'
 
 export default function AdminPiTools() {
-  const [logs, setLogs] = useState<string[]>([])
-  const [authUsername, setAuthUsername] = useState<string | null>(null)
+  const [logs, setLogs] = useState<string>('Ready for test')
   const [loading, setLoading] = useState(false)
 
-  const addLog = (msg: string) => {
-    const timestamp = new Date().toLocaleTimeString()
-    setLogs(prev => [`[${timestamp}] ${msg}`, ...prev.slice(0, 19)])
-  }
-
-  const handleTestAuth = async () => {
+  const handleTestnetAuth = async () => {
     setLoading(true)
-    addLog("Testing Pi Auth (expecting popup)...")
+    setLogs("Testing Pi Auth (Testnet)...")
     try {
       if (typeof window === 'undefined' || !window.Pi) {
         const s = document.createElement('script')
@@ -21,27 +15,23 @@ export default function AdminPiTools() {
         await new Promise((res, rej) => { s.onload = res; s.onerror = rej; document.head.appendChild(s) })
       }
       await window.Pi.init({ version: "2.0", sandbox: true })
-      addLog("Pi SDK initialized in sandbox: true")
-
-      const auth = await window.Pi.authenticate(["username", "payments"], (payment: any) => {
-        addLog(`Incomplete payment detected: ${payment?.identifier}`)
+      const auth = await window.Pi.authenticate(["username", "payments"], (p: any) => {
+        setLogs(`Incomplete: ${p?.identifier || 'none'}`)
       })
-
       const username = auth?.user?.username || 'ifiok1967'
-      setAuthUsername(username)
-      addLog(`✅ Auth SUCCESS! Username: @${username} (UID: ${auth?.user?.uid})`)
+      setLogs(`Auth Success: @${username} (UID: ${auth?.user?.uid})`)
       alert(`Pi Auth Success: @${username}`)
     } catch (err: any) {
-      addLog(`❌ Auth ERROR: ${err?.message || err}`)
+      setLogs(`Auth Failed: ${err?.message || err}`)
       alert(`Pi Auth Error: ${err?.message || err}`)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleTestPayment = async () => {
+  const handleTestnetPayment = async () => {
     setLoading(true)
-    addLog("Initiating 0.1 Test-Pi Payment...")
+    setLogs("Initiating 1 Pi Testnet payment...")
     try {
       if (typeof window === 'undefined' || !window.Pi) {
         const s = document.createElement('script')
@@ -49,98 +39,75 @@ export default function AdminPiTools() {
         await new Promise((res, rej) => { s.onload = res; s.onerror = rej; document.head.appendChild(s) })
       }
       await window.Pi.init({ version: "2.0", sandbox: true })
-      const auth = await window.Pi.authenticate(["username", "payments"], () => {})
-      addLog(`Pioneer authenticated: @${auth?.user?.username || 'ifiok1967'}`)
+      await window.Pi.authenticate(["username", "payments"], () => {})
 
       window.Pi.createPayment({
-        amount: 0.1,
-        memo: "Admin Sandbox Testnet Payment for ifiok1967",
+        amount: 1,
+        memo: "Admin Pi Testnet Payment 1 Pi for ifiok1967",
         metadata: { adminTest: true, testnet: true, recipient: "GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E" }
       }, {
         onReadyForServerApproval: async (paymentId: string) => {
-          addLog(`Calling server approval for ${paymentId}...`)
-          const res = await fetch('/api/pi/payments/approve', {
+          setLogs(`Approving ${paymentId}...`)
+          const res = await fetch('/api/pi/testnet/approve', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ paymentId })
           })
           const data = await res.json()
-          addLog(`Approval response: ${JSON.stringify(data)}`)
+          setLogs(`Approved: ${JSON.stringify(data)}`)
         },
         onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-          addLog(`Payment approved! Submitting blockchain completion with txid ${txid}...`)
-          const res = await fetch('/api/pi/payments/complete', {
+          setLogs(`Completing with TXID ${txid}...`)
+          const res = await fetch('/api/pi/testnet/complete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ paymentId, txid })
           })
           const data = await res.json()
-          addLog(`✅ Completion response: ${JSON.stringify(data)}`)
-          alert(`Testnet Payment Complete! Tx: ${txid}`)
+          setLogs(`Payment Complete! TX: ${txid}`)
+          alert(`Testnet Payment Complete! TX: ${txid}`)
           setLoading(false)
         },
-        onCancel: (paymentId: string) => {
-          addLog(`Payment cancelled: ${paymentId}`)
+        onCancel: () => {
+          setLogs("Payment cancelled by user")
           setLoading(false)
         },
         onError: (err: any) => {
-          addLog(`Payment error: ${err?.message || JSON.stringify(err)}`)
+          setLogs(`Payment Error: ${err?.message || JSON.stringify(err)}`)
           setLoading(false)
         }
       })
     } catch (err: any) {
-      addLog(`Execution error: ${err?.message || err}`)
+      setLogs(`Error: ${err?.message || err}`)
       setLoading(false)
     }
   }
 
   return (
-    <div className="p-6 rounded-2xl bg-[#121620] border border-yellow-500/30 space-y-4">
-      <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-        <div>
-          <h3 className="text-base font-bold text-yellow-400 flex items-center gap-2">
-            <span>⚙️ Pi Testnet Tools (Admin Only)</span>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-mono">SANDBOX</span>
-          </h3>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Internal diagnostics for Pioneer auth and server approval verification.
-          </p>
-        </div>
-        {authUsername && (
-          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-            @{authUsername}
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-3">
+    <div className="mt-8 p-4 bg-purple-900/20 border border-purple-500 rounded-xl space-y-3">
+      <h3 className="text-purple-400 font-bold mb-1 text-base">PI TESTNET PAYMENT TEST (Admin Only)</h3>
+      <p className="text-gray-400 text-sm mb-3">
+        Test Pi Testnet payments without charging real Pi. Uses api.testnet.minepi.com
+      </p>
+      <div className="flex flex-wrap gap-2">
         <button
-          onClick={handleTestAuth}
+          onClick={handleTestnetAuth}
           disabled={loading}
-          className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 active:bg-purple-800 disabled:opacity-50 text-white font-bold text-xs cursor-pointer transition-colors shadow-md flex items-center gap-2"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold text-xs cursor-pointer transition-colors"
         >
-          <span>👤 Test Pi Auth - Show @ifiok1967 popup</span>
+          Test Pi Auth - Show @ifiok1967
         </button>
-
         <button
-          onClick={handleTestPayment}
+          onClick={handleTestnetPayment}
           disabled={loading}
-          className="px-4 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 disabled:opacity-50 text-black font-bold text-xs cursor-pointer transition-colors shadow-md flex items-center gap-2"
+          className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold text-xs cursor-pointer transition-colors"
         >
-          <span>🧪 Test Pi Payment Testnet (0.1 π)</span>
+          Test Pi Testnet Payment 1 Pi
         </button>
       </div>
-
-      {logs.length > 0 && (
-        <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Diagnostics Console Logs</label>
-          <div className="p-3 rounded-lg bg-black/60 border border-gray-800 font-mono text-[11px] text-gray-300 max-h-48 overflow-y-auto space-y-1">
-            {logs.map((log, idx) => (
-              <div key={idx} className="break-all">{log}</div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="mt-3 text-xs text-gray-300 font-mono bg-black/50 p-2.5 rounded border border-gray-800 break-all">
+        Logs: {logs}
+      </div>
     </div>
   )
 }

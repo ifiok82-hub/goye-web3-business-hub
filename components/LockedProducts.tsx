@@ -1,158 +1,69 @@
 'use client'
 import React, { useState, useEffect } from 'react'
+import ProductCardWithImage, { ProductData } from './ProductCardWithImage'
 
-export interface ProductItem {
-  id: number;
-  name: string;
-  price: number;
-  desc: string;
-}
-
-export const PRODUCTS: ProductItem[] = [
-  { id: 1, name: "Business ID Registration", price: 2, desc: "5-Level Verifiable Cryptographic Identity" },
-  { id: 2, name: "AI Assistant Setup", price: 3, desc: "Autonomous AI Enterprise Agents" },
-  { id: 3, name: "Marketplace Listing", price: 1, desc: "Web3 Global Marketplace Verified Listing" },
-  { id: 4, name: "Smart Contracts & Escrow", price: 2, desc: "Automated milestone-based escrow contracts" },
-  { id: 5, name: "Invoicing & Settlement", price: 1, desc: "Cryptographic invoicing with Pi verification" },
-  { id: 6, name: "Trade Assurance Protocol", price: 3, desc: "Dispute resolution and bonded transaction protection" },
-  { id: 7, name: "Corporate Business Profile", price: 2, desc: "Public verifiable business registry on Pi Network" },
-  { id: 8, name: "AI Workflow Studio", price: 4, desc: "Custom agentic pipeline design and automation" },
-  { id: 9, name: "Cross-Border Settlement", price: 3, desc: "Low-latency international digital trade" },
-  { id: 10, name: "Developer API Hub", price: 2, desc: "Direct API keys, webhooks, and SDK integration" },
-  { id: 11, name: "Merchant Mobile POS", price: 1, desc: "In-person QR code point-of-sale checkout" },
-  { id: 12, name: "Multi-Sig Vault Security", price: 3, desc: "Threshold governance for digital enterprise assets" },
-  { id: 13, name: "Supply Chain Tracking", price: 2, desc: "Provenance verification & batch serialization" },
-  { id: 14, name: "Academy Certification", price: 1, desc: "Accredited Web3 commerce developer program" },
-  { id: 15, name: "Enterprise Compliance Kit", price: 4, desc: "Audit logs, exportable tax and KYC reporting" }
+export const FLAGSHIP_PRODUCTS: ProductData[] = [
+  { id: 1, name: "Business ID Registration", desc: "5-Level Verifiable Cryptographic Identity", price: 2, image: "/images/business-id.jpg" },
+  { id: 2, name: "AI Assistant Setup", desc: "Autonomous AI Enterprise Agents", price: 3, image: "/images/ai-assistant.jpg" },
+  { id: 3, name: "Marketplace Listing", desc: "Web3 Global Marketplace Verified Listing", price: 1, image: "/images/marketplace.jpg" },
+  { id: 4, name: "Supply Chain Tracking", desc: "Provenance verification & batch serialization", price: 2, image: "/images/supply-chain.jpg" },
+  { id: 5, name: "Academy Certification", desc: "Accredited Web3 commerce developer program", price: 1, image: "/images/academy.jpg" },
+  { id: 6, name: "Enterprise Compliance Kit", desc: "Audit logs, exportable tax and KYC reporting", price: 4, image: "/images/compliance.jpg" },
+  { id: 7, name: "Escrow Contracts", desc: "Automated milestone-based escrow contracts", price: 2, image: "/images/escrow.jpg" },
+  { id: 8, name: "Invoicing & Settlement", desc: "Cryptographic invoicing with Pi verification", price: 1, image: "/images/invoicing.jpg" },
+  { id: 9, name: "Trade Assurance Protocol", desc: "Dispute resolution and bonded transaction protection", price: 3, image: "/images/trade.jpg" },
+  { id: 10, name: "Corporate Business Profile", desc: "Public verifiable business registry on Pi Network", price: 2, image: "/images/corporate.jpg" },
+  { id: 11, name: "Website Development", desc: "Launch high-conversion business websites", price: 3, image: "/images/websites.jpg" },
+  { id: 12, name: "E-Commerce Systems", desc: "Turnkey e-commerce systems for African markets", price: 4, image: "/images/ecommerce.jpg" },
+  { id: 13, name: "AI Business Automation", desc: "24/7 AI Reception, Lead Generation, WhatsApp Handoff", price: 5, image: "/images/ai-business.jpg" },
+  { id: 14, name: "Cryptographic Business ID", desc: "Establish corporate trust with verifiable identity", price: 3, image: "/images/crypto-id.jpg" },
+  { id: 15, name: "Production Web Engineering", desc: "Production Web Engineering enterprise solutions", price: 3, image: "/images/web-eng.jpg" },
 ]
 
+export const PRODUCTS = FLAGSHIP_PRODUCTS
+
 export default function LockedProducts() {
-  const [unlocked, setUnlocked] = useState<number[]>([])
-  const [loading, setLoading] = useState<number | null>(null)
+  const [unlockedCount, setUnlockedCount] = useState(0)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const saved = localStorage.getItem('unlocked_products')
-    if (saved) {
-      try {
-        setUnlocked(JSON.parse(saved))
-      } catch (_) {}
+    const updateCount = () => {
+      if (typeof window === 'undefined') return
+      const saved = localStorage.getItem('purchased_products')
+      if (saved) {
+        try {
+          const arr = JSON.parse(saved)
+          setUnlockedCount(arr.length)
+        } catch (_) {}
+      }
     }
+    updateCount()
+    window.addEventListener('storage', updateCount)
+    return () => window.removeEventListener('storage', updateCount)
   }, [])
 
-  const handlePiPay = async (product: ProductItem) => {
-    setLoading(product.id)
-    try {
-      if (!window.Pi) {
-        const s = document.createElement('script')
-        s.src = 'https://sdk.minepi.com/pi-sdk.js'
-        await new Promise((res, rej) => { s.onload = res; s.onerror = rej; document.head.appendChild(s) })
-      }
-      await window.Pi.init({ version: "2.0" })
-      await window.Pi.authenticate(["username", "payments"], () => {})
-      
-      await window.Pi.createPayment({
-        amount: product.price,
-        memo: `Goye Hub - ${product.name}`,
-        metadata: { productId: product.id, type: "product_unlock", wallet: "GBR4B47WY7JDK2JKUUQQTWWQENOUUYTAQAOYLXZ7XE36YFQY6LKPVO6R" }
-      }, {
-        onReadyForServerApproval: async (paymentId: string) => {
-          await fetch('/api/pi/payments/approve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId })
-          })
-        },
-        onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-          await fetch('/api/pi/payments/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId, txid })
-          })
-          const newUnlocked = [...unlocked, product.id]
-          setUnlocked(newUnlocked)
-          localStorage.setItem('unlocked_products', JSON.stringify(newUnlocked))
-          alert(`Unlocked ${product.name}! TX: ${txid}`)
-          setLoading(null)
-        },
-        onCancel: () => {
-          setLoading(null)
-          alert("Payment cancelled")
-        },
-        onError: (e: any) => {
-          setLoading(null)
-          alert(`Error: ${e?.message || e}`)
-        }
-      })
-    } catch (e: any) {
-      setLoading(null)
-      alert(`Pi Payment failed: ${e?.message || e} - Open in Pi Browser`)
-    }
-  }
-
   return (
-    <div className="w-full space-y-4">
-      <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+    <div className="w-full space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-800 gap-3">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-white flex flex-wrap items-center gap-2.5">
             <span>15 Flagship Products & Infrastructure</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 font-semibold">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 font-semibold font-mono">
               Pi Mainnet
             </span>
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Instant digital access via official Pi Network payments.
+          <p className="text-xs sm:text-sm text-gray-400 mt-1">
+            Enterprise products with instant digital access via official Pi Network payments.
           </p>
         </div>
-        <div className="text-xs font-mono text-gray-400">
-          Unlocked: <strong className="text-yellow-400">{unlocked.length}</strong> / 15
+        <div className="text-xs sm:text-sm font-mono text-gray-400 shrink-0 bg-black/40 px-3 py-1.5 rounded-lg border border-gray-800">
+          Unlocked: <strong className="text-yellow-400 font-bold">{unlockedCount}</strong> / 15
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {PRODUCTS.map(p => {
-          const isUnlocked = unlocked.includes(p.id)
-          return (
-            <div
-              key={p.id}
-              className={`p-4 rounded-xl border transition-all ${
-                isUnlocked
-                  ? 'bg-emerald-950/20 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
-                  : 'bg-[#121620] border-gray-800 hover:border-gray-700'
-              }`}
-            >
-              <div className="flex justify-between items-start gap-2">
-                <h3 className="font-bold text-white text-sm leading-snug">{p.name}</h3>
-                {isUnlocked ? (
-                  <span className="text-xs font-bold text-emerald-400 shrink-0 bg-emerald-950/50 px-2 py-0.5 rounded">
-                    ✓ Unlocked
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold text-yellow-400 shrink-0 bg-yellow-950/40 px-2 py-0.5 rounded">
-                    🔒 {p.price} π
-                  </span>
-                )}
-              </div>
-              <p className="text-gray-400 text-xs mt-2 leading-relaxed min-h-[36px]">{p.desc}</p>
-              {!isUnlocked ? (
-                <button
-                  onClick={() => handlePiPay(p)}
-                  disabled={loading === p.id}
-                  className="w-full mt-3 bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 disabled:opacity-50 text-black py-2 rounded-lg font-bold text-xs cursor-pointer transition-colors shadow-md flex items-center justify-center gap-1.5"
-                >
-                  {loading === p.id ? "Processing..." : `Unlock with ${p.price} Pi`}
-                </button>
-              ) : (
-                <button
-                  onClick={() => alert(`Access granted for ${p.name}`)}
-                  className="w-full mt-3 bg-emerald-900/40 hover:bg-emerald-900/60 text-emerald-200 border border-emerald-500/30 py-2 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                >
-                  Access Product
-                </button>
-              )}
-            </div>
-          )
-        })}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {FLAGSHIP_PRODUCTS.map(p => (
+          <ProductCardWithImage key={p.id} product={p} />
+        ))}
       </div>
     </div>
   )

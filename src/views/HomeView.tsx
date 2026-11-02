@@ -19,6 +19,7 @@ import {
 import { GoyeLogo } from '../components/GoyeLogo';
 import { PWAInstallButton } from '../components/PWAInstallButton';
 import LockedProducts from '../components/LockedProducts';
+import ProductCardWithImage from '../components/ProductCardWithImage';
 
 interface HomeViewProps {
   onNavigate: (view: string) => void;
@@ -200,199 +201,44 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
           </button>
         </div>
 
-        {/* 4-Quadrant Visual Grid */}
+        {/* 4-Quadrant Visual Grid with Real Lock & Buy with Pi */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Quadrant 1: Websites & Digital Infrastructure */}
-          <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
-            <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
-              <img
-                src={ASSETS.hero}
-                alt="African entrepreneurs collaborating on websites, e-commerce, and digital solutions"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
-              
-              {/* Badges Overlay */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-[#D4AF37] border border-[#D4AF37]/30">
-                  Websites
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  E-Commerce
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  Digital Solutions
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  AI Automation
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Create · Build · Grow</h3>
-                <span className="text-xs font-mono text-[#D4AF37]">01. INFRASTRUCTURE</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Launch high-conversion business websites, turnkey e-commerce systems, and client portals engineered for African markets and international clients.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-white/5">
-                <span className="text-slate-400">Production Web Engineering</span>
-                <button
-                  onClick={() => onNavigate('marketplace')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
-                >
-                  View Solutions <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quadrant 2: Business Profile & Verifiable Identity */}
-          <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
-            <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
-              <img
-                src={ASSETS.businessIdentity}
-                alt="Entrepreneur viewing professional digital business profile dashboard with verification badges and documents"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
-
-              {/* Badges Overlay */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
-                <span className="px-2 py-0.5 rounded bg-emerald-950/80 backdrop-blur-sm text-[11px] font-semibold text-emerald-400 border border-emerald-800">
-                  ✓ Verified Profile
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  CAC / Documents
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  QR Verification
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-[#D4AF37] border border-[#D4AF37]/30">
-                  5-Tier Status
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Cryptographic Business ID</h3>
-                <span className="text-xs font-mono text-[#D4AF37]">02. IDENTITY</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Establish corporate trust with verifiable business identification, transparent verification history, director records, and scannable validation endpoints.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-white/5">
-                <span className="text-slate-400">Verifiable Entity Protocol</span>
-                <button
-                  onClick={() => onNavigate('business-id')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
-                >
-                  Verify Profile <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quadrant 3: AI Business Assistants */}
-          <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
-            <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
-              <img
-                src={ASSETS.aiAssistants}
-                alt="African business owners using AI business assistant and customer support dashboard"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
-
-              {/* Badges Overlay */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
-                <span className="px-2 py-0.5 rounded bg-[#123B72]/80 backdrop-blur-sm text-[11px] font-semibold text-white border border-[#123B72]">
-                  24/7 AI Reception
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  Lead Generation
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-[#D4AF37] border border-[#D4AF37]/30">
-                  WhatsApp Handoff
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  Zero Key Exposure
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">AI Business Assistants</h3>
-                <span className="text-xs font-mono text-[#D4AF37]">03. AUTOMATION</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Server-backed AI assistants powered by Gemini models that qualify inquiries, generate quotes, answer questions, and route warm leads directly to WhatsApp.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-white/5">
-                <span className="text-slate-400">9 Specialized Agents</span>
-                <button
-                  onClick={() => onNavigate('ai-agents')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
-                >
-                  Test Live Console <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Quadrant 4: Digital Commerce & Dual Settlement */}
-          <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
-            <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
-              <img
-                src={ASSETS.digitalCommerce}
-                alt="African businesswoman completing a verified digital business transaction using smartphone and laptop"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
-
-              {/* Badges Overlay */}
-              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
-                <span className="px-2 py-0.5 rounded bg-emerald-950/80 backdrop-blur-sm text-[11px] font-semibold text-emerald-400 border border-emerald-800">
-                  ✓ Payment Confirmed
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  Bank Wire / NIP
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-[#D4AF37] border border-[#D4AF37]/30">
-                  Pi Platform API
-                </span>
-                <span className="px-2 py-0.5 rounded bg-[#0B0E14]/80 backdrop-blur-sm text-[11px] font-semibold text-slate-200 border border-white/10">
-                  Trade Protected
-                </span>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Digital Commerce & Settlement</h3>
-                <span className="text-xs font-mono text-[#D4AF37]">04. COMMERCE</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Accept direct bank wires, digital invoices, and server-verified Pi payments. Strict anti-mocking architecture with zero client-side verification tricks.
-              </p>
-              <div className="pt-2 flex items-center justify-between text-xs border-t border-white/5">
-                <span className="text-slate-400">Multi-Rail Payment Engine</span>
-                <button
-                  onClick={() => onNavigate('pi-status')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
-                >
-                  Audit Status <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <ProductCardWithImage
+            product={{
+              id: 101,
+              name: "Create · Build · Grow",
+              desc: "Launch high-conversion business websites, turnkey e-commerce systems, and client portals engineered for African markets and international clients.",
+              price: 5,
+              image: "/images/create-build-grow.jpg"
+            }}
+          />
+          <ProductCardWithImage
+            product={{
+              id: 102,
+              name: "Cryptographic Business ID",
+              desc: "Establish corporate trust with verifiable business identification, transparent verification history, director records, and scannable validation endpoints.",
+              price: 3,
+              image: "/images/crypto-id.jpg"
+            }}
+          />
+          <ProductCardWithImage
+            product={{
+              id: 103,
+              name: "AI Business Assistants",
+              desc: "Server-backed AI assistants powered by Gemini models that qualify inquiries, generate quotes, answer questions, and route warm leads directly to WhatsApp.",
+              price: 4,
+              image: "/images/ai-business.jpg"
+            }}
+          />
+          <ProductCardWithImage
+            product={{
+              id: 104,
+              name: "Digital Commerce & Settlement",
+              desc: "Accept direct digital invoices and server-verified Pi payments. Strict anti-mocking architecture with zero client-side verification tricks.",
+              price: 4,
+              image: "/images/ecommerce.jpg"
+            }}
+          />
         </div>
       </section>
 
