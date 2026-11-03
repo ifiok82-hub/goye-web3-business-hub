@@ -7,12 +7,19 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [checking, setChecking] = useState(true)
   const [inputSecret, setInputSecret] = useState('')
+  const [purchasedIds, setPurchasedIds] = useState<number[]>([])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const auth = localStorage.getItem('goye_admin')
       if (auth === 'true') {
         setIsAdmin(true)
+      }
+      const saved = localStorage.getItem('purchased_products')
+      if (saved) {
+        try {
+          setPurchasedIds(JSON.parse(saved))
+        } catch (_) {}
       }
     }
     setChecking(false)
@@ -89,19 +96,30 @@ export default function AdminPage() {
       {/* Flagship Products Management */}
       <section className="p-6 rounded-2xl bg-[#121620] border border-gray-800 space-y-4">
         <div className="flex justify-between items-center border-b border-gray-800 pb-3">
-          <h2 className="text-base font-bold text-white">Active Products ({PRODUCTS.length})</h2>
-          <span className="text-xs text-yellow-500 font-mono">Mainnet Settlement</span>
+          <div>
+            <h2 className="text-base font-bold text-white">15 Flagship Products & Infrastructure</h2>
+            <p className="text-xs text-gray-400">Current customer purchase status ({purchasedIds.length} unlocked)</p>
+          </div>
+          <span className="text-xs text-yellow-500 font-mono">Pi Mainnet</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          {PRODUCTS.map(p => (
-            <div key={p.id} className="p-3 rounded-lg bg-black/40 border border-gray-800 flex justify-between items-center">
-              <div>
-                <span className="font-bold text-white block">{p.name}</span>
-                <span className="text-gray-400 text-[11px]">{p.desc}</span>
+          {PRODUCTS.map(p => {
+            const isPurchased = purchasedIds.includes(p.id)
+            return (
+              <div key={p.id} className="p-3.5 rounded-lg bg-black/40 border border-gray-800 flex justify-between items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white block">{p.name}</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${isPurchased ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-gray-800 text-gray-400'}`}>
+                      {isPurchased ? '✓ Purchased' : '🔒 Locked'}
+                    </span>
+                  </div>
+                  <span className="text-gray-400 text-[11px] block mt-0.5">{p.desc}</span>
+                </div>
+                <span className="font-mono font-bold text-yellow-400 shrink-0">{p.price} π</span>
               </div>
-              <span className="font-mono font-bold text-yellow-400 shrink-0 ml-2">{p.price} π</span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </section>
     </main>

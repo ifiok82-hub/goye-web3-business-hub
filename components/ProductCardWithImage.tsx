@@ -12,7 +12,7 @@ export interface ProductData {
 }
 
 export default function ProductCardWithImage({ product }: { product: ProductData }) {
-  const [unlocked, setUnlocked] = useState(false)
+  const [purchased, setPurchased] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -20,8 +20,9 @@ export default function ProductCardWithImage({ product }: { product: ProductData
     const saved = localStorage.getItem('purchased_products')
     if (saved) {
       try {
-        const arr = JSON.parse(saved)
-        if (arr.includes(product.id)) setUnlocked(true)
+        if (JSON.parse(saved).includes(product.id)) {
+          setPurchased(true)
+        }
       } catch (_) {}
     }
   }, [product.id])
@@ -36,7 +37,6 @@ export default function ProductCardWithImage({ product }: { product: ProductData
       }
       await window.Pi.init({ version: "2.0" })
       await window.Pi.authenticate(["username", "payments"], () => {})
-      
       await window.Pi.createPayment({
         amount: product.price,
         memo: `Goye Hub - ${product.name}`,
@@ -65,13 +65,11 @@ export default function ProductCardWithImage({ product }: { product: ProductData
             arr.push(product.id)
           }
           localStorage.setItem('purchased_products', JSON.stringify(arr))
-          setUnlocked(true)
-          alert(`Purchased ${product.name}! TX: ${txid}`)
+          setPurchased(true)
+          alert(`Access granted to ${product.name}! TX: ${txid}`)
           setLoading(false)
         },
-        onCancel: () => {
-          setLoading(false)
-        },
+        onCancel: () => setLoading(false),
         onError: (e: any) => {
           setLoading(false)
           alert(e?.message || e)
@@ -84,48 +82,38 @@ export default function ProductCardWithImage({ product }: { product: ProductData
   }
 
   return (
-    <div className="relative bg-[#121620] border border-gray-800 rounded-2xl overflow-hidden group hover:border-yellow-500/50 transition-all shadow-lg flex flex-col justify-between">
-      {/* Product Image with Lock Overlay */}
-      {product.image && (
-        <div className="relative h-48 w-full overflow-hidden bg-black/40">
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          {!unlocked && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center">
-              <div className="bg-black/80 rounded-full p-3.5 mb-2 shadow-xl border border-yellow-500/30">
-                <span className="text-2xl">🔒</span>
-              </div>
-              <div className="bg-yellow-500/20 border border-yellow-500/50 px-3 py-1 rounded-full text-yellow-400 text-xs font-bold font-mono">
-                🔒 {product.price} π Locked
-              </div>
-            </div>
-          )}
-          {unlocked && (
-            <div className="absolute top-3 right-3 bg-emerald-500 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-              ✓ Purchased
-            </div>
-          )}
+    <div className="relative bg-[#121620] border border-gray-700/80 rounded-2xl overflow-hidden hover:border-yellow-500/40 transition-all flex flex-col justify-between shadow-xl">
+      {/* IMAGE - ALWAYS CLEAR, BEAUTIFUL, NEVER LOCKED/BLURRED */}
+      <div className="relative h-52 w-full overflow-hidden bg-black/30">
+        <img
+          src={product.image || '/images/business-id.jpg'}
+          alt={product.name}
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+        />
+        {/* Only small price badge on image corner, not covering beauty */}
+        <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-md border border-yellow-500/30 px-3 py-1 rounded-full text-yellow-400 text-xs font-bold font-mono shadow-md">
+          {product.price} π
         </div>
-      )}
+        {purchased && (
+          <div className="absolute top-3 left-3 bg-emerald-500 text-black px-3 py-1 rounded-full text-xs font-bold shadow-md">
+            ✓ Owned
+          </div>
+        )}
+      </div>
       
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <div className="flex justify-between items-start mb-2 gap-2">
-            <h3 className="font-bold text-white text-base leading-snug">{product.name}</h3>
-            {!product.image && !unlocked && (
-              <span className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full text-xs font-bold font-mono shrink-0">
-                🔒 {product.price} π
-              </span>
-            )}
-          </div>
-          <p className="text-gray-400 text-xs leading-relaxed mb-4">{product.desc}</p>
+          <h3 className="font-bold text-white text-lg leading-snug">{product.name}</h3>
+          <p className="text-gray-400 text-xs mt-1.5 mb-4 leading-relaxed">{product.desc}</p>
         </div>
         
-        <div>
-          {!unlocked ? (
+        {/* LOCK IS ONLY ON CONTENT ACCESS, NOT IMAGE */}
+        {!purchased ? (
+          <div className="space-y-2 pt-2 border-t border-gray-800">
+            <div className="flex items-center gap-1.5 text-gray-400 text-[11px]">
+              <span>🔒</span>
+              <span>Content locked - Buy to access full product</span>
+            </div>
             <button
               onClick={handleBuy}
               disabled={loading}
@@ -133,15 +121,15 @@ export default function ProductCardWithImage({ product }: { product: ProductData
             >
               {loading ? "Processing..." : `Buy with ${product.price} Pi 🔒`}
             </button>
-          ) : (
-            <button
-              onClick={() => alert(`Access granted to ${product.name}`)}
-              className="w-full bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 py-3 rounded-xl font-bold text-sm cursor-pointer hover:bg-emerald-950/60 transition-colors"
-            >
-              ✓ Access Product
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => alert(`Access granted to full content for ${product.name}`)}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm cursor-pointer transition-colors shadow-md flex items-center justify-center gap-2"
+          >
+            ✓ Access Product Content
+          </button>
+        )}
       </div>
     </div>
   )
