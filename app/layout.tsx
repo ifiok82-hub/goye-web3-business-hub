@@ -1,5 +1,4 @@
 import React from 'react';
-import PiAuthSilent from '../components/PiAuthSilent';
 
 export default function RootLayout({
   children,
@@ -16,7 +15,6 @@ export default function RootLayout({
         <meta name="description" content="AI + Web3 Business Infrastructure on Pi Network" />
       </head>
       <body className="bg-[#0B0E14] text-slate-100 antialiased">
-        <PiAuthSilent />
         {children}
       </body>
     </html>

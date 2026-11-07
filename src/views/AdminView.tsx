@@ -16,7 +16,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { TestnetPaymentTest } from '../components/PiPaymentButtons';
-import AdminPiTools from '../components/AdminPiTools';
 
 export const AdminView: React.FC = () => {
   const [overview, setOverview] = useState<any>({
@@ -236,8 +235,8 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* Pi Testnet Tools for Admin Verification & Diagnostics */}
-      <AdminPiTools />
+      {/* Testnet Payment Test Widget for 10/10 Green Check */}
+      <TestnetPaymentTest />
 
       {/* 2. Payment Reconciliation Queue (Pending / Under Review) */}
       <div className="p-6 rounded-xl bg-[#121620] border border-white/10 space-y-4">

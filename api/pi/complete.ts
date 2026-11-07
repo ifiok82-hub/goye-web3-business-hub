@@ -1,3 +1,5 @@
+const DEFAULT_KEY = '4sup304m5joyhqnmhmiov2tdjvybp4l9pr7a9qe47nf9nri4dzyczexm1dmmei2r'
+
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
@@ -9,9 +11,12 @@ export default async function handler(req: any, res: any) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const paymentId = body.paymentId || body.payment_id;
     const txid = body.txid || body.transactionId;
-    const apiKey = process.env.PI_API_KEY;
+    if (!paymentId) return res.status(400).json({ error: 'no paymentId' });
 
-    const piRes = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
+    const apiKey = process.env.PI_API_KEY || DEFAULT_KEY;
+    console.log(`Completing payment ${paymentId} with txid ${txid}...`);
+
+    const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${apiKey}`,
@@ -21,6 +26,8 @@ export default async function handler(req: any, res: any) {
     });
 
     const data = await piRes.json().catch(() => ({}));
+    console.log('Complete result', data);
+
     if (!piRes.ok) {
       if (JSON.stringify(data).toLowerCase().includes('already completed')) {
         return res.status(200).json({ success: true, alreadyCompleted: true, data });

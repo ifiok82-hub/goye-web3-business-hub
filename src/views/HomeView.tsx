@@ -18,8 +18,9 @@ import {
 } from 'lucide-react';
 import { GoyeLogo } from '../components/GoyeLogo';
 import { PWAInstallButton } from '../components/PWAInstallButton';
-import LockedProducts from '../components/LockedProducts';
-import ProductCardWithImage from '../components/ProductCardWithImage';
+import PiAuth from '../components/PiAuth';
+import PiAuthButton from '../components/PiAuthButton';
+import PiPayment from '../components/PiPayment';
 
 interface HomeViewProps {
   onNavigate: (view: string) => void;
@@ -62,11 +63,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 </button>
 
                 <button
-                  onClick={() => {
-                    const el = document.getElementById('flagship-products');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    else onNavigate('products');
-                  }}
+                  onClick={() => onNavigate('products')}
                   className="px-5 py-3 text-sm font-semibold text-white bg-[#123B72] hover:bg-[#1a4e94] border border-[#D4AF37]/40 rounded-md transition-colors shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
                 >
                   <Package className="w-4 h-4 text-[#D4AF37]" />
@@ -88,6 +85,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 >
                   Pi System Audit
                 </button>
+              </div>
+
+              {/* Pi Network Pioneer Action Card */}
+              <div className="pt-2 pb-1 space-y-3 max-w-md w-full">
+                <PiAuthButton />
+                <PiPayment
+                  amount={1}
+                  memo="Goye Web3 Hub Test Payment for ifiok1967"
+                  metadata={{ product: "test", user: "ifiok1967", wallet: "GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E" }}
+                />
               </div>
 
               {/* Verified Trust Markers */}
@@ -171,11 +178,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
         </div>
       </section>
 
-      {/* 2.5 15 Flagship Products & Infrastructure (Pi Mainnet Locked) */}
-      <section id="flagship-products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <LockedProducts />
-      </section>
-
       {/* 3. CORE PHOTOGRAPHIC VISUAL SYSTEM SHOWCASE (4-Quadrant Mood Board Layout) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
@@ -201,17 +203,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
           </button>
         </div>
 
-        {/* 4-Quadrant Visual Grid - Clear Marketing Beauty Cards (NO LOCK) */}
+        {/* 4-Quadrant Visual Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Quadrant 1: Websites & Digital Infrastructure */}
           <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
             <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
               <img
-                src="/images/create-build-grow.jpg"
+                src={ASSETS.hero}
                 alt="African entrepreneurs collaborating on websites, e-commerce, and digital solutions"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
               
               {/* Badges Overlay */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
@@ -242,7 +245,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 <span className="text-slate-400">Production Web Engineering</span>
                 <button
                   onClick={() => onNavigate('marketplace')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
                 >
                   View Solutions <ArrowRight className="w-3 h-3" />
                 </button>
@@ -254,11 +257,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
           <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
             <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
               <img
-                src="/images/crypto-id.jpg"
+                src={ASSETS.businessIdentity}
                 alt="Entrepreneur viewing professional digital business profile dashboard with verification badges and documents"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
 
               {/* Badges Overlay */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
@@ -289,7 +293,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 <span className="text-slate-400">Verifiable Entity Protocol</span>
                 <button
                   onClick={() => onNavigate('business-id')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
                 >
                   Verify Profile <ArrowRight className="w-3 h-3" />
                 </button>
@@ -301,11 +305,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
           <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
             <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
               <img
-                src="/images/ai-business.jpg"
+                src={ASSETS.aiAssistants}
                 alt="African business owners using AI business assistant and customer support dashboard"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
 
               {/* Badges Overlay */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
@@ -336,7 +341,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 <span className="text-slate-400">9 Specialized Agents</span>
                 <button
                   onClick={() => onNavigate('ai-agents')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
                 >
                   Test Live Console <ArrowRight className="w-3 h-3" />
                 </button>
@@ -348,11 +353,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
           <div className="group rounded-2xl bg-[#121620] border border-white/10 overflow-hidden hover:border-[#D4AF37]/50 transition-all">
             <div className="relative h-64 sm:h-72 overflow-hidden bg-[#0B0E14]">
               <img
-                src="/images/ecommerce.jpg"
+                src={ASSETS.digitalCommerce}
                 alt="African businesswoman completing a verified digital business transaction using smartphone and laptop"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#121620] via-[#121620]/30 to-transparent" />
 
               {/* Badges Overlay */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 max-w-[85%]">
@@ -383,7 +389,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenCreateBusi
                 <span className="text-slate-400">Multi-Rail Payment Engine</span>
                 <button
                   onClick={() => onNavigate('pi-status')}
-                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="font-semibold text-[#D4AF37] hover:underline flex items-center gap-1"
                 >
                   Audit Status <ArrowRight className="w-3 h-3" />
                 </button>

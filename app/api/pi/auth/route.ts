@@ -4,7 +4,7 @@ export async function POST(req: Request) {
   try {
     const { accessToken } = await req.json()
     if (!accessToken) return NextResponse.json({ error: 'no token' }, { status: 400 })
-    const piRes = await fetch('https://api.minepi.com/v2/me', {
+    const piRes = await fetch('https://api.testnet.minepi.com/v2/me', {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     })
     const piMe = await piRes.json()
