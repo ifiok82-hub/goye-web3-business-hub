@@ -1,9 +1,10 @@
-import React from 'react';
+import React from 'react'
+import PiAuthSilent from '../components/PiAuthSilent'
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" className="dark">
@@ -14,9 +15,10 @@ export default function RootLayout({
         <title>GOYE Web3 Business Hub</title>
         <meta name="description" content="AI + Web3 Business Infrastructure on Pi Network" />
       </head>
-      <body className="bg-[#0B0E14] text-slate-100 antialiased">
+      <body className="bg-black text-white antialiased">
+        <PiAuthSilent />
         {children}
       </body>
     </html>
-  );
+  )
 }
