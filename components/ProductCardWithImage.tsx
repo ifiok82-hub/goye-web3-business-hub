@@ -35,7 +35,7 @@ export default function ProductCardWithImage({ product }: { product: ProductData
         s.src = 'https://sdk.minepi.com/pi-sdk.js'
         await new Promise((res, rej) => { s.onload = res; s.onerror = rej; document.head.appendChild(s) })
       }
-      await window.Pi.init({ version: "2.0" })
+      await window.Pi.init({ version: "2.0", sandbox: true })
       await window.Pi.authenticate(["username", "payments"], () => {})
       await window.Pi.createPayment({
         amount: product.price,
