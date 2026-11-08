@@ -1,65 +1,42 @@
 'use client'
-import { useState, useEffect } from 'react'
-import FooterWithAdminTap from '../components/FooterWithAdminTap'
-import LockedProducts from '../components/LockedProducts'
+import React from 'react'
+import PiAuthButton from '../components/PiAuthButton'
+import PiPayment from '../components/PiPayment'
 
 export default function Page() {
-  const [authed, setAuthed] = useState(false)
-  const [authStatus, setAuthStatus] = useState('idle') // idle, authenticating, verified, error
-
-  useEffect(() => {
-    const s = document.createElement('script'); s.src = 'https://sdk.minepi.com/pi-sdk.js'; s.async = true
-    s.onload = () => { try { (window as any).Pi.init({ version: "2.0", sandbox: true }) } catch {} }
-    document.head.appendChild(s)
-  }, [])
-
-  const handlePiAuth = async () => {
-    try {
-      const Pi = (window as any).Pi
-      if (!Pi) return alert('Open in Pi Browser - not Chrome')
-      setAuthStatus('authenticating')
-      
-      // With 15s timeout
-      const authPromise = Pi.authenticate(["username", "payments"], (p: any) => console.log('incomplete', p))
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timed out')), 15000))
-      
-      const auth = await Promise.race([authPromise, timeoutPromise]) as any
-      
-      const r = await fetch('/api/pi/appstudio-auth', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ accessToken: auth.accessToken }) 
-      })
-      const data = await r.json()
-      if (!data.ok) throw new Error('Auth verify failed')
-      
-      setAuthed(true)
-      setAuthStatus('verified')
-      alert('Signed in with Pi - Verified!')
-    } catch (e: any) {
-      setAuthStatus('error')
-      alert('Pi Auth failed: ' + e.message + ' - Open in Pi Browser, check App URL in Developer Portal = https://goye-web3-business-hub.vercel.app')
-    }
-  }
-
   return (
-    <main className="min-h-screen bg-gray-900 text-white">
-      <header className="p-6">
-        <h1 className="text-2xl font-bold">GOYE Web3 Business Hub</h1>
-        <div className="flex gap-2 mt-4">
-          <button onClick={handlePiAuth} className="bg-yellow-500 text-black px-4 py-2 rounded-full font-bold">
-            {authStatus === 'authenticating' ? 'Authenticating...' : authed ? 'Pi Verified ✓' : 'Sign in with Pi'}
-          </button>
-          <button className="border border-gray-600 px-4 py-2 rounded-full">Register Business ID</button>
+    <main className="min-h-screen bg-[#08080f] text-white flex flex-col items-center justify-center p-6 space-y-6">
+      <div className="w-full max-w-md bg-[#12121f] border border-[#2a2a44] p-6 rounded-2xl shadow-2xl space-y-5">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 text-[#facc15] text-xs font-bold uppercase tracking-wider">
+            Pi Network Only
+          </div>
+          <h1 className="text-2xl font-extrabold text-[#f5f3ff]">GOYE Web3 Business Hub</h1>
+          <p className="text-xs text-zinc-400">
+            Official Pi Testnet Checkout for @ifiok1967
+          </p>
         </div>
-      </header>
-      
-      <section className="p-6">
-        <h2 className="text-xl font-bold mb-4">15 Products</h2>
-        <LockedProducts />
-      </section>
 
-      <FooterWithAdminTap />
+        {/* 1. Pi Auth Button at top so user sees username popup before paying */}
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Step 1: Pioneer Authentication</label>
+          <PiAuthButton />
+        </div>
+
+        {/* 2. Pi Payment Component */}
+        <div className="space-y-2 pt-2 border-t border-[#23233a]">
+          <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Step 2: Testnet Payment (1 Pi)</label>
+          <PiPayment
+            amount={1}
+            memo="Goye Web3 Hub Test Payment for ifiok1967"
+            metadata={{ product: "test", user: "ifiok1967", wallet: "GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E" }}
+          />
+        </div>
+
+        <div className="text-[11px] text-zinc-500 text-center leading-relaxed">
+          Pi Testnet Sandbox Active • Zero monetary loss • Recipient: GDDTB2...X24E
+        </div>
+      </div>
     </main>
   )
 }
