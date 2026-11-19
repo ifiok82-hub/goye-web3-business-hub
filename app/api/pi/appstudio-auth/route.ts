@@ -1,51 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+--- START ---
+import { NextResponse } from 'next/server';
 
-const APP_STUDIO_LOGIN_URL =
-  'https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login';
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const accessToken = body?.accessToken;
-
-    if (!accessToken || typeof accessToken !== 'string') {
-      return NextResponse.json({ error: 'accessToken is required' }, { status: 400 });
-    }
-
-    const res = await fetch(APP_STUDIO_LOGIN_URL, {
+    const { accessToken } = await req.json();
+    if (!accessToken) return NextResponse.json({ error: 'Missing accessToken' }, { status: 400 });
+    const res = await fetch('https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accessToken }),
     });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: data?.message || data?.error || 'App Studio auth failed' },
-        { status: res.status || 401 }
-      );
-    }
-
-    const uid = data?.user?.uid ?? data?.uid;
-    const username = data?.user?.username ?? data?.username;
-    const sessionToken = data?.sessionToken ?? data?.token ?? data?.accessToken ?? null;
-
-    if (!uid) {
-      return NextResponse.json(
-        { error: 'App Studio did not return verified user uid' },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.json({
-      sessionToken,
-      user: {
-        uid,
-        username,
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: 'App Studio login request failed' }, { status: 500 });
+    const data = await res.json();
+    if (!res.ok) return NextResponse.json({ error: 'App Studio rejected', detail: data }, { status: 401 });
+    return NextResponse.json({ ok: true, sessionToken: data.sessionToken, user: { uid: data.user.uid, username: data.user.username } });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
+--- END ---
