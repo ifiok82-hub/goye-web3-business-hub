@@ -65,14 +65,14 @@ export default function ProductCardWithImage({ product }: { product: ProductData
         },
         {
           onReadyForServerApproval: async (paymentId: string) => {
-            await fetch('/api/pi/payments/approve', {
+            await fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
             });
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            await fetch('/api/pi/payments/complete', {
+            await fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId, txid }),

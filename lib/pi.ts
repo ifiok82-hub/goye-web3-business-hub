@@ -5,9 +5,9 @@ declare global {
 }
 
 export const PI_CONFIG = {
-  apiUrl: process.env.NEXT_PUBLIC_PI_API_URL || 'https://api.minepi.com',
-  isMainnet: true,
-  apiKey: process.env.PI_API_KEY
+  apiUrl: process.env.NEXT_PUBLIC_PI_API_URL || 'https://api.testnet.minepi.com',
+  isMainnet: false,
+  apiKey: process.env.PI_API_KEY,
 };
 
 export const initPi = () => {
