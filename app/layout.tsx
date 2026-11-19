@@ -1,22 +1,21 @@
-import React from 'react';
+import type { Metadata } from 'next';
+import './globals.css';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const metadata: Metadata = {
+  title: 'GOYE Web3 Business Hub',
+  description:
+    'Build. Automate. Trade. Pay. Grow. AI + Web3 Business Infrastructure for the Global Digital Economy.',
+  openGraph: {
+    title: 'GOYE Web3 Business Hub',
+    description:
+      'Build. Automate. Trade. Pay. Grow. AI + Web3 Business Infrastructure for the Global Digital Economy.',
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <head>
-        <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <title>GOYE Web3 Business Hub</title>
-        <meta name="description" content="AI + Web3 Business Infrastructure on Pi Network" />
-      </head>
-      <body className="bg-[#0B0E14] text-slate-100 antialiased">
-        {children}
-      </body>
+    <html lang="en">
+      <body className="bg-[#0B0E14] text-slate-100 antialiased">{children}</body>
     </html>
   );
 }
