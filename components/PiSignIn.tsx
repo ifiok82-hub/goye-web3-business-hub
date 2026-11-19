@@ -1,13 +1,9 @@
---- START ---
 'use client';
 import { useEffect, useState } from 'react';
-
 declare global { interface Window { Pi: any } }
-
 export default function PiSignIn() {
   const [status, setStatus] = useState('Sign in with Pi');
   const [done, setDone] = useState(false);
-
   useEffect(() => {
     if (document.querySelector('script[src="https://sdk.minepi.com/pi-sdk.js"]')) return;
     const s = document.createElement('script');
@@ -15,7 +11,6 @@ export default function PiSignIn() {
     s.async = true;
     document.head.appendChild(s);
   }, []);
-
   async function signIn() {
     try {
       setStatus('Connecting...');
@@ -38,11 +33,9 @@ export default function PiSignIn() {
       alert('Pi sign-in failed: ' + (e.message || e));
     }
   }
-
   return (
     <button onClick={signIn} style={{ background: '#a855f7', color: '#fff', padding: '16px', borderRadius: '12px', width: '100%', fontWeight: 700, fontSize: '18px' }}>
       {done ? 'Pi Verified ✓' : status}
     </button>
   );
 }
---- END ---
