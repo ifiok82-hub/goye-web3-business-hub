@@ -16,6 +16,7 @@ import {
 import PiSignIn from '../components/PiSignIn';
 import LockedProducts from '../components/LockedProducts';
 import FooterWithAdminTap from '../components/FooterWithAdminTap';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 interface BusinessRecord {
   id: string;
@@ -71,11 +72,13 @@ export default function Page() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('goye_registered_businesses');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setRegisteredBusinesses(parsed);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = window.localStorage.getItem('goye_registered_businesses');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setRegisteredBusinesses(parsed);
+          }
         }
       }
     } catch {
@@ -97,7 +100,9 @@ export default function Page() {
     const updated = [record, ...registeredBusinesses];
     setRegisteredBusinesses(updated);
     try {
-      localStorage.setItem('goye_registered_businesses', JSON.stringify(updated));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('goye_registered_businesses', JSON.stringify(updated));
+      }
     } catch {
       // Ignore storage errors
     }
@@ -106,6 +111,7 @@ export default function Page() {
   };
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-[#0B0E14] text-slate-100 flex flex-col">
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-[#0B0E14]/90 backdrop-blur-md border-b border-slate-800/80">
@@ -500,5 +506,6 @@ export default function Page() {
 
       <FooterWithAdminTap />
     </div>
+    </ErrorBoundary>
   );
 }

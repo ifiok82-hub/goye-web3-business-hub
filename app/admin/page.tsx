@@ -10,9 +10,13 @@ export default function AdminPage() {
   const [inputSecret, setInputSecret] = useState('');
 
   useEffect(() => {
-    const auth = localStorage.getItem('goye_admin');
-    if (auth === 'true') {
-      setIsAdmin(true);
+    try {
+      const auth = localStorage.getItem('goye_admin');
+      if (auth === 'true') {
+        setIsAdmin(true);
+      }
+    } catch {
+      // Ignore restricted storage
     }
     setChecking(false);
   }, []);
@@ -20,7 +24,11 @@ export default function AdminPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputSecret === 'GoyeAdmin@2026') {
-      localStorage.setItem('goye_admin', 'true');
+      try {
+        localStorage.setItem('goye_admin', 'true');
+      } catch {
+        // Ignore restricted storage
+      }
       setIsAdmin(true);
     } else {
       setInputSecret('');

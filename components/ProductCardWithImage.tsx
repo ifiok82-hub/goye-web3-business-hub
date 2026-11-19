@@ -19,15 +19,16 @@ export default function ProductCardWithImage({ product }: { product: ProductData
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem('purchased_products');
-    if (saved) {
-      try {
-        if (JSON.parse(saved).includes(product.id)) {
+    try {
+      const saved = localStorage.getItem('purchased_products');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.includes(product.id)) {
           setPurchased(true);
         }
-      } catch {
-        // Ignore invalid storage
       }
+    } catch {
+      // Ignore restricted storage
     }
   }, [product.id]);
 

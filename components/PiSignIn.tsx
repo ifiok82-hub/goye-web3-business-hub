@@ -2,42 +2,41 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 
-interface PiSdk {
-  init: (config: { version: string; sandbox?: boolean }) => Promise<void> | void;
-  authenticate: (
-    scopes: string[],
-    onIncompletePaymentFound: (payment: unknown) => void
-  ) => Promise<{ accessToken: string; user?: { uid?: string; username?: string } }>;
+declare global {
+  interface Window {
+    Pi?: any;
+  }
 }
-
-type PiWindow = Window & { Pi?: PiSdk };
 
 let piSdkPromise: Promise<void> | null = null;
 let piInitialized = false;
 
-function getPi(): PiSdk | undefined {
-  if (typeof window === 'undefined') return undefined;
-  return (window as PiWindow).Pi;
-}
-
 function loadPiSdkOnce(): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve();
-  if (getPi()) return Promise.resolve();
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.resolve();
+  }
+  if (window.Pi) return Promise.resolve();
   if (piSdkPromise) return piSdkPromise;
 
   piSdkPromise = new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector('script[src="https://sdk.minepi.com/pi-sdk.js"]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('Failed to load Pi SDK')), { once: true });
-      return;
+    try {
+      const existing = document.querySelector('script[src="https://sdk.minepi.com/pi-sdk.js"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error('Failed to load Pi SDK')), {
+          once: true,
+        });
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = 'https://sdk.minepi.com/pi-sdk.js';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('Failed to load Pi SDK'));
+      document.head.appendChild(s);
+    } catch (err) {
+      reject(err);
     }
-    const s = document.createElement('script');
-    s.src = 'https://sdk.minepi.com/pi-sdk.js';
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Failed to load Pi SDK'));
-    document.head.appendChild(s);
   });
 
   return piSdkPromise;
@@ -48,26 +47,16 @@ export default function PiSignIn() {
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const savedToken = sessionStorage.getItem('pi_appstudio_session_token');
-        if (savedToken && active) {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const savedToken = window.sessionStorage.getItem('pi_appstudio_session_token');
+        if (savedToken) {
           setStatus('verified');
         }
-        await loadPiSdkOnce();
-        const Pi = getPi();
-        if (Pi && !piInitialized) {
-          await Promise.resolve(Pi.init({ version: '2.0' }));
-          piInitialized = true;
-        }
-      } catch {
-        // Ignore SDK load failure outside Pi Browser until user clicks
       }
-    })();
-    return () => {
-      active = false;
-    };
+    } catch {
+      // Ignore restricted sessionStorage in sandboxed iframes
+    }
   }, []);
 
   const handleSignIn = async () => {
@@ -76,8 +65,12 @@ export default function PiSignIn() {
     setErrorMsg('');
 
     try {
+      if (typeof window === 'undefined') {
+        throw new Error('Browser environment required.');
+      }
+
       await loadPiSdkOnce();
-      const Pi = getPi();
+      const Pi = window.Pi;
       if (!Pi) {
         throw new Error('Open inside Pi Browser to sign in with Pi.');
       }
@@ -87,7 +80,7 @@ export default function PiSignIn() {
         piInitialized = true;
       }
 
-      const onIncompletePaymentFound = (_payment: unknown) => {
+      const onIncompletePaymentFound = () => {
         // Handled silently during App Studio sign-in
       };
 
@@ -96,7 +89,6 @@ export default function PiSignIn() {
         throw new Error('No access token returned by Pi SDK.');
       }
 
-      // Send ONLY accessToken to /api/pi/appstudio-auth (one exchange per sign-in)
       const res = await fetch('/api/pi/appstudio-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,10 +100,15 @@ export default function PiSignIn() {
         throw new Error(data?.error || 'Pi App Studio authentication failed.');
       }
 
-      if (data.sessionToken) {
-        sessionStorage.setItem('pi_appstudio_session_token', String(data.sessionToken));
-      } else {
-        sessionStorage.setItem('pi_appstudio_session_token', 'verified');
+      try {
+        if (window.sessionStorage) {
+          window.sessionStorage.setItem(
+            'pi_appstudio_session_token',
+            data.sessionToken ? String(data.sessionToken) : 'verified'
+          );
+        }
+      } catch {
+        // Ignore restricted sessionStorage
       }
 
       setStatus('verified');

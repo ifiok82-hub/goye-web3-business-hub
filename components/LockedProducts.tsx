@@ -28,12 +28,16 @@ export default function LockedProducts() {
   useEffect(() => {
     const updateCount = () => {
       if (typeof window === 'undefined') return
-      const saved = localStorage.getItem('purchased_products')
-      if (saved) {
-        try {
+      try {
+        const saved = localStorage.getItem('purchased_products')
+        if (saved) {
           const arr = JSON.parse(saved)
-          setUnlockedCount(arr.length)
-        } catch (_) {}
+          if (Array.isArray(arr)) {
+            setUnlockedCount(arr.length)
+          }
+        }
+      } catch {
+        // Ignore restricted storage in sandboxed iframes
       }
     }
     updateCount()

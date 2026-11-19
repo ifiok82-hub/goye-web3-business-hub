@@ -17,14 +17,25 @@ export default function FooterWithAdminTap({ onNavigate }: FooterWithAdminTapPro
     timerRef.current = setTimeout(() => setTapCount(0), 3000);
     if (newCount >= 7) {
       setTapCount(0);
-      const secret = window.prompt('Enter Admin Secret:');
-      if (secret === 'GoyeAdmin@2026') {
-        localStorage.setItem('goye_admin', 'true');
-        if (onNavigate) {
-          onNavigate('admin');
-        } else {
-          window.location.href = '/admin';
+      try {
+        if (typeof window === 'undefined') return;
+        const secret = window.prompt('Enter Admin Secret:');
+        if (secret === 'GoyeAdmin@2026') {
+          try {
+            if (window.localStorage) {
+              window.localStorage.setItem('goye_admin', 'true');
+            }
+          } catch {
+            // Ignore restricted storage
+          }
+          if (onNavigate) {
+            onNavigate('admin');
+          } else {
+            window.location.href = '/admin';
+          }
         }
+      } catch {
+        // Ignore restricted prompt
       }
     }
   };
