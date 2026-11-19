@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { ShieldCheck, Terminal, Zap } from 'lucide-react';
+import { BadgeCheck, Terminal, Zap } from 'lucide-react';
 
 const TESTNET_WALLET = 'GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E';
 
@@ -97,13 +97,13 @@ export default function AdminPiTools() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-300 mb-1">
-            <ShieldCheck className="w-4 h-4 text-yellow-400" />
-            Admin Sandbox Diagnostics
+            <BadgeCheck className="w-4 h-4 text-yellow-400" />
+            <span>Admin Sandbox Diagnostics</span>
           </div>
           <h3 className="text-white font-bold text-lg">
             Testnet Payment Test (Admin Only)
           </h3>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-400 text-sm mt-1 leading-relaxed">
             Exercises Pi.init (sandbox auto), Pi.authenticate, and server approval/completion via https://api.testnet.minepi.com for Testnet wallet {TESTNET_WALLET.slice(0, 8)}...{TESTNET_WALLET.slice(-6)}.
           </p>
         </div>
