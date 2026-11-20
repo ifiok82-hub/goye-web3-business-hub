@@ -1,4 +1,5 @@
-# GOYE Web3 Business Hub
+Force rebuild 1
+#GOYE Web3 Business Hub
 
 **Build. Automate. Trade. Pay. Grow.**  
 AI + Web3 Business Infrastructure for the Global Digital Economy.
