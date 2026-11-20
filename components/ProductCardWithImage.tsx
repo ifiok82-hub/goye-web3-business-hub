@@ -131,7 +131,7 @@ export default function ProductCardWithImage({ product }: { product: ProductData
           metadata: {
             productId: product.id,
             productName: product.name,
-            wallet: 'GBR4B47WY7JDK2JKUUQQTWWQENOUUYTAQAOYLXZ7XE36YFQY6LKPVO6R',
+            wallet: 'GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E',
           },
         },
         {

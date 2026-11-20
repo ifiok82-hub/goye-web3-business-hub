@@ -25,7 +25,7 @@ export default function AdminPiTools() {
 
   const handleTestnetPayment = async () => {
     setLoading(true);
-    setLogs('Initializing Pi SDK (Testnet sandbox auto)...');
+    setLogs('Initializing Pi SDK (Testnet)...');
     try {
       const Pi = await ensurePiSdk();
       if (!Pi) throw new Error('Pi SDK unavailable. Open in Pi Browser.');
@@ -98,13 +98,13 @@ export default function AdminPiTools() {
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-300 mb-1">
             <BadgeCheck className="w-4 h-4 text-yellow-400" />
-            <span>Admin Sandbox Diagnostics</span>
+            <span>Admin Testnet Diagnostics</span>
           </div>
           <h3 className="text-white font-bold text-lg">
             Testnet Payment Test (Admin Only)
           </h3>
           <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-            Exercises Pi.init (sandbox auto), Pi.authenticate, and server approval/completion via https://api.testnet.minepi.com for Testnet wallet {TESTNET_WALLET.slice(0, 8)}...{TESTNET_WALLET.slice(-6)}.
+            Exercises Pi.init, Pi.authenticate, and server approval/completion via https://api.testnet.minepi.com for Testnet wallet {TESTNET_WALLET.slice(0, 8)}...{TESTNET_WALLET.slice(-6)}.
           </p>
         </div>
       </div>

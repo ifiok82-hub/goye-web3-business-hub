@@ -36,7 +36,13 @@ export default function AdminPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('goye_admin');
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('goye_admin');
+      }
+    } catch {
+      // Ignore restricted storage
+    }
     setIsAdmin(false);
   };
 

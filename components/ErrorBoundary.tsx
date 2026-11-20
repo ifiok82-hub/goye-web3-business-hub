@@ -25,10 +25,17 @@ export default class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#0B0E14] text-slate-100 flex flex-col items-center justify-center p-6 text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F5D061] via-[#D4AF37] to-[#8C6A1B] flex items-center justify-center font-black text-[#0B0E14] text-xl">
-            G
-          </div>
+        <div
+          style={{ backgroundColor: '#060B18', color: '#f1f5f9' }}
+          className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4"
+        >
+          <img
+            src="/logo.png"
+            alt="GOYE Web3 Business Hub"
+            width={64}
+            height={64}
+            className="w-16 h-16 rounded-xl object-cover border border-slate-700/70"
+          />
           <h1 className="text-xl font-bold text-white">Loading GOYE...</h1>
           <button
             type="button"
