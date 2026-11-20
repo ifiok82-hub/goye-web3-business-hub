@@ -8,10 +8,16 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accessToken }),
     });
-    const data = await res.json();
-    if (!res.ok) return NextResponse.json({ error: 'App Studio rejected', detail: data }, { status: 401 });
-    return NextResponse.json({ ok: true, sessionToken: data.sessionToken, user: { uid: data.user.uid, username: data.user.username } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.user?.uid) {
+      return NextResponse.json({ error: 'App Studio rejected', detail: data }, { status: 401 });
+    }
+    return NextResponse.json({
+      ok: true,
+      sessionToken: data.sessionToken ?? null,
+      user: { uid: data.user.uid, username: data.user.username },
+    });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: e?.message || 'Auth request failed' }, { status: 500 });
   }
 }
