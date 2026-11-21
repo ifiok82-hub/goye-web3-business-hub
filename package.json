@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/dev.mjs",
+    "dev": "node -e \"const {spawn}=require('child_process');const a=process.argv.slice(1).map(x=>x==='--host'?'-H':x==='--port'?'-p':x);const c=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev',...a],{stdio:'inherit'});c.on('exit',k=>process.exit(k??0))\" --",
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit"

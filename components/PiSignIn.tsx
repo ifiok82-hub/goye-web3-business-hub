@@ -1,55 +1,10 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-
-declare global {
-  interface Window {
-    Pi?: any;
-  }
-}
+import { handleIncompletePayment, initPiSdk, loadPiSdk } from '../lib/piClient';
 
 const APP_STUDIO_LOGIN_URL =
   'https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login';
-
-let piSdkPromise: Promise<boolean> | null = null;
-let piInitialized = false;
-
-function loadPiSdkOnce(): Promise<boolean> {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return Promise.resolve(false);
-  }
-  if (window.Pi) return Promise.resolve(true);
-  if (piSdkPromise) return piSdkPromise;
-
-  piSdkPromise = new Promise<boolean>((resolve) => {
-    try {
-      const existing = document.querySelector(
-        'script[src="https://sdk.minepi.com/pi-sdk.js"]'
-      );
-      if (existing) {
-        if (window.Pi) {
-          resolve(true);
-          return;
-        }
-        existing.addEventListener('load', () => resolve(Boolean(window.Pi)), { once: true });
-        existing.addEventListener('error', () => resolve(false), { once: true });
-        setTimeout(() => resolve(Boolean(window.Pi)), 4000);
-        return;
-      }
-
-      const s = document.createElement('script');
-      s.src = 'https://sdk.minepi.com/pi-sdk.js';
-      s.async = true;
-      s.onload = () => resolve(Boolean(window.Pi));
-      s.onerror = () => resolve(false);
-      document.head.appendChild(s);
-    } catch {
-      resolve(false);
-    }
-  });
-
-  return piSdkPromise;
-}
 
 function isPiEnvironment(): boolean {
   if (typeof window === 'undefined') return false;
@@ -75,8 +30,8 @@ export default function PiSignIn() {
     setErrorMsg('');
 
     try {
-      const loaded = await loadPiSdkOnce();
-      if (!loaded || typeof window === 'undefined' || !window.Pi) {
+      const ready = await initPiSdk();
+      if (!ready || typeof window === 'undefined' || !window.Pi) {
         if (!isAuto) {
           setErrorMsg('Open in Pi Browser to sign in');
         }
@@ -84,32 +39,20 @@ export default function PiSignIn() {
         return;
       }
 
-      if (!piInitialized) {
-        await Promise.resolve(window.Pi.init({ version: '2.0' }));
-        piInitialized = true;
-      }
-
-      const onIncompletePayment = async (payment: any) => {
-        if (payment?.identifier && payment?.transaction?.txid) {
-          try {
-            await fetch('/api/pi/complete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                paymentId: payment.identifier,
-                txid: payment.transaction.txid,
-              }),
-            });
-          } catch {
-            // Ignore incomplete payment recovery error during auth
-          }
-        }
-      };
-
-      const auth = await window.Pi.authenticate(['username', 'payments'], onIncompletePayment);
+      const auth = await window.Pi.authenticate(['username', 'payments'], handleIncompletePayment);
       const accessToken = auth?.accessToken;
       if (!accessToken || typeof accessToken !== 'string') {
         throw new Error('No accessToken returned');
+      }
+
+      if (auth?.user?.uid) {
+        try {
+          if (window.sessionStorage) {
+            window.sessionStorage.setItem('pi_user_uid', String(auth.user.uid));
+          }
+        } catch {
+          // Ignore restricted storage
+        }
       }
 
       // Send ONLY { accessToken } directly to Pi App Studio login endpoint
@@ -139,7 +82,6 @@ export default function PiSignIn() {
           throw new Error(`HTTP ${appStudioRes.status} ${errBody}`);
         }
       } catch (directErr) {
-        // Fallback through Next.js API route (still sending ONLY { accessToken }) if direct browser CORS is blocked
         const proxyRes = await fetch('/api/pi/appstudio-auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -162,6 +104,7 @@ export default function PiSignIn() {
       if (authSucceeded) {
         console.log('AppStudio auth sent');
         setVerified(true);
+        window.dispatchEvent(new CustomEvent('goye:entitlements-updated'));
       }
     } catch (err: any) {
       console.log('AppStudio auth failed', err?.message || err);
@@ -175,9 +118,7 @@ export default function PiSignIn() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    // Preload Pi SDK script once and auto-run auth if inside Pi Browser / App Studio preview
-    loadPiSdkOnce().then((loaded) => {
+    loadPiSdk().then((loaded) => {
       if (!autoAttemptedRef.current && loaded && isPiEnvironment()) {
         autoAttemptedRef.current = true;
         runPiAuth(true);
@@ -196,7 +137,7 @@ export default function PiSignIn() {
   }
 
   return (
-    <div className="flex flex-col items-end">
+    <div className="flex flex-col items-center">
       <button
         type="button"
         onClick={() => runPiAuth(false)}

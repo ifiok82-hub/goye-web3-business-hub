@@ -1,0 +1,6 @@
+{
+  "name": "GOYE Web3 Business Hub",
+  "description": "AI + Web3 Infrastructure - Build the Business of Tomorrow",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

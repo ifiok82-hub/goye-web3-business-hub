@@ -1,77 +1,66 @@
 'use client';
 import React, { useState } from 'react';
 import { BadgeCheck, Terminal, Zap } from 'lucide-react';
-
-const TESTNET_WALLET = 'GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E';
+import { authenticateForPayments } from '../lib/piClient';
 
 export default function AdminPiTools() {
-  const [logs, setLogs] = useState<string>('Ready for Testnet diagnostic payment');
+  const [logs, setLogs] = useState<string>('Ready for admin U2A diagnostic payment');
   const [loading, setLoading] = useState(false);
 
-  const ensurePiSdk = async () => {
-    if (typeof window === 'undefined') return null;
-    if (!window.Pi) {
-      const s = document.createElement('script');
-      s.src = 'https://sdk.minepi.com/pi-sdk.js';
-      s.async = true;
-      await new Promise((res, rej) => {
-        s.onload = res;
-        s.onerror = rej;
-        document.head.appendChild(s);
-      });
-    }
-    return window.Pi;
-  };
-
-  const handleTestnetPayment = async () => {
+  const handleDiagnosticPayment = async () => {
     setLoading(true);
-    setLogs('Initializing Pi SDK (Testnet)...');
+    setLogs('Authenticating Pi SDK (payments scope)...');
     try {
-      const Pi = await ensurePiSdk();
-      if (!Pi) throw new Error('Pi SDK unavailable. Open in Pi Browser.');
+      const { userUid } = await authenticateForPayments(['payments']);
 
-      await Promise.resolve(Pi.init({ version: '2.0' }));
-      await Pi.authenticate(['username', 'payments'], (incomplete: unknown) => {
-        setLogs(`Incomplete payment found: ${JSON.stringify(incomplete)}`);
+      setLogs('Creating authoritative server order for Module #3 (1 Pi)...');
+      const orderRes = await fetch('/api/pi/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: 3, userUid }),
       });
+      const orderData = await orderRes.json().catch(() => ({}));
+      if (!orderRes.ok || !orderData?.orderId) {
+        throw new Error(orderData?.error || 'Failed to create server order');
+      }
 
-      setLogs(`Creating Testnet payment (1 Pi) to ${TESTNET_WALLET}...`);
-      Pi.createPayment(
+      if (typeof window === 'undefined' || !window.Pi) {
+        throw new Error('Pi SDK unavailable. Open in Pi Browser.');
+      }
+
+      setLogs(`Initiating U2A payment (${orderData.amount} Pi, Order ${orderData.orderId})...`);
+      window.Pi.createPayment(
         {
-          amount: 1,
-          memo: 'GOYE Admin Testnet Payment Test (1 Pi)',
-          metadata: {
-            adminTest: true,
-            testnet: true,
-            wallet: TESTNET_WALLET,
-          },
+          amount: orderData.amount,
+          memo: orderData.memo,
+          metadata: orderData.metadata,
         },
         {
           onReadyForServerApproval: async (paymentId: string) => {
-            setLogs(`Approving payment ${paymentId} via /api/pi/approve...`);
+            setLogs(`Retrieving & approving payment ${paymentId} via /api/pi/approve...`);
             const res = await fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId }),
+              body: JSON.stringify({ paymentId, orderId: orderData.orderId }),
             });
-            const data = await res.json();
-            if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data?.success) {
               throw new Error(data?.error || 'Server approval failed');
             }
             setLogs(`Approved ${paymentId}: ${JSON.stringify(data)}`);
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            setLogs(`Completing payment ${paymentId} (TX: ${txid}) via /api/pi/complete...`);
+            setLogs(`Verifying & completing ${paymentId} (TX: ${txid}) via /api/pi/complete...`);
             const res = await fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, txid }),
+              body: JSON.stringify({ paymentId, txid, orderId: orderData.orderId }),
             });
-            const data = await res.json();
-            if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data?.fulfilled) {
               throw new Error(data?.error || 'Server completion failed');
             }
-            setLogs(`Testnet Payment Complete! Payment ID: ${paymentId} | TX: ${txid}`);
+            setLogs(`U2A Payment Verified & Fulfilled! Payment ID: ${paymentId} | TX: ${txid}`);
             setLoading(false);
           },
           onCancel: () => {
@@ -98,25 +87,26 @@ export default function AdminPiTools() {
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-purple-300 mb-1">
             <BadgeCheck className="w-4 h-4 text-yellow-400" />
-            <span>Admin Testnet Diagnostics</span>
+            <span>Admin U2A Diagnostics</span>
           </div>
           <h3 className="text-white font-bold text-lg">
-            Testnet Payment Test (Admin Only)
+            U2A Payment Test (Admin Only)
           </h3>
           <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-            Exercises Pi.init, Pi.authenticate, and server approval/completion via https://api.testnet.minepi.com for Testnet wallet {TESTNET_WALLET.slice(0, 8)}...{TESTNET_WALLET.slice(-6)}.
+            Exercises Pi.init, Pi.authenticate, server order creation, and Pi Platform API validation/approval/completion via https://api.minepi.com.
           </p>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={handleTestnetPayment}
+          type="button"
+          onClick={handleDiagnosticPayment}
           disabled={loading}
           className="bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black px-5 py-2.5 rounded-xl font-bold text-sm inline-flex items-center gap-2 transition-colors cursor-pointer"
         >
           <Zap className="w-4 h-4" />
-          {loading ? 'Processing Testnet Payment...' : 'Pay with Pi (Testnet) - Test'}
+          {loading ? 'Processing U2A Payment...' : 'Run Admin U2A Payment Test (1 Pi)'}
         </button>
       </div>
 

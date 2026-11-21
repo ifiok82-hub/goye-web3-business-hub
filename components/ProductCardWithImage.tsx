@@ -19,32 +19,10 @@ import {
   KeyRound,
   Code2,
 } from 'lucide-react';
+import { ProductData, ProductIconName } from '../lib/products';
+import { authenticateForPayments } from '../lib/piClient';
 
-export interface ProductData {
-  id: number;
-  name: string;
-  desc: string;
-  price: number;
-  image?: string;
-  iconName:
-    | 'fingerprint'
-    | 'bot'
-    | 'store'
-    | 'package'
-    | 'graduation'
-    | 'compliance'
-    | 'handshake'
-    | 'receipt'
-    | 'scale'
-    | 'building'
-    | 'globe'
-    | 'shopping'
-    | 'cpu'
-    | 'key'
-    | 'code';
-}
-
-function renderProductIcon(iconName: ProductData['iconName']) {
+function renderProductIcon(iconName: ProductIconName) {
   const cls = 'w-11 h-11 text-[#F5D061]';
   switch (iconName) {
     case 'fingerprint':
@@ -80,12 +58,22 @@ function renderProductIcon(iconName: ProductData['iconName']) {
   }
 }
 
-export default function ProductCardWithImage({ product }: { product: ProductData }) {
-  const [purchased, setPurchased] = useState(false);
+export default function ProductCardWithImage({
+  product,
+  serverUnlocked = false,
+}: {
+  product: ProductData;
+  serverUnlocked?: boolean;
+}) {
+  const [purchased, setPurchased] = useState(serverUnlocked);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    if (serverUnlocked) {
+      setPurchased(true);
+      return;
+    }
     if (typeof window === 'undefined') return;
     try {
       const saved = window.localStorage.getItem('purchased_products');
@@ -98,73 +86,87 @@ export default function ProductCardWithImage({ product }: { product: ProductData
     } catch {
       // Ignore restricted storage
     }
-  }, [product.id]);
+  }, [product.id, serverUnlocked]);
 
   const handleUnlock = async () => {
+    if (loading || purchased) return;
     setLoading(true);
     setStatusMsg(null);
+
     try {
-      if (typeof window === 'undefined') {
-        throw new Error('Browser required.');
-      }
-      if (!window.Pi) {
-        const s = document.createElement('script');
-        s.src = 'https://sdk.minepi.com/pi-sdk.js';
-        s.async = true;
-        await new Promise((res, rej) => {
-          s.onload = res;
-          s.onerror = rej;
-          document.head.appendChild(s);
-        });
-      }
-      if (!window.Pi) {
-        throw new Error('Open inside Pi Browser to unlock module.');
+      const { userUid } = await authenticateForPayments(['payments']);
+
+      // Create server-owned order so amount, memo, and productId are authoritative on server
+      const orderRes = await fetch('/api/pi/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, userUid }),
+      });
+
+      const orderData = await orderRes.json().catch(() => ({}));
+      if (!orderRes.ok || !orderData?.orderId) {
+        throw new Error(orderData?.error || 'Could not initialize server order.');
       }
 
-      await Promise.resolve(window.Pi.init({ version: '2.0' }));
-      await window.Pi.authenticate(['username', 'payments'], () => {});
+      if (typeof window === 'undefined' || !window.Pi) {
+        throw new Error('Pi SDK unavailable.');
+      }
 
-      await window.Pi.createPayment(
+      window.Pi.createPayment(
         {
-          amount: product.price,
-          memo: `Goye Hub - ${product.name}`,
-          metadata: {
-            productId: product.id,
-            productName: product.name,
-            wallet: 'GDDTB2ND3AZU7BY36A7N5CHLO63XMXVSGNCMXOIDZI7FUP5GI3P7X24E',
-          },
+          amount: orderData.amount,
+          memo: orderData.memo,
+          metadata: orderData.metadata,
         },
         {
           onReadyForServerApproval: async (paymentId: string) => {
-            await fetch('/api/pi/approve', {
+            setStatusMsg('Approving payment on server...');
+            const approveRes = await fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId }),
+              body: JSON.stringify({ paymentId, orderId: orderData.orderId }),
             });
+            const approveData = await approveRes.json().catch(() => ({}));
+            if (!approveRes.ok || !approveData?.success) {
+              throw new Error(approveData?.error || 'Server approval rejected.');
+            }
+            setStatusMsg('Waiting for wallet confirmation...');
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            await fetch('/api/pi/complete', {
+            setStatusMsg('Verifying transaction & granting access...');
+            const completeRes = await fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, txid }),
+              body: JSON.stringify({ paymentId, txid, orderId: orderData.orderId }),
             });
+            const completeData = await completeRes.json().catch(() => ({}));
+            if (!completeRes.ok || !completeData?.fulfilled) {
+              setLoading(false);
+              setStatusMsg(completeData?.error || 'Server completion failed.');
+              return;
+            }
             try {
               const saved = window.localStorage.getItem('purchased_products');
               const arr = saved ? JSON.parse(saved) : [];
-              if (!arr.includes(product.id)) {
+              if (Array.isArray(arr) && !arr.includes(product.id)) {
                 arr.push(product.id);
+                window.localStorage.setItem('purchased_products', JSON.stringify(arr));
               }
-              window.localStorage.setItem('purchased_products', JSON.stringify(arr));
             } catch {
               // Ignore restricted storage
             }
+            window.dispatchEvent(
+              new CustomEvent('goye:entitlements-updated', {
+                detail: { productId: product.id },
+              })
+            );
             setPurchased(true);
             setStatusMsg(`Unlocked • TX: ${txid.slice(0, 12)}...`);
             setLoading(false);
           },
           onCancel: () => {
             setLoading(false);
-            setStatusMsg('Cancelled.');
+            setStatusMsg('Payment cancelled.');
           },
           onError: (e: unknown) => {
             const msg = e instanceof Error ? e.message : String(e);
@@ -176,12 +178,12 @@ export default function ProductCardWithImage({ product }: { product: ProductData
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoading(false);
-      setStatusMsg(`Open in Pi Browser (${msg})`);
+      setStatusMsg(msg);
     }
   };
 
   return (
-    <div className="bg-[#0E162B] border border-slate-700/70 rounded-2xl p-6 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between gap-5 shadow-xl">
+    <div className="bg-[#0E162B] border border-slate-700/70 rounded-2xl p-6 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between gap-5 shadow-xl text-left">
       <div className="space-y-4">
         {product.image ? (
           <div className="aspect-video w-full overflow-hidden rounded-2xl bg-[#070C1A] border border-slate-800">
@@ -220,6 +222,7 @@ export default function ProductCardWithImage({ product }: { product: ProductData
             <span>Module locked — unlock instant digital access</span>
           </div>
           <button
+            type="button"
             onClick={handleUnlock}
             disabled={loading}
             className="w-full bg-[#D4AF37] hover:bg-[#e5c14b] disabled:opacity-50 text-[#0A1128] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
@@ -227,22 +230,19 @@ export default function ProductCardWithImage({ product }: { product: ProductData
             <Lock className="w-4 h-4" />
             <span>{loading ? 'Processing...' : `Buy with ${product.price} Pi`}</span>
           </button>
-          {statusMsg && (
-            <p className="text-xs text-amber-300 text-center">{statusMsg}</p>
-          )}
+          {statusMsg && <p className="text-xs text-amber-300 text-center">{statusMsg}</p>}
         </div>
       ) : (
         <div className="space-y-2 pt-3 border-t border-slate-800/80">
           <button
+            type="button"
             onClick={() => setStatusMsg(`Full access active for ${product.name}`)}
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm cursor-pointer transition-colors flex items-center justify-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Access Product Content</span>
           </button>
-          {statusMsg && (
-            <p className="text-xs text-emerald-300 text-center">{statusMsg}</p>
-          )}
+          {statusMsg && <p className="text-xs text-emerald-300 text-center">{statusMsg}</p>}
         </div>
       )}
     </div>
