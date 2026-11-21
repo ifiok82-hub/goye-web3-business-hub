@@ -1,4 +1,4 @@
-const PI_PLATFORM_API_BASE = 'https://api.minepi.com';
+const PI_PLATFORM_API_BASE = 'https://api.testnet.minepi.com';
 
 export interface PiPlatformPayment {
   identifier: string;
@@ -45,7 +45,7 @@ export class PiPlatformApiError extends Error {
 }
 
 function getServerApiKey(): string {
-  const key = (process.env.PI_NETWORK_API_KEY || '').trim();
+  const key = (process.env.PI_NETWORK_API_KEY || process.env.PI_API_KEY || '').trim();
   if (!key || key === 'NOT CONFIGURED') {
     throw new PiConfigError('PI_NETWORK_API_KEY is not configured on the server.');
   }

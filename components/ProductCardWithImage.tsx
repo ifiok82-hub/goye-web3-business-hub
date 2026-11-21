@@ -1,62 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import {
-  Lock,
-  CheckCircle2,
-  Fingerprint,
-  Bot,
-  Store,
-  PackageCheck,
-  GraduationCap,
-  FileCheck2,
-  Handshake,
-  Receipt,
-  Scale,
-  Building2,
-  Globe,
-  ShoppingBag,
-  Cpu,
-  KeyRound,
-  Code2,
-} from 'lucide-react';
-import { ProductData, ProductIconName } from '../lib/products';
+import { Lock, CheckCircle2 } from 'lucide-react';
+import { ProductData } from '../lib/products';
 import { authenticateForPayments } from '../lib/piClient';
-
-function renderProductIcon(iconName: ProductIconName) {
-  const cls = 'w-11 h-11 text-[#F5D061]';
-  switch (iconName) {
-    case 'fingerprint':
-      return <Fingerprint className={cls} />;
-    case 'bot':
-      return <Bot className={cls} />;
-    case 'store':
-      return <Store className={cls} />;
-    case 'package':
-      return <PackageCheck className={cls} />;
-    case 'graduation':
-      return <GraduationCap className={cls} />;
-    case 'compliance':
-      return <FileCheck2 className={cls} />;
-    case 'handshake':
-      return <Handshake className={cls} />;
-    case 'receipt':
-      return <Receipt className={cls} />;
-    case 'scale':
-      return <Scale className={cls} />;
-    case 'building':
-      return <Building2 className={cls} />;
-    case 'globe':
-      return <Globe className={cls} />;
-    case 'shopping':
-      return <ShoppingBag className={cls} />;
-    case 'cpu':
-      return <Cpu className={cls} />;
-    case 'key':
-      return <KeyRound className={cls} />;
-    case 'code':
-      return <Code2 className={cls} />;
-  }
-}
 
 export default function ProductCardWithImage({
   product,
@@ -96,7 +42,6 @@ export default function ProductCardWithImage({
     try {
       const { userUid } = await authenticateForPayments(['payments']);
 
-      // Create server-owned order so amount, memo, and productId are authoritative on server
       const orderRes = await fetch('/api/pi/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -185,24 +130,14 @@ export default function ProductCardWithImage({
   return (
     <div className="bg-[#0E162B] border border-slate-700/70 rounded-2xl p-6 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between gap-5 shadow-xl text-left">
       <div className="space-y-4">
-        {product.image ? (
-          <div className="aspect-video w-full overflow-hidden rounded-2xl bg-[#070C1A] border border-slate-800">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="aspect-video w-full rounded-2xl bg-gradient-to-br from-[#0A1128] via-[#121E3F] to-[#262010] border border-[#D4AF37]/30 flex flex-col items-center justify-center gap-3 p-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
-              {renderProductIcon(product.iconName)}
-            </div>
-            <span className="text-[11px] font-mono uppercase tracking-wider text-[#F5D061]">
-              GOYE Module #{String(product.id).padStart(2, '0')}
-            </span>
-          </div>
-        )}
+        <div className="aspect-video w-full overflow-hidden rounded-2xl bg-[#070C1A] border border-slate-800">
+          <img
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+        </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">

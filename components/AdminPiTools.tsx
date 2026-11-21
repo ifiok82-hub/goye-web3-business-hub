@@ -93,7 +93,7 @@ export default function AdminPiTools() {
             U2A Payment Test (Admin Only)
           </h3>
           <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-            Exercises Pi.init, Pi.authenticate, server order creation, and Pi Platform API validation/approval/completion via https://api.minepi.com.
+            Exercises Pi.init, Pi.authenticate, server order creation, and Testnet Pi Platform validation/approval/completion via https://api.testnet.minepi.com.
           </p>
         </div>
       </div>

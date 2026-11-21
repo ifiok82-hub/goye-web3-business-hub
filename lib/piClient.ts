@@ -51,7 +51,7 @@ export async function initPiSdk(): Promise<boolean> {
   }
 
   if (!sdkInitialized) {
-    const useSandbox = process.env.NEXT_PUBLIC_PI_SANDBOX === 'true';
+    const useSandbox = process.env.NEXT_PUBLIC_PI_SANDBOX !== 'false';
     await Promise.resolve(
       window.Pi.init(useSandbox ? { version: '2.0', sandbox: true } : { version: '2.0' })
     );

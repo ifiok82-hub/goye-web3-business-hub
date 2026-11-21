@@ -9,7 +9,22 @@ export const PRODUCTS = FLAGSHIP_PRODUCTS;
 export default function LockedProducts() {
   const [unlockedIds, setUnlockedIds] = useState<number[]>([]);
 
-  const refreshEntitlements = useCallback(async () => {
+  const loadLocalUnlocked = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = window.localStorage.getItem('purchased_products');
+      if (saved) {
+        const arr = JSON.parse(saved);
+        if (Array.isArray(arr)) {
+          setUnlockedIds(arr.filter((id): id is number => typeof id === 'number'));
+        }
+      }
+    } catch {
+      // Ignore restricted storage in sandboxed iframes
+    }
+  }, []);
+
+  const refreshServerEntitlements = useCallback(async () => {
     if (typeof window === 'undefined') return;
     const merged = new Set<number>();
 
@@ -24,7 +39,7 @@ export default function LockedProducts() {
         }
       }
     } catch {
-      // Ignore restricted storage in sandboxed iframes
+      // Ignore restricted storage
     }
 
     try {
@@ -50,17 +65,18 @@ export default function LockedProducts() {
   }, []);
 
   useEffect(() => {
-    refreshEntitlements();
-    const onUpdate = () => {
-      refreshEntitlements();
+    // Only read local state on initial load — zero network fetch until user signs in or buys
+    loadLocalUnlocked();
+    const onServerUpdate = () => {
+      refreshServerEntitlements();
     };
-    window.addEventListener('storage', onUpdate);
-    window.addEventListener('goye:entitlements-updated', onUpdate);
+    window.addEventListener('storage', loadLocalUnlocked);
+    window.addEventListener('goye:entitlements-updated', onServerUpdate);
     return () => {
-      window.removeEventListener('storage', onUpdate);
-      window.removeEventListener('goye:entitlements-updated', onUpdate);
+      window.removeEventListener('storage', loadLocalUnlocked);
+      window.removeEventListener('goye:entitlements-updated', onServerUpdate);
     };
-  }, [refreshEntitlements]);
+  }, [loadLocalUnlocked, refreshServerEntitlements]);
 
   return (
     <div className="w-full space-y-8 text-left">

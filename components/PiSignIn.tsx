@@ -1,30 +1,17 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { handleIncompletePayment, initPiSdk, loadPiSdk } from '../lib/piClient';
+import { handleIncompletePayment, initPiSdk } from '../lib/piClient';
 
 const APP_STUDIO_LOGIN_URL =
   'https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login';
-
-function isPiEnvironment(): boolean {
-  if (typeof window === 'undefined') return false;
-  const ua = typeof window.navigator !== 'undefined' ? window.navigator.userAgent || '' : '';
-  const ref = typeof document !== 'undefined' ? document.referrer || '' : '';
-  const inIframe = window.self !== window.top;
-  return (
-    Boolean(window.Pi) ||
-    /PiBrowser/i.test(ua) ||
-    (inIframe && /minepi|pinet|piappengine|socialchain/i.test(ref))
-  );
-}
 
 export default function PiSignIn() {
   const [verified, setVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const autoAttemptedRef = useRef(false);
 
-  const runPiAuth = async (isAuto = false) => {
+  const handleSignIn = async () => {
     if (loading || verified) return;
     setLoading(true);
     setErrorMsg('');
@@ -32,9 +19,7 @@ export default function PiSignIn() {
     try {
       const ready = await initPiSdk();
       if (!ready || typeof window === 'undefined' || !window.Pi) {
-        if (!isAuto) {
-          setErrorMsg('Open in Pi Browser to sign in');
-        }
+        setErrorMsg('Open in Pi Browser to sign in with Pi');
         setLoading(false);
         return;
       }
@@ -55,7 +40,7 @@ export default function PiSignIn() {
         }
       }
 
-      // Send ONLY { accessToken } directly to Pi App Studio login endpoint
+      // Send ONLY { accessToken } to Pi App Studio login endpoint
       let authSucceeded = false;
       try {
         const appStudioRes = await fetch(APP_STUDIO_LOGIN_URL, {
@@ -108,24 +93,11 @@ export default function PiSignIn() {
       }
     } catch (err: any) {
       console.log('AppStudio auth failed', err?.message || err);
-      if (!isAuto) {
-        setErrorMsg('Sign-in failed — tap to retry');
-      }
+      setErrorMsg('Sign-in failed — tap to retry');
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    loadPiSdk().then((loaded) => {
-      if (!autoAttemptedRef.current && loaded && isPiEnvironment()) {
-        autoAttemptedRef.current = true;
-        runPiAuth(true);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (verified) {
     return (
@@ -137,10 +109,10 @@ export default function PiSignIn() {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-end">
       <button
         type="button"
-        onClick={() => runPiAuth(false)}
+        onClick={handleSignIn}
         disabled={loading}
         className="px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white font-semibold text-xs sm:text-sm inline-flex items-center gap-2 transition-colors shadow-lg shadow-purple-900/30 cursor-pointer whitespace-nowrap"
       >

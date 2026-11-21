@@ -46,7 +46,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, and enforces id
     const method = init?.method || 'GET';
     calls.push({ url, method });
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_bad_amount' && method === 'GET') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_bad_amount' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_bad_amount',
@@ -60,7 +60,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, and enforces id
       );
     }
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_wrong_dir' && method === 'GET') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_wrong_dir' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_wrong_dir',
@@ -74,7 +74,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, and enforces id
       );
     }
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_wrong_user' && method === 'GET') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_wrong_user' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_wrong_user',
@@ -88,7 +88,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, and enforces id
       );
     }
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_valid_1' && method === 'GET') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_valid_1' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_valid_1',
@@ -103,15 +103,15 @@ test('U2A workflow: validates amount, direction, user_uid, txid, and enforces id
       );
     }
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_valid_1/approve' && method === 'POST') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_valid_1/approve' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_valid_1' }), { status: 200 });
     }
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_valid_1/complete' && method === 'POST') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_valid_1/complete' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_valid_1' }), { status: 200 });
     }
 
-    if (url === 'https://api.minepi.com/v2/payments/pay_incomplete_1' && method === 'GET') {
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_incomplete_1' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_incomplete_1',
@@ -126,7 +126,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, and enforces id
       );
     }
 
-    if (url.startsWith('https://api.minepi.com/v2/payments/pay_incomplete_1/')) {
+    if (url.startsWith('https://api.testnet.minepi.com/v2/payments/pay_incomplete_1/')) {
       return new Response(JSON.stringify({ identifier: 'pay_incomplete_1' }), { status: 200 });
     }
 
