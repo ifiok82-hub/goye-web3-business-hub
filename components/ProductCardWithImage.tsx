@@ -225,7 +225,7 @@ export default function ProductCardWithImage({ product }: { product: ProductData
             className="w-full bg-[#D4AF37] hover:bg-[#e5c14b] disabled:opacity-50 text-[#0A1128] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Lock className="w-4 h-4" />
-            <span>{loading ? 'Processing...' : `Unlock Module (${product.price} Pi)`}</span>
+            <span>{loading ? 'Processing...' : `Buy with ${product.price} Pi`}</span>
           </button>
           {statusMsg && (
             <p className="text-xs text-amber-300 text-center">{statusMsg}</p>

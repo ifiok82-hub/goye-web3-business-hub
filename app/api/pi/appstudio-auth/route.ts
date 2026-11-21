@@ -15,7 +15,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       sessionToken: data.sessionToken ?? null,
-      user: { uid: data.user.uid, username: data.user.username },
+      verified: true,
+      network: 'testnet',
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Auth request failed' }, { status: 500 });
