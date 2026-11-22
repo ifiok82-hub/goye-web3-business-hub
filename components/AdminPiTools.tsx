@@ -100,6 +100,11 @@ export default function AdminPiTools() {
             console.log('CANCELLED', id);
             appendLog(`CANCELLED ${id}`);
             setLoading(false);
+            return fetch('/api/pi/cancel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId: id }),
+            }).catch(() => undefined);
           },
           onError: (error: any) => {
             console.log('PAYMENT ERROR', JSON.stringify(error));

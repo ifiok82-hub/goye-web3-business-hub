@@ -11,8 +11,8 @@ export async function POST(req: Request) {
     console.log('APPROVE START', paymentId, 'KEY EXISTS?', !!apiKey);
 
     if (!apiKey || apiKey === 'NOT CONFIGURED') {
-      console.log('PI_API_KEY MISSING');
-      return NextResponse.json({ error: 'PI_API_KEY MISSING' }, { status: 500 });
+      console.log('PI_API_KEY MISSING IN VERCEL');
+      return NextResponse.json({ error: 'PI_API_KEY MISSING IN VERCEL' }, { status: 500 });
     }
 
     const res = await fetch(

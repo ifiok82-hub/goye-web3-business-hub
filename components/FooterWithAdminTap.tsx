@@ -75,7 +75,7 @@ export default function FooterWithAdminTap({ onNavigate }: FooterWithAdminTapPro
             <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>Non-Custodial Commercial Registry</span>
           </span>
-          <span className="text-slate-500 font-mono">Build ALLOW-POPUP-FIX</span>
+          <span className="text-slate-500 font-mono">Build GOYE-ALLOW-FIX</span>
         </div>
       </div>
     </footer>

@@ -140,6 +140,11 @@ export default function ProductCardWithImage({
             console.log('CANCELLED', paymentId);
             setLoading(false);
             setStatusMsg('Payment cancelled.');
+            return fetch('/api/pi/cancel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId }),
+            }).catch(() => undefined);
           },
           onError: (error: any) => {
             console.log('PAYMENT ERROR', JSON.stringify(error));
