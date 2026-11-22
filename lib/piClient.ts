@@ -53,7 +53,7 @@ export async function initPiSdk(): Promise<boolean> {
   }
 
   if (!sdkInitialized) {
-    const sandbox = process.env.NEXT_PUBLIC_PI_SANDBOX !== 'false';
+    const sandbox = process.env.NEXT_PUBLIC_PI_SANDBOX === 'false' ? false : true;
     await Promise.resolve(window.Pi.init({ version: '2.0', sandbox }));
     sdkInitialized = true;
   }

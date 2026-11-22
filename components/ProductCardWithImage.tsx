@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, CheckCircle2 } from 'lucide-react';
 import { ProductData } from '../lib/products';
-import { authenticateForPayments } from '../lib/piClient';
+import { authenticateForPayments, initPiSdk } from '../lib/piClient';
 
 export default function ProductCardWithImage({
   product,
@@ -36,15 +36,17 @@ export default function ProductCardWithImage({
 
   const handleUnlock = async () => {
     if (loading || purchased) return;
+    console.log('BUY TAPPED', product.id);
     setLoading(true);
-    setStatusMsg(null);
+    setStatusMsg('Initializing Pi Testnet...');
 
     try {
-      await authenticateForPayments(['username', 'payments']);
-
-      if (typeof window === 'undefined' || !window.Pi) {
-        throw new Error('Pi SDK unavailable.');
+      const ready = await initPiSdk();
+      if (!ready || typeof window === 'undefined' || !window.Pi) {
+        throw new Error('Open inside Pi Browser to complete payment.');
       }
+
+      await authenticateForPayments(['username', 'payments']);
 
       window.Pi.createPayment(
         {
@@ -54,15 +56,17 @@ export default function ProductCardWithImage({
         },
         {
           onReadyForServerApproval: async (paymentId: string) => {
+            console.log('READY FOR APPROVAL', paymentId);
             setStatusMsg('Approving payment on server...');
-            const approveRes = await fetch('/api/pi/approve', {
+            const r = await fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
             });
-            const approveData = await approveRes.json().catch(() => ({}));
-            if (!approveRes.ok || !approveData?.success) {
-              const msg = approveData?.error || 'Server approval rejected.';
+            console.log('APPROVE FETCH', r.status);
+            const approveData = await r.json().catch(() => ({}));
+            if (!r.ok || !approveData?.success) {
+              const msg = approveData?.error || `Server approval failed (${r.status})`;
               setStatusMsg(msg);
               setLoading(false);
               throw new Error(msg);
@@ -70,6 +74,7 @@ export default function ProductCardWithImage({
             setStatusMsg('Waiting for wallet confirmation...');
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+            console.log('READY FOR COMPLETION', paymentId, txid);
             setStatusMsg('Verifying transaction & granting access...');
             const completeRes = await fetch('/api/pi/complete', {
               method: 'POST',
@@ -101,14 +106,14 @@ export default function ProductCardWithImage({
             setStatusMsg(`Unlocked • TX: ${txid.slice(0, 12)}...`);
             setLoading(false);
           },
-          onCancel: (paymentId: string) => {
-            console.log('CANCELLED', paymentId);
+          onCancel: (id: string) => {
+            console.log('CANCELLED', id);
             setLoading(false);
             setStatusMsg('Payment cancelled.');
           },
-          onError: (error: unknown) => {
-            console.log('PAYMENT ERROR', error);
-            const msg = error instanceof Error ? error.message : String(error);
+          onError: (e: unknown) => {
+            console.log('PAYMENT ERROR', JSON.stringify(e));
+            const msg = e instanceof Error ? e.message : String(e);
             setLoading(false);
             setStatusMsg(msg);
           },
@@ -159,7 +164,7 @@ export default function ProductCardWithImage({
             <Lock className="w-4 h-4" />
             <span>{loading ? 'Processing...' : `Buy with ${product.price} Pi`}</span>
           </button>
-          {statusMsg && <p className="text-xs text-amber-300 text-center">{statusMsg}</p>}
+          {statusMsg && <p className="text-xs text-amber-300 text-center break-words">{statusMsg}</p>}
         </div>
       ) : (
         <div className="space-y-2 pt-3 border-t border-slate-800/80">
@@ -171,7 +176,7 @@ export default function ProductCardWithImage({
             <CheckCircle2 className="w-4 h-4" />
             <span>Access Product Content</span>
           </button>
-          {statusMsg && <p className="text-xs text-emerald-300 text-center">{statusMsg}</p>}
+          {statusMsg && <p className="text-xs text-emerald-300 text-center break-words">{statusMsg}</p>}
         </div>
       )}
     </div>
