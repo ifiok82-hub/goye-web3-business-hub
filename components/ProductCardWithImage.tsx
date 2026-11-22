@@ -40,7 +40,7 @@ export default function ProductCardWithImage({
     setStatusMsg(null);
 
     try {
-      const { userUid } = await authenticateForPayments(['payments']);
+      const { userUid } = await authenticateForPayments(['username', 'payments']);
 
       const orderRes = await fetch('/api/pi/orders', {
         method: 'POST',
@@ -73,7 +73,10 @@ export default function ProductCardWithImage({
             });
             const approveData = await approveRes.json().catch(() => ({}));
             if (!approveRes.ok || !approveData?.success) {
-              throw new Error(approveData?.error || 'Server approval rejected.');
+              const msg = approveData?.error || 'Server approval rejected.';
+              setStatusMsg(msg);
+              setLoading(false);
+              throw new Error(msg);
             }
             setStatusMsg('Waiting for wallet confirmation...');
           },

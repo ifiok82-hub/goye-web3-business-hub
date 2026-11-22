@@ -11,7 +11,7 @@ export default function AdminPiTools() {
     setLoading(true);
     setLogs('Authenticating Pi SDK (payments scope)...');
     try {
-      const { userUid } = await authenticateForPayments(['payments']);
+      const { userUid } = await authenticateForPayments(['username', 'payments']);
 
       setLogs('Creating authoritative server order for Module #3 (1 Pi)...');
       const orderRes = await fetch('/api/pi/orders', {

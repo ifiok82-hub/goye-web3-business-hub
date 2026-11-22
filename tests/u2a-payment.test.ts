@@ -29,7 +29,7 @@ test('U2A workflow: rejects missing PI_API_KEY / PI_NETWORK_API_KEY', async () =
   );
 });
 
-test('U2A workflow: validates amount, direction, user_uid, txid, supports stateless serverless orderId, cancel, and incomplete recovery', async () => {
+test('U2A workflow: fast single-hop approve, strict complete verification, stateless serverless orderId, cancel, and incomplete recovery', async () => {
   await cleanStore();
   process.env.PI_API_KEY = 'test_placeholder_env_value';
 
@@ -56,7 +56,8 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
           amount: 99,
           direction: 'user_to_app',
           metadata: { orderId: order.orderId, productId: 3 },
-          status: { developer_approved: false, developer_completed: false, cancelled: false },
+          transaction: { txid: 'tx_bad_amount', verified: true },
+          status: { developer_approved: true, developer_completed: false, cancelled: false },
         }),
         { status: 200 }
       );
@@ -70,7 +71,8 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
           amount: 1,
           direction: 'app_to_user',
           metadata: { orderId: order.orderId, productId: 3 },
-          status: { developer_approved: false, developer_completed: false, cancelled: false },
+          transaction: { txid: 'tx_wrong_dir', verified: true },
+          status: { developer_approved: true, developer_completed: false, cancelled: false },
         }),
         { status: 200 }
       );
@@ -84,7 +86,8 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
           amount: 1,
           direction: 'user_to_app',
           metadata: { orderId: order.orderId, productId: 3 },
-          status: { developer_approved: false, developer_completed: false, cancelled: false },
+          transaction: { txid: 'tx_wrong_user', verified: true },
+          status: { developer_approved: true, developer_completed: false, cancelled: false },
         }),
         { status: 200 }
       );
@@ -99,7 +102,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
           direction: 'user_to_app',
           metadata: { orderId: order.orderId, productId: 3 },
           transaction: { txid: 'tx_chain_001', verified: true },
-          status: { developer_approved: false, developer_completed: false, cancelled: false },
+          status: { developer_approved: true, developer_completed: false, cancelled: false },
         }),
         { status: 200 }
       );
@@ -121,13 +124,18 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
           amount: 2,
           direction: 'user_to_app',
           metadata: { orderId: 'ord_created_in_other_container', productId: 1 },
-          status: { developer_approved: false, developer_completed: false, cancelled: false },
+          transaction: { txid: 'tx_stateless_001', verified: true },
+          status: { developer_approved: true, developer_completed: false, cancelled: false },
         }),
         { status: 200 }
       );
     }
 
     if (url === 'https://api.testnet.minepi.com/v2/payments/pay_stateless_lambda/approve' && method === 'POST') {
+      return new Response(JSON.stringify({ identifier: 'pay_stateless_lambda' }), { status: 200 });
+    }
+
+    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_stateless_lambda/complete' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_stateless_lambda' }), { status: 200 });
     }
 
@@ -177,44 +185,50 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
   }) as typeof fetch;
 
   try {
-    await assert.rejects(
-      () => approveU2APayment({ paymentId: 'pay_bad_amount', orderId: order.orderId }),
-      /amount mismatch/i
-    );
-
-    await assert.rejects(
-      () => approveU2APayment({ paymentId: 'pay_wrong_dir', orderId: order.orderId }),
-      /direction/i
-    );
-
-    await assert.rejects(
-      () => approveU2APayment({ paymentId: 'pay_wrong_user', orderId: order.orderId }),
-      /user_uid/i
-    );
-
+    // Fast approve makes ONLY 1 POST request straight to /approve (no pre-GET delay)
+    const callsBeforeApprove = calls.length;
     const approved = await approveU2APayment({
       paymentId: 'pay_valid_1',
       orderId: order.orderId,
     });
     assert.equal(approved.success, true);
-    assert.equal(approved.productId, 3);
+    assert.equal(calls.length - callsBeforeApprove, 1);
+    assert.equal(calls[callsBeforeApprove].method, 'POST');
+    assert.equal(
+      calls[callsBeforeApprove].url,
+      'https://api.testnet.minepi.com/v2/payments/pay_valid_1/approve'
+    );
 
-    // Stateless multi-container approve succeeds when productId + amount match catalog
-    const statelessApproved = await approveU2APayment({
-      paymentId: 'pay_stateless_lambda',
-      orderId: 'ord_created_in_other_container',
-    });
-    assert.equal(statelessApproved.success, true);
-    assert.equal(statelessApproved.productId, 1);
+    // Tampered amount/direction/user rejected before complete or fulfillment
+    await assert.rejects(
+      () =>
+        completeU2APayment({
+          paymentId: 'pay_bad_amount',
+          txid: 'tx_bad_amount',
+          orderId: order.orderId,
+        }),
+      /amount mismatch/i
+    );
 
-    // Idempotent second approval does not call Pi Platform /approve again
-    const callsBeforeRetry = calls.length;
-    const approvedAgain = await approveU2APayment({
-      paymentId: 'pay_valid_1',
-      orderId: order.orderId,
-    });
-    assert.equal(approvedAgain.alreadyApproved, true);
-    assert.equal(calls.length, callsBeforeRetry);
+    await assert.rejects(
+      () =>
+        completeU2APayment({
+          paymentId: 'pay_wrong_dir',
+          txid: 'tx_wrong_dir',
+          orderId: order.orderId,
+        }),
+      /direction/i
+    );
+
+    await assert.rejects(
+      () =>
+        completeU2APayment({
+          paymentId: 'pay_wrong_user',
+          txid: 'tx_wrong_user',
+          orderId: order.orderId,
+        }),
+      /user_uid/i
+    );
 
     // Mismatched txid rejected
     await assert.rejects(
@@ -227,6 +241,20 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
       /mismatches/i
     );
 
+    // Stateless multi-container approve + complete succeeds when productId + amount match catalog
+    const statelessApproved = await approveU2APayment({
+      paymentId: 'pay_stateless_lambda',
+      orderId: 'ord_created_in_other_container',
+    });
+    assert.equal(statelessApproved.success, true);
+    const statelessCompleted = await completeU2APayment({
+      paymentId: 'pay_stateless_lambda',
+      txid: 'tx_stateless_001',
+      orderId: 'ord_created_in_other_container',
+    });
+    assert.equal(statelessCompleted.fulfilled, true);
+    assert.equal(statelessCompleted.productId, 1);
+
     // Valid completion grants entitlement once
     const completed = await completeU2APayment({
       paymentId: 'pay_valid_1',
@@ -236,7 +264,8 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
     assert.equal(completed.fulfilled, true);
     assert.equal(completed.newlyGranted, true);
 
-    // Duplicate completion is idempotent and does NOT re-grant
+    // Duplicate completion is idempotent and does NOT re-grant or call /complete again
+    const callsBeforeRetry = calls.length;
     const completedAgain = await completeU2APayment({
       paymentId: 'pay_valid_1',
       txid: 'tx_chain_001',
@@ -244,6 +273,7 @@ test('U2A workflow: validates amount, direction, user_uid, txid, supports statel
     });
     assert.equal(completedAgain.alreadyCompleted, true);
     assert.equal(completedAgain.newlyGranted, false);
+    assert.equal(calls.length, callsBeforeRetry);
 
     const ents = await getUserEntitlements('user_abc');
     assert.equal(ents.length, 1);

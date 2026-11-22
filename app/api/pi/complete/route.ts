@@ -8,6 +8,8 @@ export async function POST(req: Request) {
     const txid = body?.txid;
     const orderId = typeof body?.orderId === 'string' ? body.orderId : undefined;
 
+    console.log('COMPLETE', paymentId, txid);
+
     const result = await completeU2APayment({ paymentId, txid, orderId });
     return NextResponse.json(result, { status: 200 });
   } catch (err) {

@@ -10,10 +10,7 @@ import {
 import {
   getOrderById,
   getPaymentById,
-  markPaymentApproved,
   markPaymentCompletedAndFulfill,
-  persistPaymentBeforeApproval,
-  persistPaymentTxidBeforeCompletion,
   ServerOrderRecord,
 } from './piPaymentsStore';
 import { getProductById, ProductData } from './products';
@@ -48,7 +45,7 @@ async function resolveAndValidatePayment(
     typeof meta.orderId === 'string' && meta.orderId.trim() ? meta.orderId.trim() : undefined;
   const orderId = metaOrderId || (clientOrderId ? String(clientOrderId).trim() : undefined);
 
-  // Note: On multi-instance serverless platforms (Vercel), orderId created in another container
+  // On multi-instance serverless platforms (Vercel), orderId created in another container
   // may not exist in local /tmp store, so do NOT 404 solely because serverOrder is absent locally.
   const serverOrder = orderId ? await getOrderById(orderId) : null;
 
@@ -99,65 +96,34 @@ export async function approveU2APayment(params: {
     throw new PaymentValidationError('paymentId is required.', 400);
   }
 
-  console.log('[PI APPROVE] Approve called:', paymentId);
-
-  const existing = await getPaymentById(paymentId);
-  if (existing && (existing.status === 'approved' || existing.status === 'completed')) {
-    console.log('[PI APPROVE] Approve success (cached):', paymentId);
-    return {
-      success: true,
-      alreadyApproved: true,
-      paymentId,
-      orderId: existing.orderId,
-      productId: existing.productId,
-      amount: existing.amount,
-    };
-  }
+  console.log('APPROVE', paymentId);
 
   try {
-    const piPayment = await getPiPayment(paymentId);
-    const { product, serverOrder } = await resolveAndValidatePayment(piPayment, orderId);
-
-    await persistPaymentBeforeApproval({
-      paymentId,
-      orderId: serverOrder?.orderId || orderId,
-      productId: product.id,
-      userUid: piPayment.user_uid,
-      amount: product.price,
-      direction: piPayment.direction,
-    });
-
-    if (!piPayment.status?.developer_approved) {
-      try {
-        await approvePiPayment(paymentId);
-      } catch (err) {
-        if (
-          err instanceof PiPlatformApiError &&
-          err.message.toLowerCase().includes('already')
-        ) {
-          // Idempotent success when already approved on Pi Platform
-        } else {
-          throw err;
-        }
+    try {
+      await approvePiPayment(paymentId);
+    } catch (err) {
+      if (
+        err instanceof PiPlatformApiError &&
+        err.message.toLowerCase().includes('already')
+      ) {
+        return {
+          success: true,
+          alreadyApproved: true,
+          paymentId,
+          orderId,
+        };
       }
+      throw err;
     }
 
-    await markPaymentApproved({
-      paymentId,
-      orderId: serverOrder?.orderId || orderId,
-    });
-
-    console.log('[PI APPROVE] Approve success:', paymentId);
     return {
       success: true,
-      alreadyApproved: Boolean(piPayment.status?.developer_approved),
+      alreadyApproved: false,
       paymentId,
-      orderId: serverOrder?.orderId || orderId,
-      productId: product.id,
-      amount: product.price,
+      orderId,
     };
   } catch (err: any) {
-    console.error('[PI APPROVE] Approve failed:', paymentId, err?.message || err);
+    console.error('APPROVE FAILED', paymentId, err?.message || err);
     throw err;
   }
 }
@@ -175,7 +141,7 @@ export async function completeU2APayment(params: {
     throw new PaymentValidationError('txid is required.', 400);
   }
 
-  console.log('[PI COMPLETE] Complete called:', paymentId, txid);
+  console.log('COMPLETE', paymentId, txid);
 
   const existing = await getPaymentById(paymentId);
   if (existing && existing.status === 'completed' && existing.fulfilled) {
@@ -185,7 +151,6 @@ export async function completeU2APayment(params: {
         409
       );
     }
-    console.log('[PI COMPLETE] Complete success (cached):', paymentId);
     return {
       success: true,
       alreadyCompleted: true,
@@ -206,16 +171,6 @@ export async function completeU2APayment(params: {
       throw new PaymentValidationError('txid mismatches Pi Platform payment transaction.', 400);
     }
 
-    await persistPaymentTxidBeforeCompletion({
-      paymentId,
-      txid,
-      orderId: serverOrder?.orderId || orderId,
-      productId: product.id,
-      userUid: piPayment.user_uid,
-      amount: product.price,
-      direction: piPayment.direction,
-    });
-
     if (!piPayment.status?.developer_completed) {
       try {
         await completePiPayment(paymentId, txid);
@@ -231,6 +186,7 @@ export async function completeU2APayment(params: {
       }
     }
 
+    // Unlock product strictly AFTER Testnet /complete succeeds
     const { entitlement, newlyGranted } = await markPaymentCompletedAndFulfill({
       paymentId,
       txid,
@@ -241,7 +197,6 @@ export async function completeU2APayment(params: {
       direction: piPayment.direction,
     });
 
-    console.log('[PI COMPLETE] Complete success:', paymentId);
     return {
       success: true,
       alreadyCompleted: !newlyGranted,
@@ -254,7 +209,7 @@ export async function completeU2APayment(params: {
       entitlement,
     };
   } catch (err: any) {
-    console.error('[PI COMPLETE] Complete failed:', paymentId, err?.message || err);
+    console.error('COMPLETE FAILED', paymentId, err?.message || err);
     throw err;
   }
 }
@@ -264,10 +219,9 @@ export async function cancelU2APayment(paymentId: string) {
     throw new PaymentValidationError('paymentId is required.', 400);
   }
 
-  console.log('[PI CANCEL] Cancel called:', paymentId);
+  console.log('CANCEL', paymentId);
   try {
     const result = await cancelPiPayment(paymentId);
-    console.log('[PI CANCEL] Cancel success:', paymentId);
     return {
       success: true,
       cancelled: true,
@@ -279,7 +233,6 @@ export async function cancelU2APayment(paymentId: string) {
       err instanceof PiPlatformApiError &&
       (err.status === 400 || err.status === 404 || err.message.toLowerCase().includes('already'))
     ) {
-      console.log('[PI CANCEL] Cancel already closed:', paymentId);
       return {
         success: true,
         cancelled: true,
@@ -287,7 +240,7 @@ export async function cancelU2APayment(paymentId: string) {
         paymentId,
       };
     }
-    console.error('[PI CANCEL] Cancel failed:', paymentId, err?.message || err);
+    console.error('CANCEL FAILED', paymentId, err?.message || err);
     throw err;
   }
 }
@@ -324,7 +277,6 @@ export async function resumeIncompleteU2APayment(paymentId: string) {
     };
   }
 
-  // No txid on incomplete payment -> cancel cleanly so stale payment doesn't block new ones
   await cancelU2APayment(paymentId);
   return {
     success: true,

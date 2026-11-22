@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { handleIncompletePayment, initPiSdk, loadPiSdk } from '../lib/piClient';
+import { handleIncompletePayment, initPiSdk, loadPiSdk, markPiSessionAuthenticated } from '../lib/piClient';
 
 const APP_STUDIO_LOGIN_URL =
   'https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login';
@@ -45,10 +45,13 @@ export default function PiSignIn() {
         throw new Error('No accessToken returned');
       }
 
-      if (auth?.user?.uid) {
+      const userUid = auth?.user?.uid ? String(auth.user.uid) : undefined;
+      markPiSessionAuthenticated(userUid);
+
+      if (userUid) {
         try {
           if (window.sessionStorage) {
-            window.sessionStorage.setItem('pi_user_uid', String(auth.user.uid));
+            window.sessionStorage.setItem('pi_user_uid', userUid);
           }
         } catch {
           // Ignore restricted storage

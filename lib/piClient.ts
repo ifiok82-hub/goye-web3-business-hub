@@ -6,6 +6,8 @@ declare global {
 
 let sdkLoadPromise: Promise<boolean> | null = null;
 let sdkInitialized = false;
+let authenticatedInSession = false;
+let cachedUserUid: string | undefined;
 
 export function loadPiSdk(): Promise<boolean> {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -51,11 +53,19 @@ export async function initPiSdk(): Promise<boolean> {
   }
 
   if (!sdkInitialized) {
-    await Promise.resolve(window.Pi.init({ version: '2.0' }));
+    const sandbox = process.env.NEXT_PUBLIC_PI_SANDBOX !== 'false';
+    await Promise.resolve(window.Pi.init({ version: '2.0', sandbox }));
     sdkInitialized = true;
   }
 
   return true;
+}
+
+export function markPiSessionAuthenticated(userUid?: string): void {
+  authenticatedInSession = true;
+  if (userUid) {
+    cachedUserUid = userUid;
+  }
 }
 
 export async function handleIncompletePayment(payment: any): Promise<void> {
@@ -100,10 +110,14 @@ export async function handleIncompletePayment(payment: any): Promise<void> {
 
 export async function authenticateForPayments(
   scopes: string[] = ['username', 'payments']
-): Promise<{ accessToken: string; userUid?: string }> {
+): Promise<{ accessToken?: string; userUid?: string }> {
   const ready = await initPiSdk();
   if (!ready || typeof window === 'undefined' || !window.Pi) {
     throw new Error('Open inside Pi Browser to continue with Pi.');
+  }
+
+  if (authenticatedInSession) {
+    return { userUid: cachedUserUid };
   }
 
   const auth = await window.Pi.authenticate(scopes, handleIncompletePayment);
@@ -112,6 +126,8 @@ export async function authenticateForPayments(
   }
 
   const userUid = auth?.user?.uid ? String(auth.user.uid) : undefined;
+  markPiSessionAuthenticated(userUid);
+
   if (userUid) {
     try {
       if (window.sessionStorage) {
