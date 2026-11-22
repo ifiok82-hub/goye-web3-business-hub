@@ -51,10 +51,7 @@ export async function initPiSdk(): Promise<boolean> {
   }
 
   if (!sdkInitialized) {
-    const useSandbox = process.env.NEXT_PUBLIC_PI_SANDBOX !== 'false';
-    await Promise.resolve(
-      window.Pi.init(useSandbox ? { version: '2.0', sandbox: true } : { version: '2.0' })
-    );
+    await Promise.resolve(window.Pi.init({ version: '2.0' }));
     sdkInitialized = true;
   }
 
@@ -62,36 +59,47 @@ export async function initPiSdk(): Promise<boolean> {
 }
 
 export async function handleIncompletePayment(payment: any): Promise<void> {
-  if (!payment?.identifier) return;
+  const paymentId = payment?.identifier;
+  if (!paymentId) return;
+
+  const txid = payment?.transaction?.txid;
   try {
-    const res = await fetch('/api/pi/incomplete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ paymentId: payment.identifier }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data?.fulfilled && data?.productId && typeof window !== 'undefined') {
-      try {
-        const saved = window.localStorage.getItem('purchased_products');
-        const arr = saved ? JSON.parse(saved) : [];
-        if (Array.isArray(arr) && !arr.includes(data.productId)) {
-          arr.push(data.productId);
-          window.localStorage.setItem('purchased_products', JSON.stringify(arr));
+    if (txid) {
+      const res = await fetch('/api/pi/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId, txid }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.fulfilled && data?.productId && typeof window !== 'undefined') {
+        try {
+          const saved = window.localStorage.getItem('purchased_products');
+          const arr = saved ? JSON.parse(saved) : [];
+          if (Array.isArray(arr) && !arr.includes(data.productId)) {
+            arr.push(data.productId);
+            window.localStorage.setItem('purchased_products', JSON.stringify(arr));
+          }
+        } catch {
+          // Ignore restricted storage
         }
-      } catch {
-        // Ignore restricted storage
+        window.dispatchEvent(
+          new CustomEvent('goye:entitlements-updated', { detail: { productId: data.productId } })
+        );
       }
-      window.dispatchEvent(
-        new CustomEvent('goye:entitlements-updated', { detail: { productId: data.productId } })
-      );
+    } else {
+      await fetch('/api/pi/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentId }),
+      });
     }
   } catch {
-    // Incomplete payment recovery will retry on next authenticate
+    // Incomplete recovery errors ignored safely
   }
 }
 
 export async function authenticateForPayments(
-  scopes: string[] = ['payments']
+  scopes: string[] = ['username', 'payments']
 ): Promise<{ accessToken: string; userUid?: string }> {
   const ready = await initPiSdk();
   if (!ready || typeof window === 'undefined' || !window.Pi) {

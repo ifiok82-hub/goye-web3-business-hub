@@ -1,9 +1,22 @@
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "frame-ancestors 'self' https://*.minepi.com https://*.pinet.com https://*.pi.app https://*.pi-browser.app https://app-studio.minepi.com https://appstudio.minepi.com https://*.piappengine.com https://*.vercel.app https://*.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.minepi.com; connect-src 'self' https://socialchain.app https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com https://api.testnet.minepi.com https: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:;",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

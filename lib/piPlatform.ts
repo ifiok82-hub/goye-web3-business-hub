@@ -45,9 +45,9 @@ export class PiPlatformApiError extends Error {
 }
 
 function getServerApiKey(): string {
-  const key = (process.env.PI_NETWORK_API_KEY || process.env.PI_API_KEY || '').trim();
+  const key = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
   if (!key || key === 'NOT CONFIGURED') {
-    throw new PiConfigError('PI_NETWORK_API_KEY is not configured on the server.');
+    throw new PiConfigError('PI_API_KEY (Testnet) is not configured on the server.');
   }
   return key;
 }
@@ -62,6 +62,7 @@ async function piRequest<T>(path: string, init: RequestInit): Promise<T> {
       ...(init.headers || {}),
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(8000),
   });
 
   const text = await res.text();
@@ -112,6 +113,16 @@ export async function completePiPayment(
     {
       method: 'POST',
       body: JSON.stringify({ txid }),
+    }
+  );
+}
+
+export async function cancelPiPayment(paymentId: string): Promise<PiPlatformPayment> {
+  return piRequest<PiPlatformPayment>(
+    `/v2/payments/${encodeURIComponent(paymentId)}/cancel`,
+    {
+      method: 'POST',
+      body: JSON.stringify({}),
     }
   );
 }

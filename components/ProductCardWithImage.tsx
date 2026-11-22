@@ -109,11 +109,21 @@ export default function ProductCardWithImage({
             setStatusMsg(`Unlocked • TX: ${txid.slice(0, 12)}...`);
             setLoading(false);
           },
-          onCancel: () => {
+          onCancel: async (paymentId: string) => {
+            try {
+              await fetch('/api/pi/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId }),
+              });
+            } catch {
+              // Ignore cancel network errors
+            }
             setLoading(false);
             setStatusMsg('Payment cancelled.');
           },
-          onError: (e: unknown) => {
+          onError: (e: unknown, payment?: unknown) => {
+            console.error('[PI PAYMENT ERROR]', e, payment);
             const msg = e instanceof Error ? e.message : String(e);
             setLoading(false);
             setStatusMsg(msg);

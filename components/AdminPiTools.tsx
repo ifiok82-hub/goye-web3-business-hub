@@ -63,11 +63,21 @@ export default function AdminPiTools() {
             setLogs(`U2A Payment Verified & Fulfilled! Payment ID: ${paymentId} | TX: ${txid}`);
             setLoading(false);
           },
-          onCancel: () => {
-            setLogs('Payment cancelled by admin.');
+          onCancel: async (paymentId: string) => {
+            try {
+              await fetch('/api/pi/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId }),
+              });
+            } catch {
+              // Ignore cancel network errors
+            }
+            setLogs(`Payment cancelled by admin (${paymentId}).`);
             setLoading(false);
           },
-          onError: (err: unknown) => {
+          onError: (err: unknown, payment?: unknown) => {
+            console.error('[PI ADMIN PAYMENT ERROR]', err, payment);
             const msg = err instanceof Error ? err.message : JSON.stringify(err);
             setLogs(`Payment Error: ${msg}`);
             setLoading(false);
