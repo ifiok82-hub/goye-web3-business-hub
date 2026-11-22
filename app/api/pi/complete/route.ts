@@ -1,19 +1,23 @@
-import { NextResponse } from 'next/server';
-import { completeU2APayment, toHttpErrorResponse } from '@/lib/piPaymentWorkflow';
-
+import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const paymentId = body?.paymentId || body?.payment_id;
-    const txid = body?.txid;
-    const orderId = typeof body?.orderId === 'string' ? body.orderId : undefined;
-
-    console.log('COMPLETE', paymentId, txid);
-
-    const result = await completeU2APayment({ paymentId, txid, orderId });
-    return NextResponse.json(result, { status: 200 });
-  } catch (err) {
-    const { status, body } = toHttpErrorResponse(err);
-    return NextResponse.json(body, { status });
+    const { paymentId, txid } = await req.json();
+    if (!paymentId) return NextResponse.json({ error: "no paymentId" }, { status: 400 });
+    console.log("COMPLETE", paymentId, txid);
+    const res = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Key ${process.env.PI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ txid }),
+    });
+    const data = await res.text();
+    console.log("COMPLETE RESULT", res.status, data);
+    if (!res.ok) return NextResponse.json({ error: data }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    console.log("COMPLETE ERROR", e?.message);
+    return NextResponse.json({ error: e?.message }, { status: 500 });
   }
 }

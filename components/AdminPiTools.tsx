@@ -11,37 +11,26 @@ export default function AdminPiTools() {
     setLoading(true);
     setLogs('Authenticating Pi SDK (payments scope)...');
     try {
-      const { userUid } = await authenticateForPayments(['username', 'payments']);
-
-      setLogs('Creating authoritative server order for Module #3 (1 Pi)...');
-      const orderRes = await fetch('/api/pi/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: 3, userUid }),
-      });
-      const orderData = await orderRes.json().catch(() => ({}));
-      if (!orderRes.ok || !orderData?.orderId) {
-        throw new Error(orderData?.error || 'Failed to create server order');
-      }
+      await authenticateForPayments(['username', 'payments']);
 
       if (typeof window === 'undefined' || !window.Pi) {
         throw new Error('Pi SDK unavailable. Open in Pi Browser.');
       }
 
-      setLogs(`Initiating U2A payment (${orderData.amount} Pi, Order ${orderData.orderId})...`);
+      setLogs('Initiating U2A payment (1 Pi, productId: 3)...');
       window.Pi.createPayment(
         {
-          amount: orderData.amount,
-          memo: orderData.memo,
-          metadata: orderData.metadata,
+          amount: 1,
+          memo: 'GOYE #3 Web3 Commerce Store',
+          metadata: { productId: 3 },
         },
         {
           onReadyForServerApproval: async (paymentId: string) => {
-            setLogs(`Retrieving & approving payment ${paymentId} via /api/pi/approve...`);
+            setLogs(`Approving payment ${paymentId} via /api/pi/approve...`);
             const res = await fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, orderId: orderData.orderId }),
+              body: JSON.stringify({ paymentId }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data?.success) {
@@ -50,34 +39,26 @@ export default function AdminPiTools() {
             setLogs(`Approved ${paymentId}: ${JSON.stringify(data)}`);
           },
           onReadyForServerCompletion: async (paymentId: string, txid: string) => {
-            setLogs(`Verifying & completing ${paymentId} (TX: ${txid}) via /api/pi/complete...`);
+            setLogs(`Completing ${paymentId} (TX: ${txid}) via /api/pi/complete...`);
             const res = await fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, txid, orderId: orderData.orderId }),
+              body: JSON.stringify({ paymentId, txid }),
             });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok || !data?.fulfilled) {
+            if (!res.ok || (!data?.success && !data?.fulfilled)) {
               throw new Error(data?.error || 'Server completion failed');
             }
             setLogs(`U2A Payment Verified & Fulfilled! Payment ID: ${paymentId} | TX: ${txid}`);
             setLoading(false);
           },
-          onCancel: async (paymentId: string) => {
-            try {
-              await fetch('/api/pi/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId }),
-              });
-            } catch {
-              // Ignore cancel network errors
-            }
+          onCancel: (paymentId: string) => {
+            console.log('CANCELLED', paymentId);
             setLogs(`Payment cancelled by admin (${paymentId}).`);
             setLoading(false);
           },
-          onError: (err: unknown, payment?: unknown) => {
-            console.error('[PI ADMIN PAYMENT ERROR]', err, payment);
+          onError: (err: unknown) => {
+            console.log('PAYMENT ERROR', err);
             const msg = err instanceof Error ? err.message : JSON.stringify(err);
             setLogs(`Payment Error: ${msg}`);
             setLoading(false);

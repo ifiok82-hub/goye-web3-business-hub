@@ -81,7 +81,7 @@ export async function handleIncompletePayment(payment: any): Promise<void> {
         body: JSON.stringify({ paymentId, txid }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data?.fulfilled && data?.productId && typeof window !== 'undefined') {
+      if (res.ok && (data?.success || data?.fulfilled) && data?.productId && typeof window !== 'undefined') {
         try {
           const saved = window.localStorage.getItem('purchased_products');
           const arr = saved ? JSON.parse(saved) : [];

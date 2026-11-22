@@ -40,18 +40,7 @@ export default function ProductCardWithImage({
     setStatusMsg(null);
 
     try {
-      const { userUid } = await authenticateForPayments(['username', 'payments']);
-
-      const orderRes = await fetch('/api/pi/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, userUid }),
-      });
-
-      const orderData = await orderRes.json().catch(() => ({}));
-      if (!orderRes.ok || !orderData?.orderId) {
-        throw new Error(orderData?.error || 'Could not initialize server order.');
-      }
+      await authenticateForPayments(['username', 'payments']);
 
       if (typeof window === 'undefined' || !window.Pi) {
         throw new Error('Pi SDK unavailable.');
@@ -59,9 +48,9 @@ export default function ProductCardWithImage({
 
       window.Pi.createPayment(
         {
-          amount: orderData.amount,
-          memo: orderData.memo,
-          metadata: orderData.metadata,
+          amount: product.price,
+          memo: product.memo,
+          metadata: { productId: product.id },
         },
         {
           onReadyForServerApproval: async (paymentId: string) => {
@@ -69,7 +58,7 @@ export default function ProductCardWithImage({
             const approveRes = await fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, orderId: orderData.orderId }),
+              body: JSON.stringify({ paymentId }),
             });
             const approveData = await approveRes.json().catch(() => ({}));
             if (!approveRes.ok || !approveData?.success) {
@@ -85,10 +74,10 @@ export default function ProductCardWithImage({
             const completeRes = await fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ paymentId, txid, orderId: orderData.orderId }),
+              body: JSON.stringify({ paymentId, txid }),
             });
             const completeData = await completeRes.json().catch(() => ({}));
-            if (!completeRes.ok || !completeData?.fulfilled) {
+            if (!completeRes.ok || (!completeData?.success && !completeData?.fulfilled)) {
               setLoading(false);
               setStatusMsg(completeData?.error || 'Server completion failed.');
               return;
@@ -112,22 +101,14 @@ export default function ProductCardWithImage({
             setStatusMsg(`Unlocked • TX: ${txid.slice(0, 12)}...`);
             setLoading(false);
           },
-          onCancel: async (paymentId: string) => {
-            try {
-              await fetch('/api/pi/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentId }),
-              });
-            } catch {
-              // Ignore cancel network errors
-            }
+          onCancel: (paymentId: string) => {
+            console.log('CANCELLED', paymentId);
             setLoading(false);
             setStatusMsg('Payment cancelled.');
           },
-          onError: (e: unknown, payment?: unknown) => {
-            console.error('[PI PAYMENT ERROR]', e, payment);
-            const msg = e instanceof Error ? e.message : String(e);
+          onError: (error: unknown) => {
+            console.log('PAYMENT ERROR', error);
+            const msg = error instanceof Error ? error.message : String(error);
             setLoading(false);
             setStatusMsg(msg);
           },
