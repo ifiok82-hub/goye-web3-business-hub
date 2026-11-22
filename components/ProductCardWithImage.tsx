@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, CheckCircle2 } from 'lucide-react';
 import { ProductData } from '../lib/products';
-import { authenticateForPayments, initPiSdk } from '../lib/piClient';
 
 export default function ProductCardWithImage({
   product,
@@ -34,97 +33,96 @@ export default function ProductCardWithImage({
     }
   }, [product.id, serverUnlocked]);
 
-  const handleUnlock = async () => {
+  async function handleBuy(targetProduct: ProductData) {
     if (loading || purchased) return;
-    console.log('BUY TAPPED', product.id);
-    setLoading(true);
-    setStatusMsg('Initializing Pi Testnet...');
-
     try {
-      const ready = await initPiSdk();
-      if (!ready || typeof window === 'undefined' || !window.Pi) {
-        throw new Error('Open inside Pi Browser to complete payment.');
+      console.log('BUY TAPPED', targetProduct.id, targetProduct.price);
+      const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
+      if (!Pi) {
+        setStatusMsg('Open in Pi Browser');
+        return;
       }
 
-      await authenticateForPayments(['username', 'payments']);
+      setLoading(true);
+      setStatusMsg('Opening Pi Wallet...');
 
-      window.Pi.createPayment(
+      await Pi.createPayment(
         {
-          amount: product.price,
-          memo: product.memo,
-          metadata: { productId: product.id },
+          amount: targetProduct.price,
+          memo: targetProduct.name,
+          metadata: { productId: targetProduct.id },
         },
         {
-          onReadyForServerApproval: async (paymentId: string) => {
+          onReadyForServerApproval: (paymentId: string) => {
             console.log('READY FOR APPROVAL', paymentId);
             setStatusMsg('Approving payment on server...');
-            const r = await fetch('/api/pi/approve', {
+            return fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
+            }).then(async (r) => {
+              console.log('APPROVE FETCH DONE', r.status);
+              if (!r.ok) {
+                const errText = await r.text().catch(() => '');
+                setStatusMsg(`Approve failed: ${r.status}${errText ? ` ${errText}` : ''}`);
+                setLoading(false);
+                throw new Error('Approve failed ' + r.status);
+              }
+              setStatusMsg('Waiting for wallet confirmation...');
             });
-            console.log('APPROVE FETCH', r.status);
-            const approveData = await r.json().catch(() => ({}));
-            if (!r.ok || !approveData?.success) {
-              const msg = approveData?.error || `Server approval failed (${r.status})`;
-              setStatusMsg(msg);
-              setLoading(false);
-              throw new Error(msg);
-            }
-            setStatusMsg('Waiting for wallet confirmation...');
           },
-          onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          onReadyForServerCompletion: (paymentId: string, txid: string) => {
             console.log('READY FOR COMPLETION', paymentId, txid);
-            setStatusMsg('Verifying transaction & granting access...');
-            const completeRes = await fetch('/api/pi/complete', {
+            setStatusMsg('Completing payment...');
+            return fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId, txid }),
-            });
-            const completeData = await completeRes.json().catch(() => ({}));
-            if (!completeRes.ok || (!completeData?.success && !completeData?.fulfilled)) {
-              setLoading(false);
-              setStatusMsg(completeData?.error || 'Server completion failed.');
-              return;
-            }
-            try {
-              const saved = window.localStorage.getItem('purchased_products');
-              const arr = saved ? JSON.parse(saved) : [];
-              if (Array.isArray(arr) && !arr.includes(product.id)) {
-                arr.push(product.id);
-                window.localStorage.setItem('purchased_products', JSON.stringify(arr));
+            }).then(async (r) => {
+              console.log('COMPLETE FETCH DONE', r.status);
+              if (r.ok) {
+                try {
+                  const saved = window.localStorage.getItem('purchased_products');
+                  const arr = saved ? JSON.parse(saved) : [];
+                  if (Array.isArray(arr) && !arr.includes(targetProduct.id)) {
+                    arr.push(targetProduct.id);
+                    window.localStorage.setItem('purchased_products', JSON.stringify(arr));
+                  }
+                } catch {
+                  // Ignore restricted storage
+                }
+                window.dispatchEvent(
+                  new CustomEvent('goye:entitlements-updated', {
+                    detail: { productId: targetProduct.id },
+                  })
+                );
+                setPurchased(true);
+                setStatusMsg(`Unlocked • TX: ${txid.slice(0, 12)}...`);
+              } else {
+                const errText = await r.text().catch(() => '');
+                setStatusMsg(`Complete failed: ${r.status}${errText ? ` ${errText}` : ''}`);
               }
-            } catch {
-              // Ignore restricted storage
-            }
-            window.dispatchEvent(
-              new CustomEvent('goye:entitlements-updated', {
-                detail: { productId: product.id },
-              })
-            );
-            setPurchased(true);
-            setStatusMsg(`Unlocked • TX: ${txid.slice(0, 12)}...`);
-            setLoading(false);
+              setLoading(false);
+            });
           },
-          onCancel: (id: string) => {
-            console.log('CANCELLED', id);
+          onCancel: (paymentId: string) => {
+            console.log('CANCELLED', paymentId);
             setLoading(false);
             setStatusMsg('Payment cancelled.');
           },
-          onError: (e: unknown) => {
-            console.log('PAYMENT ERROR', JSON.stringify(e));
-            const msg = e instanceof Error ? e.message : String(e);
+          onError: (error: any) => {
+            console.log('PAYMENT ERROR', JSON.stringify(error));
             setLoading(false);
-            setStatusMsg(msg);
+            setStatusMsg('Payment error: ' + (error?.message || 'unknown'));
           },
         }
       );
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
+    } catch (e: any) {
+      console.log('BUY ERROR', e?.message);
       setLoading(false);
-      setStatusMsg(msg);
+      setStatusMsg('Buy error: ' + (e?.message || 'unknown'));
     }
-  };
+  }
 
   return (
     <div className="bg-[#0E162B] border border-slate-700/70 rounded-2xl p-6 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between gap-5 shadow-xl text-left">
@@ -157,7 +155,7 @@ export default function ProductCardWithImage({
           </div>
           <button
             type="button"
-            onClick={handleUnlock}
+            onClick={() => handleBuy(product)}
             disabled={loading}
             className="w-full bg-[#D4AF37] hover:bg-[#e5c14b] disabled:opacity-50 text-[#0A1128] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >

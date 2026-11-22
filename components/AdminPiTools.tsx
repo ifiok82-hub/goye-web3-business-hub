@@ -14,74 +14,83 @@ export default function AdminPiTools() {
   const handleDiagnosticPayment = async () => {
     setLoading(true);
     setLogs([]);
-    console.log('BUY TAPPED', 'admin-test-0.01');
-    appendLog('BUY TAPPED admin-test-0.01');
+    console.log('BUY TAPPED', 'admin-test-0.01', 0.01);
+    appendLog('BUY TAPPED admin-test-0.01 0.01');
 
     try {
-      appendLog('Initializing Pi.init({ version: "2.0", sandbox: true })...');
-      const ready = await initPiSdk();
-      if (!ready || typeof window === 'undefined' || !window.Pi) {
-        throw new Error('Pi SDK unavailable. Open /admin inside Pi Browser.');
+      const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
+      if (!Pi) {
+        const ready = await initPiSdk();
+        if (!ready || !(window as any).Pi) {
+          throw new Error('Pi SDK unavailable. Open /admin inside Pi Browser.');
+        }
+        await authenticateForPayments(['username', 'payments']);
+      } else {
+        await initPiSdk();
       }
 
-      appendLog('Authenticating Pi SDK (username, payments)...');
-      await authenticateForPayments(['username', 'payments']);
+      const activePi = (window as any).Pi;
+      console.log('CREATE PAYMENT', 0.01);
+      appendLog('CREATE PAYMENT 0.01');
 
-      appendLog('Calling Pi.createPayment (0.01 Pi Testnet)...');
-      window.Pi.createPayment(
+      await activePi.createPayment(
         {
           amount: 0.01,
           memo: 'GOYE Admin Testnet Payment 0.01 Pi',
           metadata: { productId: 'admin-test-0.01' },
         },
         {
-          onReadyForServerApproval: async (paymentId: string) => {
+          onReadyForServerApproval: (paymentId: string) => {
             console.log('READY FOR APPROVAL', paymentId);
             appendLog(`READY FOR APPROVAL ${paymentId}`);
-            const r = await fetch('/api/pi/approve', {
+            return fetch('/api/pi/approve', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
+            }).then(async (r) => {
+              console.log('APPROVE FETCH DONE', r.status);
+              const data = await r.text().catch(() => '');
+              appendLog(`APPROVE FETCH DONE ${r.status}: ${data}`);
+              if (!r.ok) {
+                setLoading(false);
+                throw new Error('Approve failed ' + r.status);
+              }
             });
-            console.log('APPROVE FETCH', r.status);
-            const data = await r.json().catch(() => ({}));
-            appendLog(`APPROVE FETCH ${r.status}: ${JSON.stringify(data)}`);
-            if (!r.ok || !data?.success) {
-              throw new Error(data?.error || `Server approval failed (${r.status})`);
-            }
           },
-          onReadyForServerCompletion: async (paymentId: string, txid: string) => {
+          onReadyForServerCompletion: (paymentId: string, txid: string) => {
             console.log('READY FOR COMPLETION', paymentId, txid);
             appendLog(`READY FOR COMPLETION ${paymentId} ${txid}`);
-            const res = await fetch('/api/pi/complete', {
+            return fetch('/api/pi/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId, txid }),
+            }).then(async (r) => {
+              console.log('COMPLETE FETCH DONE', r.status);
+              const data = await r.text().catch(() => '');
+              appendLog(`COMPLETE FETCH DONE ${r.status}: ${data}`);
+              if (r.ok) {
+                appendLog(`SUCCESS! Payment ID: ${paymentId} | TX: ${txid}`);
+              } else {
+                appendLog(`Complete failed: ${r.status}`);
+              }
+              setLoading(false);
             });
-            const data = await res.json().catch(() => ({}));
-            appendLog(`COMPLETE FETCH ${res.status}: ${JSON.stringify(data)}`);
-            if (!res.ok || (!data?.success && !data?.fulfilled)) {
-              throw new Error(data?.error || `Server completion failed (${res.status})`);
-            }
-            appendLog(`SUCCESS! Payment ID: ${paymentId} | TX: ${txid}`);
-            setLoading(false);
           },
           onCancel: (id: string) => {
             console.log('CANCELLED', id);
             appendLog(`CANCELLED ${id}`);
             setLoading(false);
           },
-          onError: (e: unknown) => {
-            console.log('PAYMENT ERROR', JSON.stringify(e));
-            const msg = e instanceof Error ? e.message : JSON.stringify(e);
-            appendLog(`PAYMENT ERROR ${msg}`);
+          onError: (error: any) => {
+            console.log('PAYMENT ERROR', JSON.stringify(error));
+            appendLog(`PAYMENT ERROR ${error?.message || JSON.stringify(error)}`);
             setLoading(false);
           },
         }
       );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      appendLog(`ERROR: ${msg}`);
+      appendLog(`BUY ERROR: ${msg}`);
       setLoading(false);
     }
   };
@@ -98,7 +107,7 @@ export default function AdminPiTools() {
             Testnet Payment Debug Console (Admin Only)
           </h3>
           <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-            Runs Pi.init(sandbox: true), Pi.authenticate, and Pi.createPayment for 0.01 Pi via /api/pi/approve and /api/pi/complete (Testnet only).
+            Runs Pi.createPayment for 0.01 Pi via /api/pi/approve and /api/pi/complete returning Promise callbacks (Testnet only).
           </p>
         </div>
       </div>
