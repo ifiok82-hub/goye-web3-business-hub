@@ -1,7 +1,27 @@
 'use client';
 import React, { useState } from 'react';
 import { BadgeCheck, Terminal, Zap } from 'lucide-react';
-import { authenticateForPayments, initPiSdk } from '../lib/piClient';
+import { initPiSdk } from '../lib/piClient';
+
+function onIncompletePayment(payment: any) {
+  console.log('INCOMPLETE PAYMENT', payment?.identifier);
+  if (!payment?.identifier) return;
+  if (payment?.transaction?.txid) {
+    return fetch('/api/pi/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        paymentId: payment.identifier,
+        txid: payment.transaction.txid,
+      }),
+    });
+  }
+  return fetch('/api/pi/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentId: payment.identifier }),
+  });
+}
 
 export default function AdminPiTools() {
   const [logs, setLogs] = useState<string[]>(['Ready for admin 0.01 Pi Testnet diagnostic payment']);
@@ -14,26 +34,26 @@ export default function AdminPiTools() {
   const handleDiagnosticPayment = async () => {
     setLoading(true);
     setLogs([]);
-    console.log('BUY TAPPED', 'admin-test-0.01', 0.01);
-    appendLog('BUY TAPPED admin-test-0.01 0.01');
 
     try {
+      const ready = await initPiSdk();
       const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
-      if (!Pi) {
-        const ready = await initPiSdk();
-        if (!ready || !(window as any).Pi) {
-          throw new Error('Pi SDK unavailable. Open /admin inside Pi Browser.');
-        }
-        await authenticateForPayments(['username', 'payments']);
-      } else {
-        await initPiSdk();
+      if (!ready || !Pi) {
+        throw new Error('Pi SDK unavailable. Open /admin inside Pi Browser.');
       }
 
-      const activePi = (window as any).Pi;
-      console.log('CREATE PAYMENT', 0.01);
-      appendLog('CREATE PAYMENT 0.01');
+      // STEP 1 — MUST SHOW ALLOW POPUP — DO NOT SKIP
+      console.log('AUTH FOR PAYMENT START');
+      appendLog('AUTH FOR PAYMENT START');
+      const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
+      console.log('AUTH FOR PAYMENT SUCCESS', JSON.stringify(auth));
+      appendLog('AUTH FOR PAYMENT SUCCESS');
 
-      await activePi.createPayment(
+      // STEP 2 — ONLY AFTER Allow, create payment
+      console.log('BUY TAPPED', 'admin-test-0.01', 0.01);
+      appendLog('BUY TAPPED admin-test-0.01 0.01');
+
+      await Pi.createPayment(
         {
           amount: 0.01,
           memo: 'GOYE Admin Testnet Payment 0.01 Pi',
@@ -90,7 +110,8 @@ export default function AdminPiTools() {
       );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      appendLog(`BUY ERROR: ${msg}`);
+      console.log('BUY ERROR', msg);
+      appendLog(`BUY ERROR: ${msg} — Please tap Allow when Pi asks for payments permission.`);
       setLoading(false);
     }
   };
@@ -107,7 +128,7 @@ export default function AdminPiTools() {
             Testnet Payment Debug Console (Admin Only)
           </h3>
           <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-            Runs Pi.createPayment for 0.01 Pi via /api/pi/approve and /api/pi/complete returning Promise callbacks (Testnet only).
+            Runs Pi.authenticate([&quot;username&quot;, &quot;payments&quot;]) then Pi.createPayment for 0.01 Pi via /api/pi/approve and /api/pi/complete (Testnet only).
           </p>
         </div>
       </div>

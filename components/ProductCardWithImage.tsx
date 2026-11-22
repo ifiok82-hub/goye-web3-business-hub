@@ -2,6 +2,27 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, CheckCircle2 } from 'lucide-react';
 import { ProductData } from '../lib/products';
+import { initPiSdk } from '../lib/piClient';
+
+function onIncompletePayment(payment: any) {
+  console.log('INCOMPLETE PAYMENT', payment?.identifier);
+  if (!payment?.identifier) return;
+  if (payment?.transaction?.txid) {
+    return fetch('/api/pi/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        paymentId: payment.identifier,
+        txid: payment.transaction.txid,
+      }),
+    });
+  }
+  return fetch('/api/pi/cancel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentId: payment.identifier }),
+  });
+}
 
 export default function ProductCardWithImage({
   product,
@@ -35,15 +56,25 @@ export default function ProductCardWithImage({
 
   async function handleBuy(targetProduct: ProductData) {
     if (loading || purchased) return;
+    setLoading(true);
+    setStatusMsg('Requesting Pi payments permission...');
+
     try {
-      console.log('BUY TAPPED', targetProduct.id, targetProduct.price);
+      const ready = await initPiSdk();
       const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
-      if (!Pi) {
+      if (!ready || !Pi) {
+        setLoading(false);
         setStatusMsg('Open in Pi Browser');
         return;
       }
 
-      setLoading(true);
+      // STEP 1 — MUST SHOW ALLOW POPUP — DO NOT SKIP
+      console.log('AUTH FOR PAYMENT START');
+      const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
+      console.log('AUTH FOR PAYMENT SUCCESS', JSON.stringify(auth));
+
+      // STEP 2 — ONLY AFTER Allow, create payment
+      console.log('BUY TAPPED', targetProduct.id, targetProduct.price);
       setStatusMsg('Opening Pi Wallet...');
 
       await Pi.createPayment(
@@ -118,9 +149,9 @@ export default function ProductCardWithImage({
         }
       );
     } catch (e: any) {
-      console.log('BUY ERROR', e?.message);
+      console.log('BUY ERROR', e?.message || JSON.stringify(e));
       setLoading(false);
-      setStatusMsg('Buy error: ' + (e?.message || 'unknown'));
+      setStatusMsg('Please tap Allow when Pi asks for payments permission, then tap Buy again.');
     }
   }
 
