@@ -74,34 +74,32 @@ export async function handleIncompletePayment(payment: any): Promise<void> {
 
   const txid = payment?.transaction?.txid;
   try {
-    if (txid) {
-      const res = await fetch('/api/pi/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, txid }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && (data?.success || data?.fulfilled) && data?.productId && typeof window !== 'undefined') {
-        try {
-          const saved = window.localStorage.getItem('purchased_products');
-          const arr = saved ? JSON.parse(saved) : [];
-          if (Array.isArray(arr) && !arr.includes(data.productId)) {
-            arr.push(data.productId);
-            window.localStorage.setItem('purchased_products', JSON.stringify(arr));
-          }
-        } catch {
-          // Ignore restricted storage
+    const res = await fetch('/api/pi/incomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentId, txid }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (
+      res.ok &&
+      (data?.success || data?.fulfilled) &&
+      data?.status === 'completed' &&
+      data?.productId &&
+      typeof window !== 'undefined'
+    ) {
+      try {
+        const saved = window.localStorage.getItem('purchased_products');
+        const arr = saved ? JSON.parse(saved) : [];
+        if (Array.isArray(arr) && !arr.includes(data.productId)) {
+          arr.push(data.productId);
+          window.localStorage.setItem('purchased_products', JSON.stringify(arr));
         }
-        window.dispatchEvent(
-          new CustomEvent('goye:entitlements-updated', { detail: { productId: data.productId } })
-        );
+      } catch {
+        // Ignore restricted storage
       }
-    } else {
-      await fetch('/api/pi/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId }),
-      });
+      window.dispatchEvent(
+        new CustomEvent('goye:entitlements-updated', { detail: { productId: data.productId } })
+      );
     }
   } catch {
     // Incomplete recovery errors ignored safely

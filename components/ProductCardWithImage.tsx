@@ -2,27 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, CheckCircle2 } from 'lucide-react';
 import { ProductData } from '../lib/products';
-import { initPiSdk } from '../lib/piClient';
-
-function onIncompletePayment(payment: any) {
-  console.log('INCOMPLETE PAYMENT', payment?.identifier);
-  if (!payment?.identifier) return;
-  if (payment?.transaction?.txid) {
-    return fetch('/api/pi/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        paymentId: payment.identifier,
-        txid: payment.transaction.txid,
-      }),
-    });
-  }
-  return fetch('/api/pi/cancel', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ paymentId: payment.identifier }),
-  });
-}
+import { handleIncompletePayment, initPiSdk } from '../lib/piClient';
 
 export default function ProductCardWithImage({
   product,
@@ -59,28 +39,35 @@ export default function ProductCardWithImage({
     setLoading(true);
     setStatusMsg('Requesting Pi payments permission...');
 
+    const ready = await initPiSdk();
+    const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
+    if (!ready || !Pi) {
+      setLoading(false);
+      setStatusMsg('Open in Pi Browser');
+      return;
+    }
+
+    // STEP 1 — Authenticate with payments scope first
     try {
-      const ready = await initPiSdk();
-      const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
-      if (!ready || !Pi) {
-        setLoading(false);
-        setStatusMsg('Open in Pi Browser');
-        return;
-      }
-
-      // STEP 1 — MUST SHOW ALLOW POPUP — DO NOT SKIP
       console.log('AUTH FOR PAYMENT START');
-      const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
+      const auth = await Pi.authenticate(['username', 'payments'], handleIncompletePayment);
       console.log('AUTH FOR PAYMENT SUCCESS', JSON.stringify(auth));
+    } catch (authErr: any) {
+      console.log('AUTH FOR PAYMENT ERROR', authErr?.message || JSON.stringify(authErr));
+      setLoading(false);
+      setStatusMsg('Please tap Allow when Pi asks for payments permission, then tap Buy again.');
+      return;
+    }
 
-      // STEP 2 — ONLY AFTER Allow, create payment
+    // STEP 2 — Only after Allow, create Testnet payment
+    try {
       console.log('BUY TAPPED', targetProduct.id, targetProduct.price);
       setStatusMsg('Opening Pi Wallet...');
 
       await Pi.createPayment(
         {
           amount: targetProduct.price,
-          memo: targetProduct.name,
+          memo: targetProduct.memo || targetProduct.name,
           metadata: { productId: targetProduct.id },
         },
         {
@@ -156,7 +143,7 @@ export default function ProductCardWithImage({
     } catch (e: any) {
       console.log('BUY ERROR', e?.message || JSON.stringify(e));
       setLoading(false);
-      setStatusMsg('Please tap Allow when Pi asks for payments permission, then tap Buy again.');
+      setStatusMsg((prev) => prev && prev.startsWith('Approve failed') ? prev : 'Payment error: ' + (e?.message || 'Please try again.'));
     }
   }
 

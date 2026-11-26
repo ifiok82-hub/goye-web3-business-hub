@@ -1,27 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { BadgeCheck, Terminal, Zap } from 'lucide-react';
-import { initPiSdk } from '../lib/piClient';
-
-function onIncompletePayment(payment: any) {
-  console.log('INCOMPLETE PAYMENT', payment?.identifier);
-  if (!payment?.identifier) return;
-  if (payment?.transaction?.txid) {
-    return fetch('/api/pi/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        paymentId: payment.identifier,
-        txid: payment.transaction.txid,
-      }),
-    });
-  }
-  return fetch('/api/pi/cancel', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ paymentId: payment.identifier }),
-  });
-}
+import { handleIncompletePayment, initPiSdk } from '../lib/piClient';
 
 export default function AdminPiTools() {
   const [logs, setLogs] = useState<string[]>(['Ready for admin 0.01 Pi Testnet diagnostic payment']);
@@ -35,28 +15,38 @@ export default function AdminPiTools() {
     setLoading(true);
     setLogs([]);
 
-    try {
-      const ready = await initPiSdk();
-      const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
-      if (!ready || !Pi) {
-        throw new Error('Pi SDK unavailable. Open /admin inside Pi Browser.');
-      }
+    const ready = await initPiSdk();
+    const Pi = typeof window !== 'undefined' ? (window as any).Pi : null;
+    if (!ready || !Pi) {
+      appendLog('ERROR: Pi SDK unavailable. Open /admin inside Pi Browser.');
+      setLoading(false);
+      return;
+    }
 
-      // STEP 1 — MUST SHOW ALLOW POPUP — DO NOT SKIP
+    // STEP 1 — Authenticate with payments scope first
+    try {
       console.log('AUTH FOR PAYMENT START');
       appendLog('AUTH FOR PAYMENT START');
-      const auth = await Pi.authenticate(['username', 'payments'], onIncompletePayment);
+      const auth = await Pi.authenticate(['username', 'payments'], handleIncompletePayment);
       console.log('AUTH FOR PAYMENT SUCCESS', JSON.stringify(auth));
       appendLog('AUTH FOR PAYMENT SUCCESS');
+    } catch (authErr: unknown) {
+      const msg = authErr instanceof Error ? authErr.message : String(authErr);
+      console.log('AUTH FOR PAYMENT ERROR', msg);
+      appendLog(`AUTH ERROR: ${msg} — Please tap Allow when Pi asks for payments permission.`);
+      setLoading(false);
+      return;
+    }
 
-      // STEP 2 — ONLY AFTER Allow, create payment
+    // STEP 2 — Only after Allow, create 0.01 Pi Testnet payment
+    try {
       console.log('BUY TAPPED', 'admin-test-0.01', 0.01);
       appendLog('BUY TAPPED admin-test-0.01 0.01');
 
       await Pi.createPayment(
         {
           amount: 0.01,
-          memo: 'GOYE Admin Testnet Payment 0.01 Pi',
+          memo: 'GOYE Admin Testnet 0.01 Pi',
           metadata: { productId: 'admin-test-0.01' },
         },
         {
@@ -116,7 +106,7 @@ export default function AdminPiTools() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.log('BUY ERROR', msg);
-      appendLog(`BUY ERROR: ${msg} — Please tap Allow when Pi asks for payments permission.`);
+      appendLog(`BUY ERROR: ${msg}`);
       setLoading(false);
     }
   };
