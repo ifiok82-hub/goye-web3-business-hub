@@ -10,7 +10,11 @@ export function getPiApiBase(): string {
 }
 
 export function getPiApiKeyOrNull(): string | null {
-  const key = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
+  const raw = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
+  const key = raw
+    .replace(/^['"]|['"]$/g, '')
+    .replace(/^Key\s+/i, '')
+    .trim();
   if (!key || key === 'NOT CONFIGURED') {
     return null;
   }

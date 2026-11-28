@@ -125,6 +125,7 @@ export default function ProductCardWithImage({
     }
 
     // STEP 2 — Create Pi payment and await verified server approval + completion
+    let serverError: string | null = null;
     try {
       setStatusMsg('Opening Pi Wallet...');
 
@@ -141,20 +142,33 @@ export default function ProductCardWithImage({
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
-            }).then(async (r) => {
-              const data = await r.json().catch(() => ({}));
-              if (!r.ok || !data?.approved) {
-                const errDetail =
-                  typeof data?.error === 'string' && data.error
-                    ? data.error
-                    : `Server approval failed (${r.status})`;
+            })
+              .then(async (r) => {
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok || !data?.approved) {
+                  const errDetail =
+                    typeof data?.error === 'string' && data.error
+                      ? data.error
+                      : `Server approval failed (HTTP ${r.status})`;
+                  serverError = errDetail;
+                  setStatusMsg(null);
+                  setErrorMsg(errDetail);
+                  setLoading(false);
+                  throw new Error(errDetail);
+                }
+                setStatusMsg('Waiting for wallet confirmation...');
+              })
+              .catch((err: unknown) => {
+                const msg =
+                  err instanceof Error && err.message
+                    ? err.message
+                    : 'Network error calling /api/pi/approve';
+                if (!serverError) serverError = msg;
                 setStatusMsg(null);
-                setErrorMsg(errDetail);
+                setErrorMsg(serverError);
                 setLoading(false);
-                throw new Error(errDetail);
-              }
-              setStatusMsg('Waiting for wallet confirmation...');
-            });
+                throw err;
+              });
             setStatusMsg('Approving payment on server...');
             return approvePromise;
           },
@@ -164,77 +178,90 @@ export default function ProductCardWithImage({
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId, txid }),
-            }).then(async (r) => {
-              const data = await r.json().catch(() => ({}));
-              const isConfirmedPaid =
-                r.ok &&
-                data?.completed === true &&
-                data?.fulfilled === true &&
-                data?.status === 'PAID' &&
-                Boolean(data?.txid);
+            })
+              .then(async (r) => {
+                const data = await r.json().catch(() => ({}));
+                const isConfirmedPaid =
+                  r.ok &&
+                  data?.completed === true &&
+                  data?.fulfilled === true &&
+                  data?.status === 'PAID' &&
+                  Boolean(data?.txid);
 
-              if (!isConfirmedPaid) {
-                const errDetail =
-                  typeof data?.error === 'string' && data.error
-                    ? data.error
-                    : `Server completion failed (${r.status})`;
-                setStatusMsg(null);
-                setErrorMsg(errDetail);
+                if (!isConfirmedPaid) {
+                  const errDetail =
+                    typeof data?.error === 'string' && data.error
+                      ? data.error
+                      : `Server completion failed (HTTP ${r.status})`;
+                  serverError = errDetail;
+                  setStatusMsg(null);
+                  setErrorMsg(errDetail);
+                  setLoading(false);
+                  throw new Error(errDetail);
+                }
+
+                const confirmedReceipt: PaymentReceipt | null =
+                  data?.receipt && data.receipt.status === 'PAID'
+                    ? data.receipt
+                    : {
+                        receiptId: `RCP-${paymentId.slice(0, 8).toUpperCase()}`,
+                        status: 'PAID',
+                        paymentId,
+                        txid: String(data.txid || txid),
+                        productId: targetProduct.id,
+                        productName: targetProduct.name,
+                        amount: targetProduct.price,
+                        network: 'testnet',
+                        paidAt: new Date().toISOString(),
+                      };
+
+                try {
+                  const saved = window.localStorage.getItem('purchased_products');
+                  const arr = saved ? JSON.parse(saved) : [];
+                  if (Array.isArray(arr) && !arr.includes(targetProduct.id)) {
+                    arr.push(targetProduct.id);
+                    window.localStorage.setItem('purchased_products', JSON.stringify(arr));
+                  }
+                  if (confirmedReceipt) {
+                    window.localStorage.setItem(
+                      `goye_receipt_${targetProduct.id}`,
+                      JSON.stringify(confirmedReceipt)
+                    );
+                  }
+                } catch {
+                  // Ignore restricted storage
+                }
+
+                window.dispatchEvent(
+                  new CustomEvent('goye:entitlements-updated', {
+                    detail: { productId: targetProduct.id },
+                  })
+                );
+
+                setReceipt(confirmedReceipt);
+                setPurchased(true);
+                setErrorMsg(null);
+                setStatusMsg(`PAID • TX: ${String(data.txid || txid).slice(0, 12)}...`);
                 setLoading(false);
-                throw new Error(errDetail);
-              }
-
-              const confirmedReceipt: PaymentReceipt | null =
-                data?.receipt && data.receipt.status === 'PAID'
-                  ? data.receipt
-                  : {
-                      receiptId: `RCP-${paymentId.slice(0, 8).toUpperCase()}`,
-                      status: 'PAID',
-                      paymentId,
-                      txid: String(data.txid || txid),
-                      productId: targetProduct.id,
-                      productName: targetProduct.name,
-                      amount: targetProduct.price,
-                      network: 'testnet',
-                      paidAt: new Date().toISOString(),
-                    };
-
-              try {
-                const saved = window.localStorage.getItem('purchased_products');
-                const arr = saved ? JSON.parse(saved) : [];
-                if (Array.isArray(arr) && !arr.includes(targetProduct.id)) {
-                  arr.push(targetProduct.id);
-                  window.localStorage.setItem('purchased_products', JSON.stringify(arr));
-                }
-                if (confirmedReceipt) {
-                  window.localStorage.setItem(
-                    `goye_receipt_${targetProduct.id}`,
-                    JSON.stringify(confirmedReceipt)
-                  );
-                }
-              } catch {
-                // Ignore restricted storage
-              }
-
-              window.dispatchEvent(
-                new CustomEvent('goye:entitlements-updated', {
-                  detail: { productId: targetProduct.id },
-                })
-              );
-
-              setReceipt(confirmedReceipt);
-              setPurchased(true);
-              setErrorMsg(null);
-              setStatusMsg(`PAID • TX: ${String(data.txid || txid).slice(0, 12)}...`);
-              setLoading(false);
-            });
+              })
+              .catch((err: unknown) => {
+                const msg =
+                  err instanceof Error && err.message
+                    ? err.message
+                    : 'Network error calling /api/pi/complete';
+                if (!serverError) serverError = msg;
+                setStatusMsg(null);
+                setErrorMsg(serverError);
+                setLoading(false);
+                throw err;
+              });
             setStatusMsg('Verifying transaction & completing payment...');
             return completePromise;
           },
           onCancel: (paymentId: string) => {
             setLoading(false);
             setStatusMsg(null);
-            setErrorMsg('Payment cancelled. No funds were moved.');
+            setErrorMsg(serverError || 'Payment cancelled. No funds were moved.');
             return fetch('/api/pi/cancel', {
               method: 'POST',
               credentials: 'include',
@@ -251,7 +278,7 @@ export default function ProductCardWithImage({
                   : 'Pi payment error occurred.';
             setLoading(false);
             setStatusMsg(null);
-            setErrorMsg(msg);
+            setErrorMsg(serverError || msg);
           },
         }
       );
@@ -259,7 +286,7 @@ export default function ProductCardWithImage({
       const msg = e instanceof Error ? e.message : 'Payment did not complete.';
       setLoading(false);
       setStatusMsg(null);
-      setErrorMsg((prev) => prev || msg);
+      setErrorMsg(serverError || msg);
     }
   }
 

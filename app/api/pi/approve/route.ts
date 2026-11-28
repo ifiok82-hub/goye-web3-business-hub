@@ -6,27 +6,28 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const startedAt = Date.now();
   try {
     const body = await req.json().catch(() => ({}));
     const rawId = body?.paymentId || body?.payment_id;
     const paymentId = typeof rawId === 'string' ? rawId.trim() : '';
 
     if (!paymentId) {
-      return NextResponse.json({ error: 'no paymentId' }, { status: 400 });
+      return NextResponse.json({ error: 'paymentId is required' }, { status: 400 });
     }
 
     const apiKey = getPiApiKeyOrNull();
-    const piApiBase = getPiApiBase();
-    const approveUrl = `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/approve`;
-    console.log('APPROVE START', { paymentId, approveUrl, keyConfigured: Boolean(apiKey) });
-
     if (!apiKey) {
-      console.error('PI_API_KEY MISSING ON SERVER');
+      console.error('APPROVE ERROR: PI_API_KEY is not configured on server');
       return NextResponse.json(
-        { error: 'PI_API_KEY is NOT CONFIGURED on server' },
+        { approved: false, error: 'PI_API_KEY is not configured on server' },
         { status: 500 }
       );
     }
+
+    const piApiBase = getPiApiBase();
+    const approveUrl = `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/approve`;
+    console.log('APPROVE START', { paymentId, approveUrl });
 
     const res = await fetch(approveUrl, {
       method: 'POST',
@@ -47,7 +48,12 @@ export async function POST(req: Request) {
       parsed = null;
     }
 
-    console.log('APPROVE RESULT', { paymentId, status: res.status, body: rawText });
+    console.log('APPROVE RESULT', {
+      paymentId,
+      status: res.status,
+      ms: Date.now() - startedAt,
+      body: rawText,
+    });
 
     if (!res.ok) {
       const lower = rawText.toLowerCase();
@@ -60,12 +66,12 @@ export async function POST(req: Request) {
         });
       }
 
-      const errorMessage =
+      const piMessage =
         parsed?.message || parsed?.error || rawText || `Pi approve failed (${res.status})`;
       return NextResponse.json(
         {
           approved: false,
-          error: errorMessage,
+          error: `Pi API ${res.status}: ${piMessage}`,
           piStatus: res.status,
           details: parsed || rawText,
         },
@@ -80,9 +86,12 @@ export async function POST(req: Request) {
       piPayment: parsed || undefined,
     });
   } catch (e: any) {
-    console.error('APPROVE ERROR', e?.message || e);
+    console.error('APPROVE EXCEPTION', {
+      ms: Date.now() - startedAt,
+      error: e?.message || e,
+    });
     return NextResponse.json(
-      { approved: false, error: e?.message || 'Approve error' },
+      { approved: false, error: e?.message || 'Approve request failed on server' },
       { status: 500 }
     );
   }
