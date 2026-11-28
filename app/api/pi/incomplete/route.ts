@@ -16,8 +16,11 @@ export async function POST(req: Request) {
 
     const apiKey = getPiApiKeyOrNull();
     if (!apiKey) {
-      console.log('PI_API_KEY MISSING IN VERCEL');
-      return NextResponse.json({ error: 'PI_API_KEY is NOT CONFIGURED on server' }, { status: 500 });
+      console.error('INCOMPLETE: PI_API_KEY MISSING ON SERVER');
+      return NextResponse.json(
+        { error: 'PI_API_KEY is NOT CONFIGURED on server' },
+        { status: 500 }
+      );
     }
 
     const piApiBase = getPiApiBase();
@@ -26,6 +29,8 @@ export async function POST(req: Request) {
       'Content-Type': 'application/json',
     };
 
+    console.log('INCOMPLETE START', { paymentId, piApiBase });
+
     const getRes = await fetch(
       `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}`,
       { method: 'GET', headers, cache: 'no-store', signal: AbortSignal.timeout(8000) }
@@ -33,15 +38,22 @@ export async function POST(req: Request) {
 
     if (!getRes.ok) {
       const errText = await getRes.text().catch(() => '');
+      console.error('INCOMPLETE GET FAILED', { paymentId, status: getRes.status, errText });
       return NextResponse.json(
         { error: errText || `Failed to inspect payment (${getRes.status})` },
-        { status: getRes.status }
+        { status: getRes.status >= 400 && getRes.status < 600 ? getRes.status : 502 }
       );
     }
 
     const payment = await getRes.json();
+    console.log('INCOMPLETE STATUS', {
+      paymentId,
+      status: payment?.status,
+      hasTxid: Boolean(payment?.transaction?.txid),
+    });
+
     if (payment?.status?.cancelled || payment?.status?.user_cancelled) {
-      return NextResponse.json({ success: true, status: 'cancelled', paymentId });
+      return NextResponse.json({ success: true, status: 'cancelled', fulfilled: false, paymentId });
     }
 
     const txid = payment?.transaction?.txid || body?.txid;
@@ -51,7 +63,7 @@ export async function POST(req: Request) {
 
     if (txid) {
       if (!payment?.status?.developer_approved) {
-        await fetch(
+        const appRes = await fetch(
           `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/approve`,
           {
             method: 'POST',
@@ -60,24 +72,29 @@ export async function POST(req: Request) {
             cache: 'no-store',
             signal: AbortSignal.timeout(8000),
           }
-        ).catch(() => undefined);
+        ).catch(() => null);
+        console.log('INCOMPLETE APPROVE', { paymentId, status: appRes?.status });
       }
 
-      const compRes = await fetch(
-        `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/complete`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ txid }),
-          cache: 'no-store',
-          signal: AbortSignal.timeout(8000),
-        }
-      );
+      if (!payment?.status?.developer_completed) {
+        const compRes = await fetch(
+          `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/complete`,
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ txid }),
+            cache: 'no-store',
+            signal: AbortSignal.timeout(8000),
+          }
+        );
+        const compText = await compRes.text().catch(() => '');
+        console.log('INCOMPLETE COMPLETE', { paymentId, status: compRes.status, compText });
 
-      if (!compRes.ok) {
-        const compErr = await compRes.text().catch(() => '');
-        if (!compErr.toLowerCase().includes('already')) {
-          return NextResponse.json({ error: compErr || 'Complete failed' }, { status: 500 });
+        if (!compRes.ok && !compText.toLowerCase().includes('already')) {
+          return NextResponse.json(
+            { error: compText || `Complete failed (${compRes.status})` },
+            { status: compRes.status >= 400 && compRes.status < 600 ? compRes.status : 502 }
+          );
         }
       }
 
@@ -102,7 +119,7 @@ export async function POST(req: Request) {
       });
     }
 
-    await fetch(
+    const cancelRes = await fetch(
       `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/cancel`,
       {
         method: 'POST',
@@ -111,10 +128,18 @@ export async function POST(req: Request) {
         cache: 'no-store',
         signal: AbortSignal.timeout(8000),
       }
-    ).catch(() => undefined);
+    );
+    const cancelText = await cancelRes.text().catch(() => '');
+    console.log('INCOMPLETE CANCEL', { paymentId, status: cancelRes.status, cancelText });
 
-    return NextResponse.json({ success: true, fulfilled: false, status: 'cancelled', paymentId });
+    return NextResponse.json({
+      success: cancelRes.ok || cancelRes.status === 400 || cancelRes.status === 404,
+      fulfilled: false,
+      status: 'cancelled',
+      paymentId,
+    });
   } catch (e: any) {
+    console.error('INCOMPLETE ERROR', e?.message || e);
     return NextResponse.json({ error: e?.message || 'Incomplete recovery failed' }, { status: 500 });
   }
 }

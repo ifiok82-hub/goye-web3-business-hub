@@ -16,44 +16,74 @@ export async function POST(req: Request) {
     }
 
     const apiKey = getPiApiKeyOrNull();
-    console.log('APPROVE START', paymentId, 'KEY EXISTS?', !!apiKey);
+    const piApiBase = getPiApiBase();
+    const approveUrl = `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/approve`;
+    console.log('APPROVE START', { paymentId, approveUrl, keyConfigured: Boolean(apiKey) });
 
     if (!apiKey) {
-      console.log('PI_API_KEY MISSING IN VERCEL');
-      return NextResponse.json({ error: 'PI_API_KEY is NOT CONFIGURED on server' }, { status: 500 });
-    }
-
-    const piApiBase = getPiApiBase();
-    const res = await fetch(
-      `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/approve`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Key ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-        cache: 'no-store',
-        signal: AbortSignal.timeout(8000),
-      }
-    );
-
-    const data = await res.text();
-    console.log('APPROVE RESULT', res.status, data);
-
-    if (!res.ok) {
-      if (data.toLowerCase().includes('already')) {
-        return NextResponse.json({ success: true, alreadyApproved: true, paymentId });
-      }
+      console.error('PI_API_KEY MISSING ON SERVER');
       return NextResponse.json(
-        { error: data || `Approve failed (${res.status})` },
-        { status: res.status >= 400 && res.status < 600 ? res.status : 500 }
+        { error: 'PI_API_KEY is NOT CONFIGURED on server' },
+        { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, approved: true, paymentId });
+    const res = await fetch(approveUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Key ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    });
+
+    const rawText = await res.text();
+    let parsed: any = null;
+    try {
+      parsed = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      parsed = null;
+    }
+
+    console.log('APPROVE RESULT', { paymentId, status: res.status, body: rawText });
+
+    if (!res.ok) {
+      const lower = rawText.toLowerCase();
+      if (lower.includes('already_approved') || lower.includes('already approved')) {
+        return NextResponse.json({
+          success: true,
+          approved: true,
+          alreadyApproved: true,
+          paymentId,
+        });
+      }
+
+      const errorMessage =
+        parsed?.message || parsed?.error || rawText || `Pi approve failed (${res.status})`;
+      return NextResponse.json(
+        {
+          approved: false,
+          error: errorMessage,
+          piStatus: res.status,
+          details: parsed || rawText,
+        },
+        { status: res.status >= 400 && res.status < 600 ? res.status : 502 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      approved: true,
+      paymentId,
+      piPayment: parsed || undefined,
+    });
   } catch (e: any) {
-    console.log('APPROVE ERROR', e?.message);
-    return NextResponse.json({ error: e?.message || 'Approve error' }, { status: 500 });
+    console.error('APPROVE ERROR', e?.message || e);
+    return NextResponse.json(
+      { approved: false, error: e?.message || 'Approve error' },
+      { status: 500 }
+    );
   }
 }

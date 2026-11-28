@@ -38,10 +38,10 @@ export default function AdminPiTools() {
     try {
       const sdkReady = await initPiSdk();
       const [statusRes, approveRes, completeRes, authRes] = await Promise.all([
-        fetch('/api/pi/status', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/pi/approve', { method: 'GET', cache: 'no-store' }).catch(() => null),
-        fetch('/api/pi/complete', { method: 'GET', cache: 'no-store' }).catch(() => null),
-        fetch('/api/auth/pi', { method: 'GET', cache: 'no-store' }).catch(() => null),
+        fetch('/api/pi/status', { cache: 'no-store', credentials: 'include' }).catch(() => null),
+        fetch('/api/pi/approve', { method: 'GET', cache: 'no-store', credentials: 'include' }).catch(() => null),
+        fetch('/api/pi/complete', { method: 'GET', cache: 'no-store', credentials: 'include' }).catch(() => null),
+        fetch('/api/auth/pi', { method: 'GET', cache: 'no-store', credentials: 'include' }).catch(() => null),
       ]);
 
       const statusData = statusRes?.ok ? await statusRes.json().catch(() => null) : null;
@@ -95,6 +95,7 @@ export default function AdminPiTools() {
       const auth = await Pi.authenticate(['username', 'payments'], handleIncompletePayment);
       const authRes = await fetch('/api/auth/pi', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessToken: auth?.accessToken,
@@ -127,9 +128,9 @@ export default function AdminPiTools() {
         },
         {
           onReadyForServerApproval: (paymentId: string) => {
-            appendLog(`READY FOR APPROVAL: ${paymentId}`);
-            return fetch('/api/pi/approve', {
+            const approvePromise = fetch('/api/pi/approve', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
             }).then(async (r) => {
@@ -140,11 +141,13 @@ export default function AdminPiTools() {
                 throw new Error(data?.error || `Approve failed (${r.status})`);
               }
             });
+            appendLog(`READY FOR APPROVAL: ${paymentId}`);
+            return approvePromise;
           },
           onReadyForServerCompletion: (paymentId: string, txid: string) => {
-            appendLog(`READY FOR COMPLETION: ${paymentId} | TX: ${txid}`);
-            return fetch('/api/pi/complete', {
+            const completePromise = fetch('/api/pi/complete', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId, txid }),
             }).then(async (r) => {
@@ -159,12 +162,15 @@ export default function AdminPiTools() {
               }
               setLoading(false);
             });
+            appendLog(`READY FOR COMPLETION: ${paymentId} | TX: ${txid}`);
+            return completePromise;
           },
           onCancel: (id: string) => {
             appendLog(`PAYMENT CANCELLED: ${id}`);
             setLoading(false);
             return fetch('/api/pi/cancel', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId: id }),
             }).catch(() => undefined);

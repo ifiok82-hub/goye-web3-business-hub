@@ -22,30 +22,36 @@ export async function POST(req: Request) {
     }
 
     const apiKey = getPiApiKeyOrNull();
-    console.log('COMPLETE START', paymentId, txid, 'KEY EXISTS?', !!apiKey);
+    const piApiBase = getPiApiBase();
+    const completeUrl = `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/complete`;
+    console.log('COMPLETE START', {
+      paymentId,
+      txid,
+      completeUrl,
+      keyConfigured: Boolean(apiKey),
+    });
 
     if (!apiKey) {
-      console.log('PI_API_KEY MISSING IN VERCEL');
-      return NextResponse.json({ error: 'PI_API_KEY is NOT CONFIGURED on server' }, { status: 500 });
+      console.error('COMPLETE: PI_API_KEY MISSING ON SERVER');
+      return NextResponse.json(
+        { error: 'PI_API_KEY is NOT CONFIGURED on server' },
+        { status: 500 }
+      );
     }
 
-    const piApiBase = getPiApiBase();
-    const res = await fetch(
-      `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/complete`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Key ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ txid }),
-        cache: 'no-store',
-        signal: AbortSignal.timeout(8000),
-      }
-    );
+    const res = await fetch(completeUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Key ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ txid }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    });
 
     const data = await res.text();
-    console.log('COMPLETE RESULT', res.status, data);
+    console.log('COMPLETE RESULT', { paymentId, status: res.status, body: data });
 
     let parsed: any = {};
     try {
@@ -55,7 +61,8 @@ export async function POST(req: Request) {
     }
 
     if (!res.ok) {
-      if (data.toLowerCase().includes('already')) {
+      const lower = data.toLowerCase();
+      if (lower.includes('already_completed') || lower.includes('already completed')) {
         const getRes = await fetch(
           `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}`,
           {
@@ -65,13 +72,28 @@ export async function POST(req: Request) {
             signal: AbortSignal.timeout(8000),
           }
         ).catch(() => null);
-        if (getRes?.ok) {
-          parsed = await getRes.json().catch(() => ({}));
+        if (!getRes?.ok) {
+          return NextResponse.json(
+            {
+              error: parsed?.message || parsed?.error || data || `Complete failed (${res.status})`,
+              piStatus: res.status,
+            },
+            { status: res.status >= 400 && res.status < 600 ? res.status : 502 }
+          );
+        }
+        parsed = await getRes.json().catch(() => ({}));
+        if (!parsed?.status?.developer_completed) {
+          return NextResponse.json(
+            { error: 'Pi Platform has not confirmed payment completion.' },
+            { status: 409 }
+          );
         }
       } else {
+        const errorMessage =
+          parsed?.message || parsed?.error || data || `Complete failed (${res.status})`;
         return NextResponse.json(
-          { error: data || `Complete failed (${res.status})` },
-          { status: res.status >= 400 && res.status < 600 ? res.status : 500 }
+          { error: errorMessage, piStatus: res.status, details: parsed || data },
+          { status: res.status >= 400 && res.status < 600 ? res.status : 502 }
         );
       }
     }

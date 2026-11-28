@@ -35,7 +35,10 @@ export default function PiSignIn() {
 
   const syncServerSession = async () => {
     try {
-      const res = await fetch('/api/auth/pi', { cache: 'no-store' });
+      const res = await fetch('/api/auth/pi', {
+        cache: 'no-store',
+        credentials: 'include',
+      });
       if (!res.ok) return;
       const data = await res.json().catch(() => null);
       if (data?.authenticated && data?.user?.uid && data?.user?.username) {
@@ -83,6 +86,7 @@ export default function PiSignIn() {
 
       const res = await fetch('/api/auth/pi', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessToken,
@@ -130,7 +134,7 @@ export default function PiSignIn() {
 
   const handleSignOut = async () => {
     try {
-      await fetch('/api/auth/pi', { method: 'DELETE' });
+      await fetch('/api/auth/pi', { method: 'DELETE', credentials: 'include' });
     } catch {
       // Ignore network errors on sign out
     }
@@ -159,7 +163,7 @@ export default function PiSignIn() {
       if (available && isPiEnvironment() && !autoAttemptedRef.current) {
         autoAttemptedRef.current = true;
         // Only auto-authenticate if no verified server session is already loaded
-        fetch('/api/auth/pi', { cache: 'no-store' })
+        fetch('/api/auth/pi', { cache: 'no-store', credentials: 'include' })
           .then((r) => (r.ok ? r.json() : null))
           .then((data) => {
             if (mounted && !data?.authenticated) {

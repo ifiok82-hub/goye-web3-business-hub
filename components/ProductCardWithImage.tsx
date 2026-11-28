@@ -82,6 +82,7 @@ export default function ProductCardWithImage({
 
       const authRes = await fetch('/api/auth/pi', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accessToken,
@@ -135,9 +136,9 @@ export default function ProductCardWithImage({
         },
         {
           onReadyForServerApproval: (paymentId: string) => {
-            setStatusMsg('Approving payment on server...');
-            return fetch('/api/pi/approve', {
+            const approvePromise = fetch('/api/pi/approve', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
             }).then(async (r) => {
@@ -154,11 +155,13 @@ export default function ProductCardWithImage({
               }
               setStatusMsg('Waiting for wallet confirmation...');
             });
+            setStatusMsg('Approving payment on server...');
+            return approvePromise;
           },
           onReadyForServerCompletion: (paymentId: string, txid: string) => {
-            setStatusMsg('Verifying transaction & completing payment...');
-            return fetch('/api/pi/complete', {
+            const completePromise = fetch('/api/pi/complete', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId, txid }),
             }).then(async (r) => {
@@ -225,6 +228,8 @@ export default function ProductCardWithImage({
               setStatusMsg(`PAID • TX: ${String(data.txid || txid).slice(0, 12)}...`);
               setLoading(false);
             });
+            setStatusMsg('Verifying transaction & completing payment...');
+            return completePromise;
           },
           onCancel: (paymentId: string) => {
             setLoading(false);
@@ -232,6 +237,7 @@ export default function ProductCardWithImage({
             setErrorMsg('Payment cancelled. No funds were moved.');
             return fetch('/api/pi/cancel', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ paymentId }),
             }).catch(() => undefined);

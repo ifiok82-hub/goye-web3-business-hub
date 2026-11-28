@@ -48,7 +48,7 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
     const method = init?.method || 'GET';
     calls.push({ url, method });
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_bad_amount' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_bad_amount' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_bad_amount',
@@ -63,7 +63,7 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_wrong_dir' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_wrong_dir' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_wrong_dir',
@@ -78,7 +78,7 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_wrong_user' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_wrong_user' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_wrong_user',
@@ -93,7 +93,7 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_valid_1' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_valid_1' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_valid_1',
@@ -108,15 +108,15 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_valid_1/approve' && method === 'POST') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_valid_1/approve' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_valid_1' }), { status: 200 });
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_valid_1/complete' && method === 'POST') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_valid_1/complete' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_valid_1' }), { status: 200 });
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_stateless_lambda' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_stateless_lambda' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_stateless_lambda',
@@ -131,15 +131,15 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_stateless_lambda/approve' && method === 'POST') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_stateless_lambda/approve' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_stateless_lambda' }), { status: 200 });
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_stateless_lambda/complete' && method === 'POST') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_stateless_lambda/complete' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_stateless_lambda' }), { status: 200 });
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_incomplete_tx' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_incomplete_tx' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_incomplete_tx',
@@ -154,11 +154,11 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url.startsWith('https://api.testnet.minepi.com/v2/payments/pay_incomplete_tx/')) {
+    if (url.startsWith('https://api.minepi.com/v2/payments/pay_incomplete_tx/')) {
       return new Response(JSON.stringify({ identifier: 'pay_incomplete_tx' }), { status: 200 });
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_incomplete_notx' && method === 'GET') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_incomplete_notx' && method === 'GET') {
       return new Response(
         JSON.stringify({
           identifier: 'pay_incomplete_notx',
@@ -173,11 +173,11 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
       );
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_incomplete_notx/cancel' && method === 'POST') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_incomplete_notx/cancel' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_incomplete_notx', status: { cancelled: true } }), { status: 200 });
     }
 
-    if (url === 'https://api.testnet.minepi.com/v2/payments/pay_cancel_1/cancel' && method === 'POST') {
+    if (url === 'https://api.minepi.com/v2/payments/pay_cancel_1/cancel' && method === 'POST') {
       return new Response(JSON.stringify({ identifier: 'pay_cancel_1', status: { cancelled: true } }), { status: 200 });
     }
 
@@ -196,7 +196,7 @@ test('U2A workflow: fast single-hop approve, strict complete verification, state
     assert.equal(calls[callsBeforeApprove].method, 'POST');
     assert.equal(
       calls[callsBeforeApprove].url,
-      'https://api.testnet.minepi.com/v2/payments/pay_valid_1/approve'
+      'https://api.minepi.com/v2/payments/pay_valid_1/approve'
     );
 
     // Tampered amount/direction/user rejected before complete or fulfillment

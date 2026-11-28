@@ -3,7 +3,10 @@ export function isPiSandboxServer(): boolean {
 }
 
 export function getPiApiBase(): string {
-  return isPiSandboxServer() ? 'https://api.testnet.minepi.com' : 'https://api.minepi.com';
+  // Pi Platform v2 API (/v2/me, /v2/payments/*) ALWAYS resides at https://api.minepi.com
+  // for both Testnet (sandbox: true) and Mainnet apps. api.testnet.minepi.com is Horizon
+  // blockchain RPC and returns 404 for /v2/payments/*/approve.
+  return (process.env.PI_PLATFORM_API_BASE || 'https://api.minepi.com').replace(/\/+$/, '');
 }
 
 export function getPiApiKeyOrNull(): string | null {
@@ -117,55 +120,46 @@ export async function verifyPiUserAccessToken(accessToken: string): Promise<PiMe
     throw new PiPlatformApiError('Missing Pi accessToken', 400);
   }
 
-  const primaryBase = getPiApiBase();
-  const candidates =
-    primaryBase === 'https://api.minepi.com'
-      ? ['https://api.minepi.com']
-      : [primaryBase, 'https://api.minepi.com'];
+  const base = getPiApiBase();
+  try {
+    const res = await fetch(`${base}/v2/me`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${cleanToken}`,
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    });
 
-  let lastStatus = 401;
-  let lastDetails: unknown = {};
-
-  for (const base of candidates) {
+    const text = await res.text();
+    let parsed: any = {};
     try {
-      const res = await fetch(`${base}/v2/me`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${cleanToken}`,
-        },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(8000),
-      });
-
-      const text = await res.text();
-      let parsed: any = {};
-      try {
-        parsed = text ? JSON.parse(text) : {};
-      } catch {
-        parsed = { raw: text };
-      }
-
-      if (res.ok && parsed?.uid && parsed?.username) {
-        return {
-          uid: String(parsed.uid),
-          username: String(parsed.username),
-          credentials: parsed.credentials,
-        };
-      }
-
-      lastStatus = res.status;
-      lastDetails = parsed;
-    } catch (err: any) {
-      lastStatus = 502;
-      lastDetails = { error: err?.message || 'Network error reaching Pi /v2/me' };
+      parsed = text ? JSON.parse(text) : {};
+    } catch {
+      parsed = { raw: text };
     }
-  }
 
-  throw new PiPlatformApiError(
-    'Pi token verification failed against /v2/me',
-    lastStatus >= 400 && lastStatus < 600 ? lastStatus : 401,
-    lastDetails
-  );
+    if (res.ok && parsed?.uid && parsed?.username) {
+      return {
+        uid: String(parsed.uid),
+        username: String(parsed.username),
+        credentials: parsed.credentials,
+      };
+    }
+
+    throw new PiPlatformApiError(
+      parsed?.message || parsed?.error || 'Pi token verification failed against /v2/me',
+      res.status >= 400 && res.status < 600 ? res.status : 401,
+      parsed
+    );
+  } catch (err: any) {
+    if (err instanceof PiPlatformApiError) throw err;
+    throw new PiPlatformApiError(
+      err?.message || 'Network error reaching Pi /v2/me',
+      502,
+      { error: err?.message || 'Network error' }
+    );
+  }
 }
 
 export async function getPiPayment(paymentId: string): Promise<PiPlatformPayment> {

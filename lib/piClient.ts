@@ -99,9 +99,12 @@ export async function handleIncompletePayment(
   const paymentId = payment?.identifier;
   if (!paymentId) return { success: false, error: 'Missing incomplete payment identifier' };
 
+  console.log('[Pi] Incomplete payment found:', paymentId);
+
   try {
     const res = await fetch('/api/pi/incomplete', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         paymentId,
@@ -110,6 +113,7 @@ export async function handleIncompletePayment(
       }),
     });
     const data = (await res.json().catch(() => ({}))) as IncompleteRecoveryResult;
+    console.log('[Pi] Incomplete payment resolved:', res.status, data);
     if (
       res.ok &&
       (data?.success || data?.fulfilled) &&
@@ -133,6 +137,7 @@ export async function handleIncompletePayment(
     }
     return data;
   } catch (err: any) {
+    console.warn('[Pi] Incomplete payment recovery failed:', err?.message || err);
     return { success: false, error: err?.message || 'Incomplete payment recovery failed' };
   }
 }
