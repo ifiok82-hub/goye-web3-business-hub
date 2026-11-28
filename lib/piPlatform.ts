@@ -1,4 +1,22 @@
-const PI_PLATFORM_API_BASE = 'https://api.testnet.minepi.com';
+export function isPiSandboxServer(): boolean {
+  return process.env.NEXT_PUBLIC_PI_SANDBOX !== 'false' && process.env.PI_SANDBOX !== 'false';
+}
+
+export function getPiApiBase(): string {
+  return isPiSandboxServer() ? 'https://api.testnet.minepi.com' : 'https://api.minepi.com';
+}
+
+export function getPiApiKeyOrNull(): string | null {
+  const key = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
+  if (!key || key === 'NOT CONFIGURED') {
+    return null;
+  }
+  return key;
+}
+
+export function getPiApiKeyStatus(): 'CONFIGURED' | 'NOT CONFIGURED' {
+  return getPiApiKeyOrNull() ? 'CONFIGURED' : 'NOT CONFIGURED';
+}
 
 export interface PiPlatformPayment {
   identifier: string;
@@ -25,6 +43,14 @@ export interface PiPlatformPayment {
   };
 }
 
+export interface PiMeUser {
+  uid: string;
+  username: string;
+  credentials?: {
+    scopes?: string[];
+  };
+}
+
 export class PiConfigError extends Error {
   constructor(message: string) {
     super(message);
@@ -45,16 +71,17 @@ export class PiPlatformApiError extends Error {
 }
 
 function getServerApiKey(): string {
-  const key = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
-  if (!key || key === 'NOT CONFIGURED') {
-    throw new PiConfigError('PI_API_KEY (Testnet) is not configured on the server.');
+  const key = getPiApiKeyOrNull();
+  if (!key) {
+    throw new PiConfigError('PI_API_KEY is NOT CONFIGURED on the server.');
   }
   return key;
 }
 
 async function piRequest<T>(path: string, init: RequestInit): Promise<T> {
   const apiKey = getServerApiKey();
-  const res = await fetch(`${PI_PLATFORM_API_BASE}${path}`, {
+  const base = getPiApiBase();
+  const res = await fetch(`${base}${path}`, {
     ...init,
     headers: {
       Authorization: `Key ${apiKey}`,
@@ -82,6 +109,63 @@ async function piRequest<T>(path: string, init: RequestInit): Promise<T> {
   }
 
   return parsed as T;
+}
+
+export async function verifyPiUserAccessToken(accessToken: string): Promise<PiMeUser> {
+  const cleanToken = accessToken.trim();
+  if (!cleanToken) {
+    throw new PiPlatformApiError('Missing Pi accessToken', 400);
+  }
+
+  const primaryBase = getPiApiBase();
+  const candidates =
+    primaryBase === 'https://api.minepi.com'
+      ? ['https://api.minepi.com']
+      : [primaryBase, 'https://api.minepi.com'];
+
+  let lastStatus = 401;
+  let lastDetails: unknown = {};
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/v2/me`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+        },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(8000),
+      });
+
+      const text = await res.text();
+      let parsed: any = {};
+      try {
+        parsed = text ? JSON.parse(text) : {};
+      } catch {
+        parsed = { raw: text };
+      }
+
+      if (res.ok && parsed?.uid && parsed?.username) {
+        return {
+          uid: String(parsed.uid),
+          username: String(parsed.username),
+          credentials: parsed.credentials,
+        };
+      }
+
+      lastStatus = res.status;
+      lastDetails = parsed;
+    } catch (err: any) {
+      lastStatus = 502;
+      lastDetails = { error: err?.message || 'Network error reaching Pi /v2/me' };
+    }
+  }
+
+  throw new PiPlatformApiError(
+    'Pi token verification failed against /v2/me',
+    lastStatus >= 400 && lastStatus < 600 ? lastStatus : 401,
+    lastDetails
+  );
 }
 
 export async function getPiPayment(paymentId: string): Promise<PiPlatformPayment> {

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-
-const PI_TESTNET_API_BASE = 'https://api.testnet.minepi.com';
+import { getPiApiBase, getPiApiKeyOrNull } from '@/lib/piPlatform';
 
 export async function POST(req: Request) {
   try {
@@ -12,16 +11,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'no paymentId' }, { status: 400 });
     }
 
-    const apiKey = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
+    const apiKey = getPiApiKeyOrNull();
     console.log('CANCEL START', paymentId, 'KEY EXISTS?', !!apiKey);
 
-    if (!apiKey || apiKey === 'NOT CONFIGURED') {
+    if (!apiKey) {
       console.log('PI_API_KEY MISSING IN VERCEL');
-      return NextResponse.json({ error: 'PI_API_KEY MISSING IN VERCEL' }, { status: 500 });
+      return NextResponse.json({ error: 'PI_API_KEY is NOT CONFIGURED on server' }, { status: 500 });
     }
 
+    const piApiBase = getPiApiBase();
     const res = await fetch(
-      `${PI_TESTNET_API_BASE}/v2/payments/${encodeURIComponent(paymentId)}/cancel`,
+      `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/cancel`,
       {
         method: 'POST',
         headers: {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-
-const PI_TESTNET_API_BASE = 'https://api.testnet.minepi.com';
+import { getPiApiBase, getPiApiKeyOrNull } from '@/lib/piPlatform';
+import { markPaymentCompletedAndFulfill } from '@/lib/piPaymentsStore';
+import { getProductById } from '@/lib/products';
 
 export async function POST(req: Request) {
   try {
@@ -13,19 +14,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'paymentId is required' }, { status: 400 });
     }
 
-    const apiKey = (process.env.PI_API_KEY || process.env.PI_NETWORK_API_KEY || '').trim();
-    if (!apiKey || apiKey === 'NOT CONFIGURED') {
+    const apiKey = getPiApiKeyOrNull();
+    if (!apiKey) {
       console.log('PI_API_KEY MISSING IN VERCEL');
-      return NextResponse.json({ error: 'PI_API_KEY MISSING IN VERCEL' }, { status: 500 });
+      return NextResponse.json({ error: 'PI_API_KEY is NOT CONFIGURED on server' }, { status: 500 });
     }
 
+    const piApiBase = getPiApiBase();
     const headers = {
       Authorization: `Key ${apiKey}`,
       'Content-Type': 'application/json',
     };
 
     const getRes = await fetch(
-      `${PI_TESTNET_API_BASE}/v2/payments/${encodeURIComponent(paymentId)}`,
+      `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}`,
       { method: 'GET', headers, cache: 'no-store', signal: AbortSignal.timeout(8000) }
     );
 
@@ -45,11 +47,12 @@ export async function POST(req: Request) {
     const txid = payment?.transaction?.txid || body?.txid;
     const productId =
       payment?.metadata?.productId !== undefined ? Number(payment.metadata.productId) : undefined;
+    const product = productId && !Number.isNaN(productId) ? getProductById(productId) : undefined;
 
     if (txid) {
       if (!payment?.status?.developer_approved) {
         await fetch(
-          `${PI_TESTNET_API_BASE}/v2/payments/${encodeURIComponent(paymentId)}/approve`,
+          `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/approve`,
           {
             method: 'POST',
             headers,
@@ -61,7 +64,7 @@ export async function POST(req: Request) {
       }
 
       const compRes = await fetch(
-        `${PI_TESTNET_API_BASE}/v2/payments/${encodeURIComponent(paymentId)}/complete`,
+        `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/complete`,
         {
           method: 'POST',
           headers,
@@ -78,18 +81,29 @@ export async function POST(req: Request) {
         }
       }
 
+      if (product) {
+        await markPaymentCompletedAndFulfill({
+          paymentId,
+          txid,
+          productId: product.id,
+          userUid: String(payment?.user_uid || 'verified_pioneer'),
+          amount: product.price,
+          direction: String(payment?.direction || 'user_to_app'),
+        }).catch(() => undefined);
+      }
+
       return NextResponse.json({
         success: true,
         fulfilled: true,
         status: 'completed',
         paymentId,
         txid,
-        ...(productId && !Number.isNaN(productId) ? { productId } : {}),
+        ...(product ? { productId: product.id } : productId ? { productId } : {}),
       });
     }
 
     await fetch(
-      `${PI_TESTNET_API_BASE}/v2/payments/${encodeURIComponent(paymentId)}/cancel`,
+      `${piApiBase}/v2/payments/${encodeURIComponent(paymentId)}/cancel`,
       {
         method: 'POST',
         headers,

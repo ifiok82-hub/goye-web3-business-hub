@@ -1,10 +1,18 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import { handleIncompletePayment, initPiSdk, loadPiSdk, markPiSessionAuthenticated } from '../lib/piClient';
 
-const APP_STUDIO_LOGIN_URL =
-  'https://backend.appstudio-u7cm9zhmha0ruwv8.piappengine.com/pi/auth/v1/login';
+import React, { useEffect, useRef, useState } from 'react';
+import { CheckCircle2, LogOut, AlertCircle } from 'lucide-react';
+import {
+  handleIncompletePayment,
+  hasPiSdk,
+  initPiSdk,
+  isPiSandboxClient,
+} from '../lib/piClient';
+
+interface VerifiedPiUser {
+  uid: string;
+  username: string;
+}
 
 function isPiEnvironment(): boolean {
   if (typeof window === 'undefined') return false;
@@ -19,127 +27,190 @@ function isPiEnvironment(): boolean {
 }
 
 export default function PiSignIn() {
-  const [verified, setVerified] = useState(false);
+  const [user, setUser] = useState<VerifiedPiUser | null>(null);
+  const [sdkReady, setSdkReady] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const autoAttemptedRef = useRef(false);
 
+  const syncServerSession = async () => {
+    try {
+      const res = await fetch('/api/auth/pi', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (data?.authenticated && data?.user?.uid && data?.user?.username) {
+        const verifiedUser: VerifiedPiUser = {
+          uid: String(data.user.uid),
+          username: String(data.user.username),
+        };
+        setUser(verifiedUser);
+        try {
+          window.sessionStorage?.setItem('pi_user_uid', verifiedUser.uid);
+        } catch {
+          // Ignore restricted storage
+        }
+      } else {
+        setUser(null);
+      }
+    } catch {
+      // Ignore transient session check errors
+    }
+  };
+
   const runSignIn = async (isAuto = false) => {
-    if (loading || verified) return;
+    if (loading || user) return;
     setLoading(true);
     setErrorMsg('');
 
     try {
       const ready = await initPiSdk();
+      setSdkReady(ready && hasPiSdk());
       if (!ready || typeof window === 'undefined' || !window.Pi) {
         if (!isAuto) {
-          setErrorMsg('Open in Pi Browser to sign in with Pi');
+          setErrorMsg('Pi Browser / Pi SDK required for Pi sign-in and payments.');
         }
-        setLoading(false);
         return;
       }
 
-      const auth = await window.Pi.authenticate(['username', 'payments'], handleIncompletePayment);
+      const auth = await window.Pi.authenticate(
+        ['username', 'payments'],
+        handleIncompletePayment
+      );
       const accessToken = auth?.accessToken;
       if (!accessToken || typeof accessToken !== 'string') {
-        throw new Error('No accessToken returned');
+        throw new Error('Pi did not return an access token.');
       }
 
-      const userUid = auth?.user?.uid ? String(auth.user.uid) : undefined;
-      markPiSessionAuthenticated(userUid);
+      const res = await fetch('/api/auth/pi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accessToken,
+          user: auth?.user
+            ? {
+                uid: auth.user.uid,
+                username: auth.user.username,
+              }
+            : undefined,
+        }),
+      });
 
-      if (userUid) {
-        try {
-          if (window.sessionStorage) {
-            window.sessionStorage.setItem('pi_user_uid', userUid);
-          }
-        } catch {
-          // Ignore restricted storage
-        }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.authenticated || !data?.user?.username || !data?.user?.uid) {
+        throw new Error(
+          typeof data?.error === 'string' && data.error
+            ? data.error
+            : `Pi authentication verification failed (${res.status}).`
+        );
       }
 
-      // Send ONLY { accessToken } to GOYE App Studio backend; never call /v2/me
-      let authSucceeded = false;
+      const verifiedUser: VerifiedPiUser = {
+        uid: String(data.user.uid),
+        username: String(data.user.username),
+      };
+
       try {
-        const appStudioRes = await fetch(APP_STUDIO_LOGIN_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken }),
-        });
-
-        if (appStudioRes.ok) {
-          const appStudioData = await appStudioRes.json().catch(() => ({}));
-          try {
-            if (window.sessionStorage && appStudioData?.sessionToken) {
-              window.sessionStorage.setItem(
-                'pi_sessionToken',
-                String(appStudioData.sessionToken)
-              );
-            }
-          } catch {
-            // Ignore restricted storage
-          }
-          authSucceeded = true;
-        } else {
-          const errBody = await appStudioRes.text().catch(() => '');
-          throw new Error(`HTTP ${appStudioRes.status} ${errBody}`);
-        }
-      } catch (directErr) {
-        const proxyRes = await fetch('/api/pi/appstudio-auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken }),
-        });
-        if (!proxyRes.ok) {
-          throw directErr;
-        }
-        const proxyData = await proxyRes.json().catch(() => ({}));
-        try {
-          if (window.sessionStorage && proxyData?.sessionToken) {
-            window.sessionStorage.setItem('pi_sessionToken', String(proxyData.sessionToken));
-          }
-        } catch {
-          // Ignore restricted storage
-        }
-        authSucceeded = true;
+        window.sessionStorage?.setItem('pi_user_uid', verifiedUser.uid);
+      } catch {
+        // Ignore restricted storage
       }
 
-      if (authSucceeded) {
-        console.log('AppStudio auth sent');
-        setVerified(true);
-        window.dispatchEvent(new CustomEvent('goye:entitlements-updated'));
-      }
-    } catch (err: any) {
-      console.log('AppStudio auth failed', err?.message || err);
+      setUser(verifiedUser);
+      window.dispatchEvent(new CustomEvent('goye:auth-updated', { detail: verifiedUser }));
+      window.dispatchEvent(new CustomEvent('goye:entitlements-updated'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err || 'Pi sign-in cancelled or failed.');
       if (!isAuto) {
-        setErrorMsg('Sign-in failed — tap to retry');
+        setErrorMsg(msg || 'Pi sign-in failed. Please allow access and retry.');
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/pi', { method: 'DELETE' });
+    } catch {
+      // Ignore network errors on sign out
+    }
+    try {
+      window.sessionStorage?.removeItem('pi_user_uid');
+    } catch {
+      // Ignore restricted storage
+    }
+    setUser(null);
+    setErrorMsg('');
+    window.dispatchEvent(new CustomEvent('goye:auth-updated', { detail: null }));
+    window.dispatchEvent(new CustomEvent('goye:entitlements-updated'));
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // Only auto-run Pi.authenticate inside Pi Browser / App Studio preview;
-    // outside Pi Browser, defer until user taps "Sign in with Pi" so page loads fast with zero timeouts.
-    if (isPiEnvironment()) {
-      loadPiSdk().then((loaded) => {
-        if (!autoAttemptedRef.current && loaded) {
-          autoAttemptedRef.current = true;
-          runSignIn(true);
-        }
-      });
-    }
+    let mounted = true;
+
+    syncServerSession();
+
+    initPiSdk().then((loaded) => {
+      if (!mounted) return;
+      const available = loaded && hasPiSdk();
+      setSdkReady(available);
+
+      if (available && isPiEnvironment() && !autoAttemptedRef.current) {
+        autoAttemptedRef.current = true;
+        // Only auto-authenticate if no verified server session is already loaded
+        fetch('/api/auth/pi', { cache: 'no-store' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (mounted && !data?.authenticated) {
+              runSignIn(true);
+            }
+          })
+          .catch(() => undefined);
+      }
+    });
+
+    const onAuthUpdated = (event: Event) => {
+      const custom = event as CustomEvent<VerifiedPiUser | null>;
+      if (custom.detail && custom.detail.username && custom.detail.uid) {
+        setUser(custom.detail);
+        setErrorMsg('');
+      } else {
+        syncServerSession();
+      }
+    };
+
+    window.addEventListener('goye:auth-updated', onAuthUpdated);
+    return () => {
+      mounted = false;
+      window.removeEventListener('goye:auth-updated', onAuthUpdated);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (verified) {
+  if (user) {
     return (
-      <span className="px-4 py-2 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 font-semibold text-xs sm:text-sm inline-flex items-center gap-2 whitespace-nowrap">
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-        <span>Pi Verified Testnet</span>
-      </span>
+      <div className="flex items-center gap-2">
+        <span
+          className="px-3.5 py-2 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 font-semibold text-xs sm:text-sm inline-flex items-center gap-2 whitespace-nowrap"
+          title={`Verified Pi UID: ${user.uid}`}
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>@{user.username}</span>
+          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200">
+            {isPiSandboxClient() ? 'Testnet' : 'Mainnet'}
+          </span>
+        </span>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          title="Sign out of Pi session"
+          aria-label="Sign out of Pi session"
+          className="p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
+      </div>
     );
   }
 
@@ -151,9 +222,18 @@ export default function PiSignIn() {
         disabled={loading}
         className="px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-500 disabled:opacity-60 text-white font-semibold text-xs sm:text-sm inline-flex items-center gap-2 transition-colors shadow-lg shadow-purple-900/30 cursor-pointer whitespace-nowrap"
       >
-        <span>{loading ? 'Verifying...' : 'Sign in with Pi'}</span>
+        <span>{loading ? 'Verifying Pi...' : 'Sign in with Pi'}</span>
       </button>
-      {errorMsg ? <span className="text-[11px] text-red-300 mt-1">{errorMsg}</span> : null}
+      {errorMsg ? (
+        <span className="text-[11px] text-red-300 mt-1 max-w-[260px] text-right inline-flex items-center gap-1">
+          <AlertCircle className="w-3 h-3 shrink-0" />
+          <span>{errorMsg}</span>
+        </span>
+      ) : sdkReady === false ? (
+        <span className="text-[11px] text-amber-300/90 mt-1 text-right">
+          Pi Browser / Pi SDK required for Pi features
+        </span>
+      ) : null}
     </div>
   );
 }
